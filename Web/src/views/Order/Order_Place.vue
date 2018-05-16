@@ -1,0 +1,438 @@
+<template>
+  <div class="gyl-order-detail">
+    <div v-title>确认订单</div>
+    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <section class="content">
+      <div class="order-address" @click="openAddress">
+        <div class="person-infor">
+          <p>{{deliver.addrName + '  ' +deliver.addrPhone}}</p>
+          <p class="per-address">{{deliver.address}}</p>
+        </div>
+        <div class="add-more"><i class="ico-more"></i></div>
+      </div>
+      <div class="order-send">
+        <div class="order-row">
+          <div class="row-key">配送</div>
+          <div class="row-val">{{express.expressCom}}</div>
+        </div>
+        <div class="order-row">
+          <div class="row-key">预计送达时间</div>
+          <div class="row-val">{{express.arriveTime}}</div>
+        </div>
+        <div class="order-row no-border-bot">
+          <div class="row-key">配送方式</div>
+          <div class="row-val">{{express.distMode}}</div>
+        </div>
+      </div>
+      <div class="order-pay-type">
+        <div class="order-row">
+          <div class="row-key">支付方式</div>
+          <div class="row-val">{{productType==1?'微信 支付宝':'提货卡'}}</div>
+        </div>
+        <div class="order-row no-border-bot">
+          <div class="row-key">优惠券抵扣</div>
+          <div class="row-val">无</div>
+        </div>
+      </div>
+      <div class="order-paied">
+        <div class="paied-top">
+          <div class="or-mer">
+            <img class="or-img" :src="merchant.merchantLogo" alt="">
+            <p class="mer-detail"><span class="mer-name" v-text="merchant.merchantName"></span></p>
+          </div>
+          <div class="or-pro" v-for="(item,i) in productList" v-bind:key="i">
+            <div class="pro-img"><img :src="item.commodityLogo" alt=""></div>
+            <div class="pro-detail">
+              <p class="pro-title" v-text="item.commodityName"></p>
+              <p class="pro-price">
+                <span>{{item.commodityType==1?'&yen;':'BSTK'}}{{item.commodityPrice}}</span>
+                <span class="pro-num"><inline-x-number width="50px" button-style="round" :min="minNum" v-model="item.buyNum"></inline-x-number></span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="order-row">
+          <div class="row-key">配送费</div>
+          <div class="row-val" v-text="express.distFee"></div>
+        </div>
+        <div class="order-row no-border-bot">
+          <div class="row-key">订单备注</div>
+          <div class="row-val"><input type="text" v-model="remark"></div>
+        </div>
+      </div>
+    </section>
+    <footer class="foot">
+      <p class="left-btn">待支付<strong>{{merchant.merchantType==2?'&yen;':'BSTK'}}{{totalMoney}}</strong></p>
+      <input class="buy-btn" type="button" value="去支付" @click="placeOrder">
+    </footer>
+  </div>
+</template>
+<script>
+import { mapActions, mapGetters } from "vuex";
+import { dateFormat, InlineXNumber } from "vux";
+import { showMsg, valid } from '@/utils/common.js';
+import apiUrl from '@/config/apiUrl.js';
+import Header from '@/components/common/Header';
+var moment = require('moment');
+export default {
+  data() {
+    return {
+      headTitle: "确认订单",
+      headLift: {
+        label: "",
+        className: "ico-back"
+      },
+      timer:null,
+      minNum: 1,
+      maxNum: 0,
+      productId:"",
+      productType: 0,
+      productList: [],
+      merchant: {},
+      buyNum: 0,
+      amount: 0,
+      money: 0,
+      totalMoney: 0,
+      orderNo:"",
+      remark: "",
+      addressId:"",
+      deliver: {
+        addrName:'',
+        addrPhone:'',
+        address:''
+      },
+      express:{
+        expressCom:"顺丰快递",
+        arriveTime: moment().add(3, 'd').format('YYYY-MM-DD HH:mm'),
+        distMode:'商家配送',
+        distFee:"0"
+      }
+    };
+  },
+  components: {
+    Header, InlineXNumber
+  },
+  methods: {
+    openAddress: function() {
+      //TODO 选择快递地址
+      this.$router.push({name:"address", query: {backUrl:this.$route.fullPath}});
+    },
+    getProductDetail: function(flag) {
+      //TODO 查询商家和产品详情
+      let param = {
+        commodityId: this.productId,
+        commodityType: this.productType
+      };
+      this.$httpPost(apiUrl.getOrderCommodity, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.merchant = res.data.result;
+          this.productList = res.data.result.commodityList;
+          this.productList.forEach((item) => {
+            this.$set(item, "buyNum", this.buyNum);
+            this.amount = item.commodityPrice;
+            this.totalMoney += parseFloat(item.commodityPrice*item.buyNum);
+          });
+          if(this.productType==1) {
+            this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(1);
+          }else {
+            this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(8);
+          }
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    placeOrder: function() {
+      //TODO 下单
+      this.productList.forEach((item) => {
+        this.buyNum = item.buyNum;
+      });
+      if(this.buyNum<1) {
+        showMsg("请选择数量");
+        return;
+      }
+      let param = {
+        commodityType: this.productType,
+        commodityId: this.productId,
+        saleCount: this.buyNum,
+        amount: this.totalMoney,
+        remark: this.remark,
+        addressId: this.addressId
+      };
+      this.$httpPost(apiUrl.createOrder, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.orderNo = res.data.orderNo;
+          this.$router.push({name:"pay_order", query: {orderNo: this.orderNo}});
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+  },
+  mounted() {
+    this.productType = this.$route.query.proType||0;
+    this.productId = this.$route.query.proId||"";
+    this.buyNum = this.$route.query.num||0;
+    if(this.productId!="") {
+      this.getProductDetail();
+    }
+    if(window.localStorage.getItem("address")) {
+      let address = JSON.parse(localStorage.getItem("address"));
+      this.deliver.addrName = address.mobile;
+      this.deliver.addrPhone = address.receiver;
+      this.deliver.address = address.areaName+address.address;
+    }
+  },
+  watch: {
+    productList: {
+      //重新计算金额
+      handler(newValue, oldValue) {
+        if(oldValue&&oldValue.length>0) {
+          this.totalMoney = 0;
+          for (let i = 0; i < newValue.length; i++) {
+            this.totalMoney += parseFloat(oldValue[i].commodityPrice*oldValue[i].buyNum);
+          }
+        }
+        if(this.productType==1) {
+          this.totalMoney = parseFloat(this.totalMoney).toFixed(2);
+        }else {
+          this.totalMoney = parseFloat(this.totalMoney).toFixed(8);
+        }
+      },
+      deep: true
+    }
+  }
+};
+</script>
+<style lang="less">
+html,body{
+  height: 100%;
+  overflow: hidden;
+}
+
+.gyl-order-detail{
+  height: 100%;
+  overflow: hidden;
+  .content{
+    box-sizing:border-box;
+    width:100%;
+    height:calc(~"100% - 186px");
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background-color: #efefef;
+    .order-address{
+      padding: 30px 30px 25px 30px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      overflow: hidden;
+      .person-infor{
+        width: calc(~"100% - 25px");
+        height: auto;
+        float: left;
+        p{
+          line-height:45px;
+          font-size: 28px;
+          color: #555555;
+          &.per-address{
+            padding: 5px 0;
+            line-height: 35px;
+          }
+        }
+      }
+      .add-more{
+        width: 25px;
+        height: 90px;
+        float: right;
+        i{
+          display: inline-block;
+          vertical-align: middle;
+          width: 14px;
+          height: 22px;
+          margin-left: 10px;
+          margin-top: 33px;
+        }
+      }
+    }
+    .order-paied{
+      margin-top: 20px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      padding-left:25px;
+      .paied-top{
+        padding: 0 0 5px;
+        border-bottom: 1px solid #efefef; /*no*/
+        overflow: hidden;
+        .or-mer{
+          border-bottom:1px solid #e8e8e8;/*no*/
+          padding:10px 30px 10px 0;
+          .or-img{
+            display: block;
+            float: left;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            margin-right: 22px;
+            margin-top:20px;
+          }
+          .mer-detail{
+            height:80px;
+            line-height: 80px;
+            font-size: 28px;
+            color: #333;
+            vertical-align: middle;
+            .mer-r{
+              float: right;
+              font-size: 28px;
+            }
+            .mer-price{
+              color:#ffa936;              
+            }
+          }
+          .mer-paied{
+            height: 80px;
+            line-height: 80px;
+            font-size: 22px;
+            color: #999999;
+            .paied-num{
+              font-size: 20px;
+              float: right;
+            }
+          }
+        }
+        .or-pro{
+          width:100%;
+          overflow: hidden;
+          padding:30px 0;
+          .pro-img{
+            display: block;
+            width:120px;
+            height:75px;
+            float:left;
+            border:1px solid #e8e8e8;/*no*/
+            border-radius:10px;
+            padding:22px 0;
+            img{
+              display: block;
+              width:95px;
+              height:75px;
+              margin:0 auto;
+            }
+          }
+          .pro-detail{
+            margin-left:140px;
+            padding-right:30px;
+            overflow: hidden;
+            .pro-title{
+              margin-top:10px;
+              height:40px;
+              line-height: 40px;
+              color:#333;
+              font-size:28px;
+            }
+            .pro-price{
+              margin-top:25px;
+              height:40px;
+              line-height: 40px;
+              color:#ffa936;
+              font-size:26px;
+              .pro-num{
+                float:right;
+                .vux-number-selector-sub{
+                  border: 1px solid #666;/*no*/
+                  color:#666;
+                }
+                .vux-number-selector svg{
+                  fill:#666;
+                }
+                .vux-number-disabled,.vux-number-selector-plus{
+                  border: 1px solid #999;/*no*/
+                  color:#999;
+                }
+                .vux-number-disabled svg{
+                  fill:#999;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    .order-pay-type, .order-send, .order-paied{
+      margin-bottom: 20px;
+      padding-left: 30px;
+      background-color: #fff;
+      .order-row{
+        font-size: 28px;
+        border-bottom: 1px solid #efefef; /*no*/
+        overflow: hidden;
+        &.no-border-bot{
+          border: 0;
+        }
+      }
+      .row-key{
+        float: left;
+        width: 40%;
+        height: 90px;
+        line-height: 90px;
+        color: #555;
+      }
+      .row-val{
+        float: left;
+        width: calc(~"60% - 30px");
+        padding: 15px 30px 15px 0;
+        line-height: 62px;
+        text-align: right;
+        color: #555555;
+        word-break: break-all;
+        input{
+          display: block;
+          float: right;
+          width: 375px;
+          height: 62px;
+          font-size: 22px;
+          line-height: 62px;
+          color: #555;
+          padding-left: 15px;
+          border: 1px solid #efefef; /*no*/
+          box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+        }
+      }
+    }
+  }
+  .foot{
+    position: absolute;
+    bottom: 0;
+    width: 750px;
+    height: 98px;
+    background: #fff;
+    input,p{
+      display: block;
+      font-size: 26px;
+      line-height: 98px;
+      color: #fff;
+      text-align: center;
+      float: left;
+      border-radius: 0;
+    }
+    .left-btn{
+      width: calc(~"100% - 250px");
+      background-color: #ffa936;
+      strong{
+        margin-left:20px;
+      }
+    }
+    .buy-btn{
+      width: 250px;
+      font-size: 26px;
+      background-color: #317db9;
+    }
+  }
+}
+</style>

@@ -1,0 +1,278 @@
+<template>
+  <div class="gyl-mer-detail">
+    <div v-title>商家详情</div>
+    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <section class="content">
+      <div class="mer-shop">
+        <img :src="merchant.logoPic" alt="">
+        <p class="mer-title" v-text="merchant.merchName"></p>
+        <p class="mer-star"><i :class="getStarCss(merchant.praise)"></i></p>
+      </div>
+      <div class="notice">
+        <span class="i-notice"><i class="ico-notice"></i></span>
+        <span class="title">公告</span>
+        <span class="message" v-text="merchant.notice"></span>
+      </div>
+      <div class="mer-adv">
+        <swiper class="pro-swiper" height="150px" :list="proImgs" v-model="proImgIdx" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'pro-dots'"></swiper>
+      </div>
+      <div class="mer-scene">
+        <div class="scene-title">商家实景</div>
+        <div class="scene-img">
+          <div class="scene-con" :style="{width:sceneWidth}">
+            <div v-for="(item,i) in merchantPic" v-bind:key="i">
+              <img :src="item.url" :alt="item.title">
+            </div>
+          </div>
+          <!-- <Scroller lock-y scrollbar-x :bounce=false>
+            <div class="scene-con">
+              <div v-for="(item,i) in merchantPic" v-bind:key="i">
+                <img :src="item.url" :alt="item.title">
+              </div>
+            </div>
+          </Scroller> -->
+        </div>
+      </div>
+      <div class="mer-info">
+        <div class="info-title">商家信息</div>
+        <div class="info-detail">
+          <div><span class="info-lab">商家简介</span><span class="info-con" v-text="merchant.briefIntro"></span></div>
+          <div><span class="info-lab">分类</span><span class="info-con" v-text="merchant.category"></span></div>
+          <div><span class="info-lab">地址</span><span class="info-con" v-text="merchant.areaName+merchant.address"></span></div>
+          <div><span class="info-lab">联系方式</span><span class="info-con" v-html="merchant.contact+'<br />'+merchant.tel"></span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+<script>
+import { mapActions, mapGetters } from "vuex";
+import { showMsg, valid } from '@/utils/common.js';
+import apiUrl from '@/config/apiUrl.js';
+import Header from '@/components/common/Header';
+import { Swiper, Scroller } from 'vux';
+export default {
+  data() {
+    return {
+      headTitle: "商家详情",
+      headLift: {
+        label: "",
+        className: "ico-back"
+      },
+      sceneWidth:0,
+      proImgIdx: 0,
+      proImgs: [],
+      merchantId:0,
+      merchant:{},
+      merchantPic:[],
+      advertistPic:[]
+    };
+  },
+  components: {
+    Header, Swiper, Scroller
+  },
+  methods: {
+    getStarCss: function(val) {
+      return "ico-star-"+val;
+    },
+    getMerchantDetail: function(flag) {
+      //TODO 查询商家详情
+      let param = {
+        merchantId: this.merchantId
+      };
+      this.$httpPost(apiUrl.getMerchantInfo, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.merchant = res.data.merch;
+          this.merchantPic = res.data.pics;
+          this.advertistPic = res.data.advertPics;
+          this.sceneWidth = res.data.pics.length*105+"px";
+          if(res.data.advertPics) {
+            res.data.pics.forEach(item => {
+              this.proImgs.push({url: 'javascript:', img: item.url, title: item.title});
+            });
+          }
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+  },
+  mounted() {
+    this.merchantId = this.$route.query.id||"";
+    if(this.merchantId!="") {
+      this.getMerchantDetail();
+    }
+  }
+};
+</script>
+<style lang="less">
+html,body{
+  height: 100%;
+  overflow: hidden;
+}
+
+.gyl-mer-detail{
+  height: 100%;
+  overflow: hidden;
+  .content{
+    box-sizing:border-box;
+    width:100%;
+    height:100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #f3f4f6;
+    padding-bottom:90px;
+    .mer-shop{
+      width:100%;
+      height:285px;
+      padding-top:60px;
+      background-color: #fff;
+      img{
+        display:block;
+        width:165px;
+        height:165px;
+        margin:0 auto;
+        border-radius:100%;
+      }
+      .mer-title{
+        height:55px;
+        line-height:55px;
+        text-align: center;
+        font-size:34px;
+        color:#333;
+        margin-top:20px;
+      }
+      .mer-star{
+        height:25px;
+        line-height:25px;
+        text-align: center;
+        i{
+          vertical-align: middle;
+          margin-top: -10px;
+          width: 125px;
+          height: 20px;
+        }
+      }
+    }
+    .notice{
+      height:50px;
+      line-height:50px;
+      padding:20px 30px;
+      background-color:#fff;
+      font-size:24px;
+      span{
+        height:50px;
+        line-height: 50px;
+      }
+      .i-notice{
+        display: inline-block;
+        width:65px;
+        i{
+          width:44px;
+          height:36px;
+          margin-bottom:-8px;
+        }
+      }
+      .title{
+        display: inline-block;
+        width:80px;
+        height:48px;
+        line-height: 48px;
+        text-align: center;
+        border:2px solid #317db9;
+        color:#317db9;
+        margin-right:35px;
+        border-radius:10px;
+      }
+      .message{
+        color:#333;
+        font-size:24px;
+        overflow: hidden;
+      }
+    }
+    .mer-adv{
+      margin-top:20px;
+      width:100%;
+      height:300px;
+      background-color: #fff;
+    }
+    .mer-scene{
+      padding:0 30px 30px;
+      margin-top:30px;
+      background-color: #fff;
+      .scene-title{
+        height:80px;
+        line-height: 80px;
+        color:#333;
+        font-size:30px;
+      }
+      .scene-img{
+        width:100%;
+        height:185px;
+        line-height:185px;
+        overflow-y: hidden;
+        overflow-x: auto;
+        .scene-con{
+          width:auto;
+          height:185px;
+          white-space:nowrap;
+          div{
+            width:182px;
+            height:182px;
+            margin-right:25px;
+            border-radius:10px;
+            float:left;
+            img{
+              width:100%;
+              height:100%;
+            }
+          }
+        }
+      }
+    }
+    .mer-info{
+      padding:0 30px 50px;
+      margin-top:30px;
+      background-color: #fff;
+      overflow: hidden;
+      .info-title{
+        height:80px;
+        line-height: 80px;
+        color:#333;
+        font-size:30px;
+      }
+      .info-detail{
+        width:100%;
+        div{
+          display: inline-block;
+          width:100%;
+          margin-top:20px;
+          overflow: hidden;
+          vertical-align: middle;
+          .info-lab{
+            display: block;
+            width:125px;
+            height:45px;
+            line-height:45px;
+            color:#317db9;
+            border:1px solid #317db9; /*no*/
+            border-radius:10px;
+            text-align:center;
+            float:left;
+          }
+          .info-con{
+            display: block;
+            line-height:45px;
+            margin-left:165px;
+            word-wrap: break-word;
+            color:#666;
+            font-size:26px;
+          }
+        }
+      }
+    }
+  }
+}
+</style>
