@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopBaseAreaMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopBaseArea">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="area_code" property="areaCode" jdbcType="INTEGER" />
+		<result column="area_name" property="areaName" jdbcType="VARCHAR" />
+		<result column="parent_code" property="parentCode" jdbcType="INTEGER" />
+		<result column="short_name" property="shortName" jdbcType="VARCHAR" />
+		<result column="zone_code" property="zoneCode" jdbcType="INTEGER" />
+		<result column="zip_code" property="zipCode" jdbcType="INTEGER" />
+		<result column="pinyin" property="pinyin" jdbcType="VARCHAR" />
+		<result column="lng" property="lng" jdbcType="VARCHAR" />
+		<result column="lat" property="lat" jdbcType="VARCHAR" />
+		<result column="level" property="level" jdbcType="INTEGER" />
+		<result column="position" property="position" jdbcType="VARCHAR" />
+		<result column="sort" property="sort" jdbcType="INTEGER" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="areaCode != null"> and area_code= #{areaCode}</if>	
+		<if test="areaName != null and areaName !=''"> and area_name= #{areaName}</if>
+		<if test="parentCode != null"> and parent_code= #{parentCode}</if>	
+		<if test="shortName != null and shortName !=''"> and short_name= #{shortName}</if>
+		<if test="zoneCode != null"> and zone_code= #{zoneCode}</if>	
+		<if test="zipCode != null"> and zip_code= #{zipCode}</if>	
+		<if test="pinyin != null and pinyin !=''"> and pinyin= #{pinyin}</if>
+		<if test="lng != null and lng !=''"> and lng= #{lng}</if>
+		<if test="lat != null and lat !=''"> and lat= #{lat}</if>
+		<if test="level != null"> and level= #{level}</if>	
+		<if test="position != null and position !=''"> and position= #{position}</if>
+		<if test="sort != null"> and sort= #{sort}</if>	
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		area_code ,
+		area_name ,
+		parent_code ,
+		short_name ,
+		zone_code ,
+		zip_code ,
+		pinyin ,
+		lng ,
+		lat ,
+		level ,
+		position ,
+		sort ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_base_area
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<select id="selectByAreaCodeList" resultMap="BaseResultMap">
+	    select 
+	    <include refid="Base_Column_List" />
+	    from shop_base_area
+	    <where>
+	       	    1=1 
+	       <if test="areaCodeList != null and areaCodeList.size() > 0">
+	            and area_code in (  
+		        <foreach item="areaCode" index="index" collection="areaCodeList"  separator=",">
+		        		#{areaCode} 
+		        </foreach>  
+	        	)
+	       </if>
+	    </where> 
+	    order by area_code asc
+	</select>
+  
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_base_area
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBaseArea">
+		insert into shop_base_area
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="areaCode != null">area_code,</if>	
+			<if test="areaName != null and areaName !=''">area_name,</if>
+			<if test="parentCode != null">parent_code,</if>	
+			<if test="shortName != null and shortName !=''">short_name,</if>
+			<if test="zoneCode != null">zone_code,</if>	
+			<if test="zipCode != null">zip_code,</if>	
+			<if test="pinyin != null and pinyin !=''">pinyin,</if>
+			<if test="lng != null and lng !=''">lng,</if>
+			<if test="lat != null and lat !=''">lat,</if>
+			<if test="level != null">level,</if>	
+			<if test="position != null and position !=''">position,</if>
+			<if test="sort != null">sort,</if>	
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="areaCode != null">
+				#{areaCode,jdbcType=INTEGER},
+			</if>
+			<if test="areaName != null and areaName !=''">
+				#{areaName,jdbcType=VARCHAR},
+			</if>
+			<if test="parentCode != null">
+				#{parentCode,jdbcType=INTEGER},
+			</if>
+			<if test="shortName != null and shortName !=''">
+				#{shortName,jdbcType=VARCHAR},
+			</if>
+			<if test="zoneCode != null">
+				#{zoneCode,jdbcType=INTEGER},
+			</if>
+			<if test="zipCode != null">
+				#{zipCode,jdbcType=INTEGER},
+			</if>
+			<if test="pinyin != null and pinyin !=''">
+				#{pinyin,jdbcType=VARCHAR},
+			</if>
+			<if test="lng != null and lng !=''">
+				#{lng,jdbcType=VARCHAR},
+			</if>
+			<if test="lat != null and lat !=''">
+				#{lat,jdbcType=VARCHAR},
+			</if>
+			<if test="level != null">
+				#{level,jdbcType=INTEGER},
+			</if>
+			<if test="position != null and position !=''">
+				#{position,jdbcType=VARCHAR},
+			</if>
+			<if test="sort != null">
+				#{sort,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBaseArea">
+		update shop_base_area
+		<set>
+			<if test="areaCode != null">
+				area_code= #{areaCode,jdbcType=INTEGER},
+			</if>
+			<if test="areaName != null and areaName !=''">
+				area_name= #{areaName,jdbcType=VARCHAR},
+			</if>
+			<if test="parentCode != null">
+				parent_code= #{parentCode,jdbcType=INTEGER},
+			</if>
+			<if test="shortName != null and shortName !=''">
+				short_name= #{shortName,jdbcType=VARCHAR},
+			</if>
+			<if test="zoneCode != null">
+				zone_code= #{zoneCode,jdbcType=INTEGER},
+			</if>
+			<if test="zipCode != null">
+				zip_code= #{zipCode,jdbcType=INTEGER},
+			</if>
+			<if test="pinyin != null and pinyin !=''">
+				pinyin= #{pinyin,jdbcType=VARCHAR},
+			</if>
+			<if test="lng != null and lng !=''">
+				lng= #{lng,jdbcType=VARCHAR},
+			</if>
+			<if test="lat != null and lat !=''">
+				lat= #{lat,jdbcType=VARCHAR},
+			</if>
+			<if test="level != null">
+				level= #{level,jdbcType=INTEGER},
+			</if>
+			<if test="position != null and position !=''">
+				position= #{position,jdbcType=VARCHAR},
+			</if>
+			<if test="sort != null">
+				sort= #{sort,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_base_area where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_base_area where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_base_area where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_base_area where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+	<resultMap id="ShortResultMap" type="com.genyuanlian.consumer.shop.vo.AreaVo">
+		<id column="id" property="i" jdbcType="BIGINT" />
+		<result column="area_code" property="value" jdbcType="INTEGER" />
+		<result column="area_name" property="name" jdbcType="VARCHAR" />
+		<result column="parent_code" property="parent" jdbcType="INTEGER" />
+	</resultMap>
+	
+	<select id="selectShortAll" resultMap="ShortResultMap">
+		select area_code as value,area_name as name,parent_code as parent
+		from shop_base_area
+	</select>
+		
+</mapper>

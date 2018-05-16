@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopPuCardMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopPuCard">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="merchant_id" property="merchantId" jdbcType="BIGINT" />
+		<result column="card_type_id" property="cardTypeId" jdbcType="BIGINT" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="code" property="code" jdbcType="VARCHAR" />
+		<result column="totel_value" property="totelValue" jdbcType="DECIMAL" />
+		<result column="balance" property="balance" jdbcType="DECIMAL" />
+		<result column="bstk_rate" property="bstkRate" jdbcType="DECIMAL" />
+		<result column="bstk_value" property="bstkValue" jdbcType="DECIMAL" />
+		<result column="price" property="price" jdbcType="DECIMAL" />
+		<result column="discount" property="discount" jdbcType="DECIMAL" />
+		<result column="member_id" property="memberId" jdbcType="BIGINT" />
+		<result column="sale_time" property="saleTime" jdbcType="TIMESTAMP" />
+		<result column="valid_date" property="validDate" jdbcType="TIMESTAMP" />
+		<result column="activation_code" property="activationCode" jdbcType="VARCHAR" />
+		<result column="activation_time" property="activationTime" jdbcType="TIMESTAMP" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="type" property="type" jdbcType="INTEGER" />
+		<result column="channel" property="channel" jdbcType="INTEGER" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="merchantId != null"> and merchant_id= #{merchantId}</if>	
+		<if test="cardTypeId != null"> and card_type_id= #{cardTypeId}</if>	
+		<if test="title != null and title !=''"> and title= #{title}</if>
+		<if test="code != null and code !=''"> and code= #{code}</if>
+		<if test="totelValue != null"> and totel_value= #{totelValue}</if>	
+		<if test="balance != null"> and balance= #{balance}</if>	
+		<if test="bstkRate != null"> and bstk_rate= #{bstkRate}</if>	
+		<if test="bstkValue != null"> and bstk_value= #{bstkValue}</if>	
+		<if test="price != null"> and price= #{price}</if>	
+		<if test="discount != null"> and discount= #{discount}</if>	
+		<if test="memberId != null"> and member_id= #{memberId}</if>	
+		<if test="saleTime != null"> and sale_time= #{saleTime}</if>	
+		<if test="validDate != null"> and valid_date= #{validDate}</if>	
+		<if test="activationCode != null and activationCode !=''"> and activation_code= #{activationCode}</if>
+		<if test="activationTime != null"> and activation_time= #{activationTime}</if>	
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+		<if test="type != null"> and type= #{type}</if>
+		<if test="channel != null"> and channel= #{channel}</if>
+		<if test="existStatus !=null">
+			and status in 
+			<foreach item="item" index="index" collection="existStatus" open="(" separator="," close=")">
+			 #{item}
+			</foreach>
+		</if>
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		merchant_id ,
+		card_type_id ,
+		title ,
+		code ,
+		totel_value ,
+		balance ,
+		bstk_rate ,
+		bstk_value ,
+		price ,
+		discount ,
+		member_id ,
+		sale_time ,
+		valid_date ,
+		activation_code ,
+		activation_time ,
+		status ,
+		remark ,
+		create_time ,
+		type,
+		channel
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_pu_card
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_pu_card
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopPuCard">
+		insert into shop_pu_card
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="merchantId != null">merchant_id,</if>	
+			<if test="cardTypeId != null">card_type_id,</if>	
+			<if test="title != null and title !=''">title,</if>
+			<if test="code != null and code !=''">code,</if>
+			<if test="totelValue != null">totel_value,</if>	
+			<if test="balance != null">balance,</if>	
+			<if test="bstkRate != null">bstk_rate,</if>	
+			<if test="bstkValue != null">bstk_value,</if>	
+			<if test="price != null">price,</if>	
+			<if test="discount != null">discount,</if>	
+			<if test="memberId != null">member_id,</if>	
+			<if test="saleTime != null">sale_time,</if>	
+			<if test="validDate != null">valid_date,</if>	
+			<if test="activationCode != null and activationCode !=''">activation_code,</if>
+			<if test="activationTime != null">activation_time,</if>	
+			<if test="status != null">status,</if>	
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="createTime != null">create_time,</if>	
+			<if test="type != null">type,</if>	
+			<if test="channel != null">channel,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="merchantId != null">
+				#{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="cardTypeId != null">
+				#{cardTypeId,jdbcType=BIGINT},
+			</if>
+			<if test="title != null and title !=''">
+				#{title,jdbcType=VARCHAR},
+			</if>
+			<if test="code != null and code !=''">
+				#{code,jdbcType=VARCHAR},
+			</if>
+			<if test="totelValue != null">
+				#{totelValue,jdbcType=DECIMAL},
+			</if>
+			<if test="balance != null">
+				#{balance,jdbcType=DECIMAL},
+			</if>
+			<if test="bstkRate != null">
+				#{bstkRate,jdbcType=DECIMAL},
+			</if>
+			<if test="bstkValue != null">
+				#{bstkValue,jdbcType=DECIMAL},
+			</if>
+			<if test="price != null">
+				#{price,jdbcType=DECIMAL},
+			</if>
+			<if test="discount != null">
+				#{discount,jdbcType=DECIMAL},
+			</if>
+			<if test="memberId != null">
+				#{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="saleTime != null">
+				#{saleTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="validDate != null">
+				#{validDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="activationCode != null and activationCode !=''">
+				#{activationCode,jdbcType=VARCHAR},
+			</if>
+			<if test="activationTime != null">
+				#{activationTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="type != null">
+				#{type,jdbcType=INTEGER},
+			</if>
+			<if test="channel != null">
+				#{channel,jdbcType=INTEGER},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopPuCard">
+		update shop_pu_card
+		<set>
+			<if test="merchantId != null">
+				merchant_id= #{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="cardTypeId != null">
+				card_type_id= #{cardTypeId,jdbcType=BIGINT},
+			</if>
+			<if test="title != null and title !=''">
+				title= #{title,jdbcType=VARCHAR},
+			</if>
+			<if test="code != null and code !=''">
+				code= #{code,jdbcType=VARCHAR},
+			</if>
+			<if test="totelValue != null">
+				totel_value= #{totelValue,jdbcType=DECIMAL},
+			</if>
+			<if test="balance != null">
+				balance= #{balance,jdbcType=DECIMAL},
+			</if>
+			<if test="bstkRate != null">
+				bstk_rate= #{bstkRate,jdbcType=DECIMAL},
+			</if>
+			<if test="bstkValue != null">
+				bstk_value= #{bstkValue,jdbcType=DECIMAL},
+			</if>
+			<if test="price != null">
+				price= #{price,jdbcType=DECIMAL},
+			</if>
+			<if test="discount != null">
+				discount= #{discount,jdbcType=DECIMAL},
+			</if>
+			<if test="memberId != null">
+				member_id= #{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="saleTime != null">
+				sale_time= #{saleTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="validDate != null">
+				valid_date= #{validDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="activationCode != null and activationCode !=''">
+				activation_code= #{activationCode,jdbcType=VARCHAR},
+			</if>
+			<if test="activationTime != null">
+				activation_time= #{activationTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="type != null">
+				type= #{type,jdbcType=INTEGER},
+			</if>
+			<if test="channel != null">
+				channel= #{channel,jdbcType=INTEGER},
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_pu_card where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_pu_card where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_pu_card where 1=1
+		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_pu_card where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+	<resultMap id="groupResultMap" type="com.genyuanlian.consumer.shop.model.ShopPuCardType">
+		<result property="id" column="card_type_id"/>
+		<result property="inventory" column="inventory"/>
+		<result property="salesVolume" column="salesVolume"/>
+	</resultMap>
+	
+	<select id="groupByCardType" resultMap="groupResultMap">
+		SELECT card_type_id,SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS inventory,SUM(CASE WHEN status != 0 THEN 1 ELSE 0 END) AS salesVolume
+		from shop_pu_card
+		WHERE type=#{type} and channel=#{channel} and card_type_id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			 #{item}
+		</foreach>
+		GROUP BY card_type_id
+	</select>
+	
+	<select id="getStatistics" resultType="java.util.Map">
+		SELECT COUNT(1) count,SUM(balance) sumBalance
+		FROM shop_pu_card where 1=1
+		<include refid="Base_Where" />
+	</select>
+	
+	<select id="selectAvailable" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_pu_card
+		where
+		member_id = #{memberId,jdbcType=BIGINT} and
+		status in (2,3,4) and
+		balance > 0
+		order by valid_date asc,balance asc
+	</select>	
+</mapper>

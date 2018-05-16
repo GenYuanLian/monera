@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopSmsInfoMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopSmsInfo">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="member_id" property="memberId" jdbcType="BIGINT" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+		<result column="content" property="content" jdbcType="VARCHAR" />
+		<result column="smstype" property="smstype" jdbcType="VARCHAR" />
+		<result column="validitytime" property="validitytime" jdbcType="VARCHAR" />
+		<result column="sms_code" property="smsCode" jdbcType="VARCHAR" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="supplier" property="supplier" jdbcType="INTEGER" />
+		<result column="call_resp" property="callResp" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="memberId != null"> and member_id= #{memberId}</if>	
+		<if test="mobile != null and mobile !=''"> and mobile= #{mobile}</if>
+		<if test="content != null and content !=''"> and content= #{content}</if>
+		<if test="smstype != null and smstype !=''"> and smstype= #{smstype}</if>
+		<if test="validitytime != null and validitytime !=''"> and validitytime= #{validitytime}</if>
+		<if test="smsCode != null and smsCode !=''"> and sms_code= #{smsCode}</if>
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="supplier != null"> and supplier= #{supplier}</if>	
+		<if test="callResp != null and callResp !=''"> and call_resp= #{callResp}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		member_id ,
+		mobile ,
+		content ,
+		smstype ,
+		validitytime ,
+		sms_code ,
+		status ,
+		supplier ,
+		call_resp ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_sms_info
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+	
+	<select id="selectByMobileList" parameterType="java.lang.String" resultMap="BaseResultMap">
+	    select 
+	    <include refid="Base_Column_List" />
+	    from shop_sms_info
+	    where mobile = #{mobile,jdbcType=VARCHAR}  and  smstype = #{type,jdbcType=VARCHAR} 
+	    <![CDATA[ and DATE_FORMAT(create_time, '%d %b %Y %T:%f') >= DATE_FORMAT(#{createTime,jdbcType=TIMESTAMP}, '%d %b %Y %T:%f') ]]>  
+	</select>
+  
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_sms_info
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopSmsInfo">
+		insert into shop_sms_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="memberId != null">member_id,</if>	
+			<if test="mobile != null and mobile !=''">mobile,</if>
+			<if test="content != null and content !=''">content,</if>
+			<if test="smstype != null and smstype !=''">smstype,</if>
+			<if test="validitytime != null and validitytime !=''">validitytime,</if>
+			<if test="smsCode != null and smsCode !=''">sms_code,</if>
+			<if test="status != null">status,</if>	
+			<if test="supplier != null">supplier,</if>	
+			<if test="callResp != null and callResp !=''">call_resp,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="memberId != null">
+				#{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				#{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="content != null and content !=''">
+				#{content,jdbcType=VARCHAR},
+			</if>
+			<if test="smstype != null and smstype !=''">
+				#{smstype,jdbcType=VARCHAR},
+			</if>
+			<if test="validitytime != null and validitytime !=''">
+				#{validitytime,jdbcType=VARCHAR},
+			</if>
+			<if test="smsCode != null and smsCode !=''">
+				#{smsCode,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="supplier != null">
+				#{supplier,jdbcType=INTEGER},
+			</if>
+			<if test="callResp != null and callResp !=''">
+				#{callResp,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopSmsInfo">
+		update shop_sms_info
+		<set>
+			<if test="memberId != null">
+				member_id= #{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				mobile= #{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="content != null and content !=''">
+				content= #{content,jdbcType=VARCHAR},
+			</if>
+			<if test="smstype != null and smstype !=''">
+				smstype= #{smstype,jdbcType=VARCHAR},
+			</if>
+			<if test="validitytime != null and validitytime !=''">
+				validitytime= #{validitytime,jdbcType=VARCHAR},
+			</if>
+			<if test="smsCode != null and smsCode !=''">
+				sms_code= #{smsCode,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="supplier != null">
+				supplier= #{supplier,jdbcType=INTEGER},
+			</if>
+			<if test="callResp != null and callResp !=''">
+				call_resp= #{callResp,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_sms_info where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_sms_info where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_sms_info where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_sms_info where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopCommodityPicMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopCommodityPic">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="commodity_id" property="commodityId" jdbcType="BIGINT" />
+		<result column="pic_type" property="picType" jdbcType="INTEGER" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="url" property="url" jdbcType="VARCHAR" />
+		<result column="sort" property="sort" jdbcType="INTEGER" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="commodityId != null"> and commodity_id= #{commodityId}</if>	
+		<if test="picType != null"> and pic_type= #{picType}</if>	
+		<if test="title != null and title !=''"> and title= #{title}</if>
+		<if test="url != null and url !=''"> and url= #{url}</if>
+		<if test="sort != null"> and sort= #{sort}</if>	
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		commodity_id ,
+		pic_type ,
+		title ,
+		url ,
+		sort ,
+		status ,
+		remark ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity_pic
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_commodity_pic
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopCommodityPic">
+		insert into shop_commodity_pic
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="commodityId != null">commodity_id,</if>	
+			<if test="picType != null">pic_type,</if>	
+			<if test="title != null and title !=''">title,</if>
+			<if test="url != null and url !=''">url,</if>
+			<if test="sort != null">sort,</if>	
+			<if test="status != null">status,</if>	
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="commodityId != null">
+				#{commodityId,jdbcType=BIGINT},
+			</if>
+			<if test="picType != null">
+				#{picType,jdbcType=INTEGER},
+			</if>
+			<if test="title != null and title !=''">
+				#{title,jdbcType=VARCHAR},
+			</if>
+			<if test="url != null and url !=''">
+				#{url,jdbcType=VARCHAR},
+			</if>
+			<if test="sort != null">
+				#{sort,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopCommodityPic">
+		update shop_commodity_pic
+		<set>
+			<if test="commodityId != null">
+				commodity_id= #{commodityId,jdbcType=BIGINT},
+			</if>
+			<if test="picType != null">
+				pic_type= #{picType,jdbcType=INTEGER},
+			</if>
+			<if test="title != null and title !=''">
+				title= #{title,jdbcType=VARCHAR},
+			</if>
+			<if test="url != null and url !=''">
+				url= #{url,jdbcType=VARCHAR},
+			</if>
+			<if test="sort != null">
+				sort= #{sort,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity_pic where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_commodity_pic where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity_pic where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity_pic where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

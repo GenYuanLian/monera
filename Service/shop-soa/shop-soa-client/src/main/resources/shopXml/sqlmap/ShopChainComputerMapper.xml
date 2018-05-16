@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopChainComputerMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopChainComputer">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="merchant_id" property="merchantId" jdbcType="BIGINT" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="model" property="model" jdbcType="VARCHAR" />
+		<result column="brand" property="brand" jdbcType="VARCHAR" />
+		<result column="calculation_force" property="calculationForce" jdbcType="VARCHAR" />
+		<result column="wall_power" property="wallPower" jdbcType="VARCHAR" />
+		<result column="power_efficiency" property="powerEfficiency" jdbcType="VARCHAR" />
+		<result column="input_voltage" property="inputVoltage" jdbcType="VARCHAR" />
+		<result column="chip_number" property="chipNumber" jdbcType="VARCHAR" />
+		<result column="board_number" property="boardNumber" jdbcType="VARCHAR" />
+		<result column="box_size" property="boxSize" jdbcType="VARCHAR" />
+		<result column="weight" property="weight" jdbcType="VARCHAR" />
+		<result column="temperature" property="temperature" jdbcType="VARCHAR" />
+		<result column="humidity" property="humidity" jdbcType="VARCHAR" />
+		<result column="network_connection" property="networkConnection" jdbcType="VARCHAR" />
+		<result column="noise" property="noise" jdbcType="VARCHAR" />
+		<result column="power_connection" property="powerConnection" jdbcType="VARCHAR" />
+		<result column="attention" property="attention" jdbcType="VARCHAR" />
+		<result column="description" property="description" jdbcType="VARCHAR" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="price" property="price" jdbcType="DECIMAL" />
+		<result column="discount" property="discount" jdbcType="DECIMAL" />
+		<result column="inventory_quantity" property="inventoryQuantity" jdbcType="INTEGER" />
+		<result column="sale_quantity" property="saleQuantity" jdbcType="INTEGER" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="merchantId != null"> and merchant_id= #{merchantId}</if>	
+		<if test="title != null and title !=''"> and title= #{title}</if>
+		<if test="model != null and model !=''"> and model= #{model}</if>
+		<if test="brand != null and brand !=''"> and brand= #{brand}</if>
+		<if test="calculationForce != null and calculationForce !=''"> and calculation_force= #{calculationForce}</if>
+		<if test="wallPower != null and wallPower !=''"> and wall_power= #{wallPower}</if>
+		<if test="powerEfficiency != null and powerEfficiency !=''"> and power_efficiency= #{powerEfficiency}</if>
+		<if test="inputVoltage != null and inputVoltage !=''"> and input_voltage= #{inputVoltage}</if>
+		<if test="chipNumber != null and chipNumber !=''"> and chip_number= #{chipNumber}</if>
+		<if test="boardNumber != null and boardNumber !=''"> and board_number= #{boardNumber}</if>
+		<if test="boxSize != null and boxSize !=''"> and box_size= #{boxSize}</if>
+		<if test="weight != null and weight !=''"> and weight= #{weight}</if>
+		<if test="temperature != null and temperature !=''"> and temperature= #{temperature}</if>
+		<if test="humidity != null and humidity !=''"> and humidity= #{humidity}</if>
+		<if test="networkConnection != null and networkConnection !=''"> and network_connection= #{networkConnection}</if>
+		<if test="noise != null and noise !=''"> and noise= #{noise}</if>
+		<if test="powerConnection != null and powerConnection !=''"> and power_connection= #{powerConnection}</if>
+		<if test="attention != null and attention !=''"> and attention= #{attention}</if>
+		<if test="description != null and description !=''"> and description= #{description}</if>
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="price != null"> and price= #{price}</if>	
+		<if test="discount != null"> and discount= #{discount}</if>	
+		<if test="inventoryQuantity != null"> and inventory_quantity= #{inventoryQuantity}</if>	
+		<if test="saleQuantity != null"> and sale_quantity= #{saleQuantity}</if>	
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		merchant_id ,
+		title ,
+		model ,
+		brand ,
+		calculation_force ,
+		wall_power ,
+		power_efficiency ,
+		input_voltage ,
+		chip_number ,
+		board_number ,
+		box_size ,
+		weight ,
+		temperature ,
+		humidity ,
+		network_connection ,
+		noise ,
+		power_connection ,
+		attention ,
+		description ,
+		remark ,
+		price ,
+		discount ,
+		inventory_quantity ,
+		sale_quantity ,
+		status ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_chain_computer
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_chain_computer
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopChainComputer">
+		insert into shop_chain_computer
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="merchantId != null">merchant_id,</if>	
+			<if test="title != null and title !=''">title,</if>
+			<if test="model != null and model !=''">model,</if>
+			<if test="brand != null and brand !=''">brand,</if>
+			<if test="calculationForce != null and calculationForce !=''">calculation_force,</if>
+			<if test="wallPower != null and wallPower !=''">wall_power,</if>
+			<if test="powerEfficiency != null and powerEfficiency !=''">power_efficiency,</if>
+			<if test="inputVoltage != null and inputVoltage !=''">input_voltage,</if>
+			<if test="chipNumber != null and chipNumber !=''">chip_number,</if>
+			<if test="boardNumber != null and boardNumber !=''">board_number,</if>
+			<if test="boxSize != null and boxSize !=''">box_size,</if>
+			<if test="weight != null and weight !=''">weight,</if>
+			<if test="temperature != null and temperature !=''">temperature,</if>
+			<if test="humidity != null and humidity !=''">humidity,</if>
+			<if test="networkConnection != null and networkConnection !=''">network_connection,</if>
+			<if test="noise != null and noise !=''">noise,</if>
+			<if test="powerConnection != null and powerConnection !=''">power_connection,</if>
+			<if test="attention != null and attention !=''">attention,</if>
+			<if test="description != null and description !=''">description,</if>
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="price != null">price,</if>	
+			<if test="discount != null">discount,</if>	
+			<if test="inventoryQuantity != null">inventory_quantity,</if>	
+			<if test="saleQuantity != null">sale_quantity,</if>	
+			<if test="status != null">status,</if>	
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="merchantId != null">
+				#{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="title != null and title !=''">
+				#{title,jdbcType=VARCHAR},
+			</if>
+			<if test="model != null and model !=''">
+				#{model,jdbcType=VARCHAR},
+			</if>
+			<if test="brand != null and brand !=''">
+				#{brand,jdbcType=VARCHAR},
+			</if>
+			<if test="calculationForce != null and calculationForce !=''">
+				#{calculationForce,jdbcType=VARCHAR},
+			</if>
+			<if test="wallPower != null and wallPower !=''">
+				#{wallPower,jdbcType=VARCHAR},
+			</if>
+			<if test="powerEfficiency != null and powerEfficiency !=''">
+				#{powerEfficiency,jdbcType=VARCHAR},
+			</if>
+			<if test="inputVoltage != null and inputVoltage !=''">
+				#{inputVoltage,jdbcType=VARCHAR},
+			</if>
+			<if test="chipNumber != null and chipNumber !=''">
+				#{chipNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="boardNumber != null and boardNumber !=''">
+				#{boardNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="boxSize != null and boxSize !=''">
+				#{boxSize,jdbcType=VARCHAR},
+			</if>
+			<if test="weight != null and weight !=''">
+				#{weight,jdbcType=VARCHAR},
+			</if>
+			<if test="temperature != null and temperature !=''">
+				#{temperature,jdbcType=VARCHAR},
+			</if>
+			<if test="humidity != null and humidity !=''">
+				#{humidity,jdbcType=VARCHAR},
+			</if>
+			<if test="networkConnection != null and networkConnection !=''">
+				#{networkConnection,jdbcType=VARCHAR},
+			</if>
+			<if test="noise != null and noise !=''">
+				#{noise,jdbcType=VARCHAR},
+			</if>
+			<if test="powerConnection != null and powerConnection !=''">
+				#{powerConnection,jdbcType=VARCHAR},
+			</if>
+			<if test="attention != null and attention !=''">
+				#{attention,jdbcType=VARCHAR},
+			</if>
+			<if test="description != null and description !=''">
+				#{description,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="price != null">
+				#{price,jdbcType=DECIMAL},
+			</if>
+			<if test="discount != null">
+				#{discount,jdbcType=DECIMAL},
+			</if>
+			<if test="inventoryQuantity != null">
+				#{inventoryQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="saleQuantity != null">
+				#{saleQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopChainComputer">
+		update shop_chain_computer
+		<set>
+			<if test="merchantId != null">
+				merchant_id= #{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="title != null and title !=''">
+				title= #{title,jdbcType=VARCHAR},
+			</if>
+			<if test="model != null and model !=''">
+				model= #{model,jdbcType=VARCHAR},
+			</if>
+			<if test="brand != null and brand !=''">
+				brand= #{brand,jdbcType=VARCHAR},
+			</if>
+			<if test="calculationForce != null and calculationForce !=''">
+				calculation_force= #{calculationForce,jdbcType=VARCHAR},
+			</if>
+			<if test="wallPower != null and wallPower !=''">
+				wall_power= #{wallPower,jdbcType=VARCHAR},
+			</if>
+			<if test="powerEfficiency != null and powerEfficiency !=''">
+				power_efficiency= #{powerEfficiency,jdbcType=VARCHAR},
+			</if>
+			<if test="inputVoltage != null and inputVoltage !=''">
+				input_voltage= #{inputVoltage,jdbcType=VARCHAR},
+			</if>
+			<if test="chipNumber != null and chipNumber !=''">
+				chip_number= #{chipNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="boardNumber != null and boardNumber !=''">
+				board_number= #{boardNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="boxSize != null and boxSize !=''">
+				box_size= #{boxSize,jdbcType=VARCHAR},
+			</if>
+			<if test="weight != null and weight !=''">
+				weight= #{weight,jdbcType=VARCHAR},
+			</if>
+			<if test="temperature != null and temperature !=''">
+				temperature= #{temperature,jdbcType=VARCHAR},
+			</if>
+			<if test="humidity != null and humidity !=''">
+				humidity= #{humidity,jdbcType=VARCHAR},
+			</if>
+			<if test="networkConnection != null and networkConnection !=''">
+				network_connection= #{networkConnection,jdbcType=VARCHAR},
+			</if>
+			<if test="noise != null and noise !=''">
+				noise= #{noise,jdbcType=VARCHAR},
+			</if>
+			<if test="powerConnection != null and powerConnection !=''">
+				power_connection= #{powerConnection,jdbcType=VARCHAR},
+			</if>
+			<if test="attention != null and attention !=''">
+				attention= #{attention,jdbcType=VARCHAR},
+			</if>
+			<if test="description != null and description !=''">
+				description= #{description,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="price != null">
+				price= #{price,jdbcType=DECIMAL},
+			</if>
+			<if test="discount != null">
+				discount= #{discount,jdbcType=DECIMAL},
+			</if>
+			<if test="inventoryQuantity != null">
+				inventory_quantity= #{inventoryQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="saleQuantity != null">
+				sale_quantity= #{saleQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_chain_computer where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_chain_computer where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_chain_computer where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_chain_computer where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

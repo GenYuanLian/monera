@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopOrderDeliveryMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopOrderDelivery">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="member_id" property="memberId" jdbcType="BIGINT" />
+		<result column="order_id" property="orderId" jdbcType="BIGINT" />
+		<result column="order_detail_id" property="orderDetailId" jdbcType="BIGINT" />
+		<result column="receiver" property="receiver" jdbcType="VARCHAR" />
+		<result column="gender" property="gender" jdbcType="INTEGER" />
+		<result column="area_id" property="areaId" jdbcType="BIGINT" />
+		<result column="area_name" property="areaName" jdbcType="VARCHAR" />
+		<result column="address" property="address" jdbcType="VARCHAR" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+		<result column="tel" property="tel" jdbcType="VARCHAR" />
+		<result column="express_supplier" property="expressSupplier" jdbcType="VARCHAR" />
+		<result column="express_no" property="expressNo" jdbcType="VARCHAR" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="email" property="email" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="memberId != null"> and member_id= #{memberId}</if>	
+		<if test="orderId != null"> and order_id= #{orderId}</if>	
+		<if test="orderDetailId != null"> and order_detail_id= #{orderDetailId}</if>	
+		<if test="receiver != null and receiver !=''"> and receiver= #{receiver}</if>
+		<if test="gender != null"> and gender= #{gender}</if>	
+		<if test="areaId != null"> and area_id= #{areaId}</if>	
+		<if test="areaName != null and areaName !=''"> and area_name= #{areaName}</if>
+		<if test="address != null and address !=''"> and address= #{address}</if>
+		<if test="mobile != null and mobile !=''"> and mobile= #{mobile}</if>
+		<if test="tel != null and tel !=''"> and tel= #{tel}</if>
+		<if test="expressSupplier != null and expressSupplier !=''"> and express_supplier= #{expressSupplier}</if>
+		<if test="expressNo != null and expressNo !=''"> and express_no= #{expressNo}</if>
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="email != null and email !=''"> and email= #{email}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		member_id ,
+		order_id ,
+		order_detail_id ,
+		receiver ,
+		gender ,
+		area_id ,
+		area_name ,
+		address ,
+		mobile ,
+		tel ,
+		express_supplier ,
+		express_no ,
+		remark ,
+		email ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_delivery
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_order_delivery
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopOrderDelivery" useGeneratedKeys="true" keyProperty="id">
+		insert into shop_order_delivery
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="memberId != null">member_id,</if>	
+			<if test="orderId != null">order_id,</if>	
+			<if test="orderDetailId != null">order_detail_id,</if>	
+			<if test="receiver != null and receiver !=''">receiver,</if>
+			<if test="gender != null">gender,</if>	
+			<if test="areaId != null">area_id,</if>	
+			<if test="areaName != null and areaName !=''">area_name,</if>
+			<if test="address != null and address !=''">address,</if>
+			<if test="mobile != null and mobile !=''">mobile,</if>
+			<if test="tel != null and tel !=''">tel,</if>
+			<if test="expressSupplier != null and expressSupplier !=''">express_supplier,</if>
+			<if test="expressNo != null and expressNo !=''">express_no,</if>
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="email != null and email !=''">email,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="memberId != null">
+				#{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="orderId != null">
+				#{orderId,jdbcType=BIGINT},
+			</if>
+			<if test="orderDetailId != null">
+				#{orderDetailId,jdbcType=BIGINT},
+			</if>
+			<if test="receiver != null and receiver !=''">
+				#{receiver,jdbcType=VARCHAR},
+			</if>
+			<if test="gender != null">
+				#{gender,jdbcType=INTEGER},
+			</if>
+			<if test="areaId != null">
+				#{areaId,jdbcType=BIGINT},
+			</if>
+			<if test="areaName != null and areaName !=''">
+				#{areaName,jdbcType=VARCHAR},
+			</if>
+			<if test="address != null and address !=''">
+				#{address,jdbcType=VARCHAR},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				#{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="tel != null and tel !=''">
+				#{tel,jdbcType=VARCHAR},
+			</if>
+			<if test="expressSupplier != null and expressSupplier !=''">
+				#{expressSupplier,jdbcType=VARCHAR},
+			</if>
+			<if test="expressNo != null and expressNo !=''">
+				#{expressNo,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="email != null and email !=''">
+				#{email,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopOrderDelivery">
+		update shop_order_delivery
+		<set>
+			<if test="memberId != null">
+				member_id= #{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="orderId != null">
+				order_id= #{orderId,jdbcType=BIGINT},
+			</if>
+			<if test="orderDetailId != null">
+				order_detail_id= #{orderDetailId,jdbcType=BIGINT},
+			</if>
+			<if test="receiver != null and receiver !=''">
+				receiver= #{receiver,jdbcType=VARCHAR},
+			</if>
+			<if test="gender != null">
+				gender= #{gender,jdbcType=INTEGER},
+			</if>
+			<if test="areaId != null">
+				area_id= #{areaId,jdbcType=BIGINT},
+			</if>
+			<if test="areaName != null and areaName !=''">
+				area_name= #{areaName,jdbcType=VARCHAR},
+			</if>
+			<if test="address != null and address !=''">
+				address= #{address,jdbcType=VARCHAR},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				mobile= #{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="tel != null and tel !=''">
+				tel= #{tel,jdbcType=VARCHAR},
+			</if>
+			<if test="expressSupplier != null and expressSupplier !=''">
+				express_supplier= #{expressSupplier,jdbcType=VARCHAR},
+			</if>
+			<if test="expressNo != null and expressNo !=''">
+				express_no= #{expressNo,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="email != null and email !=''">
+				email= #{email,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_delivery where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_order_delivery where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_delivery where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_delivery where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

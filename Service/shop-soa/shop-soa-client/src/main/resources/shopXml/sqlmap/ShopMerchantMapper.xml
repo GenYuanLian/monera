@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopMerchantMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopMerchant">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="merch_name" property="merchName" jdbcType="VARCHAR" />
+		<result column="merch_code" property="merchCode" jdbcType="VARCHAR" />
+		<result column="merch_type" property="merchType" jdbcType="INTEGER" />
+		<result column="logo_pic" property="logoPic" jdbcType="VARCHAR" />
+		<result column="brief_intro" property="briefIntro" jdbcType="VARCHAR" />
+		<result column="category" property="category" jdbcType="VARCHAR" />
+		<result column="area_id" property="areaId" jdbcType="BIGINT" />
+		<result column="area_name" property="areaName" jdbcType="VARCHAR" />
+		<result column="address" property="address" jdbcType="VARCHAR" />
+		<result column="contact" property="contact" jdbcType="VARCHAR" />
+		<result column="tel" property="tel" jdbcType="VARCHAR" />
+		<result column="notice" property="notice" jdbcType="VARCHAR" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="merchName != null and merchName !=''"> and merch_name= #{merchName}</if>
+		<if test="merchCode != null and merchCode !=''"> and merch_code= #{merchCode}</if>
+		<if test="merchType != null"> and merch_type= #{merchType}</if>	
+		<if test="logoPic != null and logoPic !=''"> and logo_pic= #{logoPic}</if>
+		<if test="briefIntro != null and briefIntro !=''"> and brief_intro= #{briefIntro}</if>
+		<if test="category != null and category !=''"> and category= #{category}</if>
+		<if test="areaId != null"> and area_id= #{areaId}</if>	
+		<if test="areaName != null and areaName !=''"> and area_name= #{areaName}</if>
+		<if test="address != null and address !=''"> and address= #{address}</if>
+		<if test="contact != null and contact !=''"> and contact= #{contact}</if>
+		<if test="tel != null and tel !=''"> and tel= #{tel}</if>
+		<if test="notice != null and notice !=''"> and notice= #{notice}</if>
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		merch_name ,
+		merch_code ,
+		merch_type ,
+		logo_pic ,
+		brief_intro ,
+		category ,
+		area_id ,
+		area_name ,
+		address ,
+		contact ,
+		tel ,
+		notice ,
+		status ,
+		remark ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_merchant
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_merchant
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopMerchant">
+		insert into shop_merchant
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="merchName != null and merchName !=''">merch_name,</if>
+			<if test="merchCode != null and merchCode !=''">merch_code,</if>
+			<if test="merchType != null">merch_type,</if>	
+			<if test="logoPic != null and logoPic !=''">logo_pic,</if>
+			<if test="briefIntro != null and briefIntro !=''">brief_intro,</if>
+			<if test="category != null and category !=''">category,</if>
+			<if test="areaId != null">area_id,</if>	
+			<if test="areaName != null and areaName !=''">area_name,</if>
+			<if test="address != null and address !=''">address,</if>
+			<if test="contact != null and contact !=''">contact,</if>
+			<if test="tel != null and tel !=''">tel,</if>
+			<if test="notice != null and notice !=''">notice,</if>
+			<if test="status != null">status,</if>	
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="merchName != null and merchName !=''">
+				#{merchName,jdbcType=VARCHAR},
+			</if>
+			<if test="merchCode != null and merchCode !=''">
+				#{merchCode,jdbcType=VARCHAR},
+			</if>
+			<if test="merchType != null">
+				#{merchType,jdbcType=INTEGER},
+			</if>
+			<if test="logoPic != null and logoPic !=''">
+				#{logoPic,jdbcType=VARCHAR},
+			</if>
+			<if test="briefIntro != null and briefIntro !=''">
+				#{briefIntro,jdbcType=VARCHAR},
+			</if>
+			<if test="category != null and category !=''">
+				#{category,jdbcType=VARCHAR},
+			</if>
+			<if test="areaId != null">
+				#{areaId,jdbcType=BIGINT},
+			</if>
+			<if test="areaName != null and areaName !=''">
+				#{areaName,jdbcType=VARCHAR},
+			</if>
+			<if test="address != null and address !=''">
+				#{address,jdbcType=VARCHAR},
+			</if>
+			<if test="contact != null and contact !=''">
+				#{contact,jdbcType=VARCHAR},
+			</if>
+			<if test="tel != null and tel !=''">
+				#{tel,jdbcType=VARCHAR},
+			</if>
+			<if test="notice != null and notice !=''">
+				#{notice,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopMerchant">
+		update shop_merchant
+		<set>
+			<if test="merchName != null and merchName !=''">
+				merch_name= #{merchName,jdbcType=VARCHAR},
+			</if>
+			<if test="merchCode != null and merchCode !=''">
+				merch_code= #{merchCode,jdbcType=VARCHAR},
+			</if>
+			<if test="merchType != null">
+				merch_type= #{merchType,jdbcType=INTEGER},
+			</if>
+			<if test="logoPic != null and logoPic !=''">
+				logo_pic= #{logoPic,jdbcType=VARCHAR},
+			</if>
+			<if test="briefIntro != null and briefIntro !=''">
+				brief_intro= #{briefIntro,jdbcType=VARCHAR},
+			</if>
+			<if test="category != null and category !=''">
+				category= #{category,jdbcType=VARCHAR},
+			</if>
+			<if test="areaId != null">
+				area_id= #{areaId,jdbcType=BIGINT},
+			</if>
+			<if test="areaName != null and areaName !=''">
+				area_name= #{areaName,jdbcType=VARCHAR},
+			</if>
+			<if test="address != null and address !=''">
+				address= #{address,jdbcType=VARCHAR},
+			</if>
+			<if test="contact != null and contact !=''">
+				contact= #{contact,jdbcType=VARCHAR},
+			</if>
+			<if test="tel != null and tel !=''">
+				tel= #{tel,jdbcType=VARCHAR},
+			</if>
+			<if test="notice != null and notice !=''">
+				notice= #{notice,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_merchant where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_merchant where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_merchant where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_merchant where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

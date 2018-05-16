@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopMemberMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopMember">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+		<result column="owner_type" property="ownerType" jdbcType="INTEGER" />
+		<result column="login_name" property="loginName" jdbcType="VARCHAR" />
+		<result column="login_pwd" property="loginPwd" jdbcType="VARCHAR" />
+		<result column="old_pwd" property="oldPwd" jdbcType="VARCHAR" />
+		<result column="pwd_uptime" property="pwdUptime" jdbcType="TIMESTAMP" />
+		<result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+		<result column="email" property="email" jdbcType="VARCHAR" />
+		<result column="gender" property="gender" jdbcType="INTEGER" />
+		<result column="head_portrait" property="headPortrait" jdbcType="VARCHAR" />
+		<result column="is_identification" property="isIdentification" jdbcType="INTEGER" />
+		<result column="id_name" property="idName" jdbcType="VARCHAR" />
+		<result column="id_number" property="idNumber" jdbcType="VARCHAR" />
+		<result column="address" property="address" jdbcType="VARCHAR" />
+		<result column="referra_code" property="referraCode" jdbcType="VARCHAR" />
+		<result column="invitation_code" property="invitationCode" jdbcType="VARCHAR" />
+		<result column="channel" property="channel" jdbcType="VARCHAR" />
+		<result column="channel_version" property="channelVersion" jdbcType="VARCHAR" />
+		<result column="sign_ip" property="signIp" jdbcType="VARCHAR" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="mobile != null and mobile !=''"> and mobile= #{mobile}</if>
+		<if test="ownerType != null"> and owner_type= #{ownerType}</if>	
+		<if test="loginName != null and loginName !=''"> and login_name= #{loginName}</if>
+		<if test="loginPwd != null and loginPwd !=''"> and login_pwd= #{loginPwd}</if>
+		<if test="oldPwd != null and oldPwd !=''"> and old_pwd= #{oldPwd}</if>
+		<if test="pwdUptime != null"> and pwd_uptime= #{pwdUptime}</if>	
+		<if test="nickName != null and nickName !=''"> and nick_name= #{nickName}</if>
+		<if test="email != null and email !=''"> and email= #{email}</if>
+		<if test="gender != null"> and gender= #{gender}</if>	
+		<if test="headPortrait != null and headPortrait !=''"> and head_portrait= #{headPortrait}</if>
+		<if test="isIdentification != null"> and is_identification= #{isIdentification}</if>	
+		<if test="idName != null and idName !=''"> and id_name= #{idName}</if>
+		<if test="idNumber != null and idNumber !=''"> and id_number= #{idNumber}</if>
+		<if test="address != null and address !=''"> and address= #{address}</if>
+		<if test="referraCode != null and referraCode !=''"> and referra_code= #{referraCode}</if>
+		<if test="invitationCode != null and invitationCode !=''"> and invitation_code= #{invitationCode}</if>
+		<if test="channel != null and channel !=''"> and channel= #{channel}</if>
+		<if test="channelVersion != null and channelVersion !=''"> and channel_version= #{channelVersion}</if>
+		<if test="signIp != null and signIp !=''"> and sign_ip= #{signIp}</if>
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		mobile ,
+		owner_type ,
+		login_name ,
+		login_pwd ,
+		old_pwd ,
+		pwd_uptime ,
+		nick_name ,
+		email ,
+		gender ,
+		head_portrait ,
+		is_identification ,
+		id_name ,
+		id_number ,
+		address ,
+		referra_code ,
+		invitation_code ,
+		channel ,
+		channel_version ,
+		sign_ip ,
+		status ,
+		remark ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_member
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<select id="selectByLogin" resultMap="BaseResultMap" parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from shop_member
+		where
+		mobile = #{loginCode,jdbcType=VARCHAR} or login_name = #{loginCode,jdbcType=VARCHAR} 
+	</select>
+	
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_member
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopMember" useGeneratedKeys="true" keyProperty="id">
+		insert into shop_member
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="mobile != null and mobile !=''">mobile,</if>
+			<if test="ownerType != null">owner_type,</if>	
+			<if test="loginName != null and loginName !=''">login_name,</if>
+			<if test="loginPwd != null and loginPwd !=''">login_pwd,</if>
+			<if test="oldPwd != null and oldPwd !=''">old_pwd,</if>
+			<if test="pwdUptime != null">pwd_uptime,</if>	
+			<if test="nickName != null and nickName !=''">nick_name,</if>
+			<if test="email != null and email !=''">email,</if>
+			<if test="gender != null">gender,</if>	
+			<if test="headPortrait != null and headPortrait !=''">head_portrait,</if>
+			<if test="isIdentification != null">is_identification,</if>	
+			<if test="idName != null and idName !=''">id_name,</if>
+			<if test="idNumber != null and idNumber !=''">id_number,</if>
+			<if test="address != null and address !=''">address,</if>
+			<if test="referraCode != null and referraCode !=''">referra_code,</if>
+			<if test="invitationCode != null and invitationCode !=''">invitation_code,</if>
+			<if test="channel != null and channel !=''">channel,</if>
+			<if test="channelVersion != null and channelVersion !=''">channel_version,</if>
+			<if test="signIp != null and signIp !=''">sign_ip,</if>
+			<if test="status != null">status,</if>	
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				#{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="ownerType != null">
+				#{ownerType,jdbcType=INTEGER},
+			</if>
+			<if test="loginName != null and loginName !=''">
+				#{loginName,jdbcType=VARCHAR},
+			</if>
+			<if test="loginPwd != null and loginPwd !=''">
+				#{loginPwd,jdbcType=VARCHAR},
+			</if>
+			<if test="oldPwd != null and oldPwd !=''">
+				#{oldPwd,jdbcType=VARCHAR},
+			</if>
+			<if test="pwdUptime != null">
+				#{pwdUptime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="nickName != null and nickName !=''">
+				#{nickName,jdbcType=VARCHAR},
+			</if>
+			<if test="email != null and email !=''">
+				#{email,jdbcType=VARCHAR},
+			</if>
+			<if test="gender != null">
+				#{gender,jdbcType=INTEGER},
+			</if>
+			<if test="headPortrait != null and headPortrait !=''">
+				#{headPortrait,jdbcType=VARCHAR},
+			</if>
+			<if test="isIdentification != null">
+				#{isIdentification,jdbcType=INTEGER},
+			</if>
+			<if test="idName != null and idName !=''">
+				#{idName,jdbcType=VARCHAR},
+			</if>
+			<if test="idNumber != null and idNumber !=''">
+				#{idNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="address != null and address !=''">
+				#{address,jdbcType=VARCHAR},
+			</if>
+			<if test="referraCode != null and referraCode !=''">
+				#{referraCode,jdbcType=VARCHAR},
+			</if>
+			<if test="invitationCode != null and invitationCode !=''">
+				#{invitationCode,jdbcType=VARCHAR},
+			</if>
+			<if test="channel != null and channel !=''">
+				#{channel,jdbcType=VARCHAR},
+			</if>
+			<if test="channelVersion != null and channelVersion !=''">
+				#{channelVersion,jdbcType=VARCHAR},
+			</if>
+			<if test="signIp != null and signIp !=''">
+				#{signIp,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopMember">
+		update shop_member
+		<set>
+			<if test="mobile != null and mobile !=''">
+				mobile= #{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="ownerType != null">
+				owner_type= #{ownerType,jdbcType=INTEGER},
+			</if>
+			<if test="loginName != null and loginName !=''">
+				login_name= #{loginName,jdbcType=VARCHAR},
+			</if>
+			<if test="loginPwd != null and loginPwd !=''">
+				login_pwd= #{loginPwd,jdbcType=VARCHAR},
+			</if>
+			<if test="oldPwd != null and oldPwd !=''">
+				old_pwd= #{oldPwd,jdbcType=VARCHAR},
+			</if>
+			<if test="pwdUptime != null">
+				pwd_uptime= #{pwdUptime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="nickName != null and nickName !=''">
+				nick_name= #{nickName,jdbcType=VARCHAR},
+			</if>
+			<if test="email != null and email !=''">
+				email= #{email,jdbcType=VARCHAR},
+			</if>
+			<if test="gender != null">
+				gender= #{gender,jdbcType=INTEGER},
+			</if>
+			<if test="headPortrait != null and headPortrait !=''">
+				head_portrait= #{headPortrait,jdbcType=VARCHAR},
+			</if>
+			<if test="isIdentification != null">
+				is_identification= #{isIdentification,jdbcType=INTEGER},
+			</if>
+			<if test="idName != null and idName !=''">
+				id_name= #{idName,jdbcType=VARCHAR},
+			</if>
+			<if test="idNumber != null and idNumber !=''">
+				id_number= #{idNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="address != null and address !=''">
+				address= #{address,jdbcType=VARCHAR},
+			</if>
+			<if test="referraCode != null and referraCode !=''">
+				referra_code= #{referraCode,jdbcType=VARCHAR},
+			</if>
+			<if test="invitationCode != null and invitationCode !=''">
+				invitation_code= #{invitationCode,jdbcType=VARCHAR},
+			</if>
+			<if test="channel != null and channel !=''">
+				channel= #{channel,jdbcType=VARCHAR},
+			</if>
+			<if test="channelVersion != null and channelVersion !=''">
+				channel_version= #{channelVersion,jdbcType=VARCHAR},
+			</if>
+			<if test="signIp != null and signIp !=''">
+				sign_ip= #{signIp,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_member where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_member where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_member where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_member where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

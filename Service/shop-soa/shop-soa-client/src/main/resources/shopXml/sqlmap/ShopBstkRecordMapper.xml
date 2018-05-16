@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopBstkRecordMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopBstkRecord">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="owner_id" property="ownerId" jdbcType="BIGINT" />
+		<result column="owner_type" property="ownerType" jdbcType="INTEGER" />
+		<result column="call_type" property="callType" jdbcType="INTEGER" />
+		<result column="business_id" property="businessId" jdbcType="BIGINT" />
+		<result column="call_url" property="callUrl" jdbcType="VARCHAR" />
+		<result column="call_req" property="callReq" jdbcType="VARCHAR" />
+		<result column="call_resp" property="callResp" jdbcType="VARCHAR" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="retry_count" property="retryCount" jdbcType="INTEGER" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="ownerId != null"> and owner_id= #{ownerId}</if>	
+		<if test="ownerType != null"> and owner_type= #{ownerType}</if>	
+		<if test="callType != null"> and call_type= #{callType}</if>	
+		<if test="businessId != null"> and business_id= #{businessId}</if>	
+		<if test="callUrl != null and callUrl !=''"> and call_url= #{callUrl}</if>
+		<if test="callReq != null and callReq !=''"> and call_req= #{callReq}</if>
+		<if test="callResp != null and callResp !=''"> and call_resp= #{callResp}</if>
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="retryCount != null"> and retry_count= #{retryCount}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		owner_id ,
+		owner_type ,
+		call_type ,
+		business_id ,
+		call_url ,
+		call_req ,
+		call_resp ,
+		status ,
+		retry_count ,
+		remark ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_bstk_record
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_bstk_record
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBstkRecord">
+		insert into shop_bstk_record
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="ownerId != null">owner_id,</if>	
+			<if test="ownerType != null">owner_type,</if>	
+			<if test="callType != null">call_type,</if>	
+			<if test="businessId != null">business_id,</if>	
+			<if test="callUrl != null and callUrl !=''">call_url,</if>
+			<if test="callReq != null and callReq !=''">call_req,</if>
+			<if test="callResp != null and callResp !=''">call_resp,</if>
+			<if test="status != null">status,</if>	
+			<if test="retryCount != null">retry_count,</if>	
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="ownerId != null">
+				#{ownerId,jdbcType=BIGINT},
+			</if>
+			<if test="ownerType != null">
+				#{ownerType,jdbcType=INTEGER},
+			</if>
+			<if test="callType != null">
+				#{callType,jdbcType=INTEGER},
+			</if>
+			<if test="businessId != null">
+				#{businessId,jdbcType=BIGINT},
+			</if>
+			<if test="callUrl != null and callUrl !=''">
+				#{callUrl,jdbcType=VARCHAR},
+			</if>
+			<if test="callReq != null and callReq !=''">
+				#{callReq,jdbcType=VARCHAR},
+			</if>
+			<if test="callResp != null and callResp !=''">
+				#{callResp,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="retryCount != null">
+				#{retryCount,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBstkRecord">
+		update shop_bstk_record
+		<set>
+			<if test="ownerId != null">
+				owner_id= #{ownerId,jdbcType=BIGINT},
+			</if>
+			<if test="ownerType != null">
+				owner_type= #{ownerType,jdbcType=INTEGER},
+			</if>
+			<if test="callType != null">
+				call_type= #{callType,jdbcType=INTEGER},
+			</if>
+			<if test="businessId != null">
+				business_id= #{businessId,jdbcType=BIGINT},
+			</if>
+			<if test="callUrl != null and callUrl !=''">
+				call_url= #{callUrl,jdbcType=VARCHAR},
+			</if>
+			<if test="callReq != null and callReq !=''">
+				call_req= #{callReq,jdbcType=VARCHAR},
+			</if>
+			<if test="callResp != null and callResp !=''">
+				call_resp= #{callResp,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="retryCount != null">
+				retry_count= #{retryCount,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_bstk_record where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_bstk_record where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_bstk_record where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_bstk_record where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

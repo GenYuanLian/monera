@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopOrderDetailMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopOrderDetail">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="member_id" property="memberId" jdbcType="BIGINT" />
+		<result column="order_id" property="orderId" jdbcType="BIGINT" />
+		<result column="order_no" property="orderNo" jdbcType="VARCHAR" />
+		<result column="merchant_id" property="merchantId" jdbcType="BIGINT" />
+		<result column="merchant_name" property="merchantName" jdbcType="VARCHAR" />
+		<result column="commodity_id" property="commodityId" jdbcType="BIGINT" />
+		<result column="commodity_type" property="commodityType" jdbcType="INTEGER" />
+		<result column="commodity_name" property="commodityName" jdbcType="VARCHAR" />
+		<result column="price" property="price" jdbcType="DECIMAL" />
+		<result column="sale_count" property="saleCount" jdbcType="INTEGER" />
+		<result column="refund_count" property="refundCount" jdbcType="INTEGER" />
+		<result column="amount" property="amount" jdbcType="DECIMAL" />
+		<result column="description" property="description" jdbcType="VARCHAR" />
+		<result column="commodity_snapshot_id" property="commoditySnapshotId" jdbcType="BIGINT" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="cancel_reason" property="cancelReason" jdbcType="VARCHAR" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="memberId != null"> and member_id= #{memberId}</if>	
+		<if test="orderId != null"> and order_id= #{orderId}</if>	
+		<if test="orderNo != null and orderNo !=''"> and order_no= #{orderNo}</if>
+		<if test="merchantId != null"> and merchant_id= #{merchantId}</if>	
+		<if test="merchantName != null and merchantName !=''"> and merchant_name= #{merchantName}</if>
+		<if test="commodityId != null"> and commodity_id= #{commodityId}</if>	
+		<if test="commodityType != null"> and commodity_type= #{commodityType}</if>	
+		<if test="commodityName != null and commodityName !=''"> and commodity_name= #{commodityName}</if>
+		<if test="price != null"> and price= #{price}</if>	
+		<if test="saleCount != null"> and sale_count= #{saleCount}</if>	
+		<if test="refundCount != null"> and refund_count= #{refundCount}</if>	
+		<if test="amount != null"> and amount= #{amount}</if>	
+		<if test="description != null and description !=''"> and description= #{description}</if>
+		<if test="commoditySnapshotId != null"> and commodity_snapshot_id= #{commoditySnapshotId}</if>	
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+		<if test="cancel_reason != null and cancel_reason !=''"> and cancel_reason= #{cancelReason}</if>
+		<if test="lastCreateTime !=null">and create_time <![CDATA[<]]> #{lastCreateTime}</if>
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		member_id ,
+		order_id ,
+		order_no ,
+		merchant_id ,
+		merchant_name ,
+		commodity_id ,
+		commodity_type ,
+		commodity_name ,
+		price ,
+		sale_count ,
+		refund_count ,
+		amount ,
+		description ,
+		commodity_snapshot_id ,
+		status ,
+		remark ,
+		create_time ,
+		cancel_reason
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_detail
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_order_detail
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopOrderDetail" useGeneratedKeys="true" keyProperty="id">
+		insert into shop_order_detail
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="memberId != null">member_id,</if>	
+			<if test="orderId != null">order_id,</if>	
+			<if test="orderNo != null and orderNo !=''">order_no,</if>
+			<if test="merchantId != null">merchant_id,</if>	
+			<if test="merchantName != null and merchantName !=''">merchant_name,</if>
+			<if test="commodityId != null">commodity_id,</if>	
+			<if test="commodityType != null">commodity_type,</if>	
+			<if test="commodityName != null and commodityName !=''">commodity_name,</if>
+			<if test="price != null">price,</if>	
+			<if test="saleCount != null">sale_count,</if>	
+			<if test="refundCount != null">refund_count,</if>	
+			<if test="amount != null">amount,</if>	
+			<if test="description != null and description !=''">description,</if>
+			<if test="commoditySnapshotId != null">commodity_snapshot_id,</if>	
+			<if test="status != null">status,</if>	
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="createTime != null">create_time,</if>	
+			<if test="cancelReason != null and cancelReason !=''">cancel_reason,</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="memberId != null">
+				#{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="orderId != null">
+				#{orderId,jdbcType=BIGINT},
+			</if>
+			<if test="orderNo != null and orderNo !=''">
+				#{orderNo,jdbcType=VARCHAR},
+			</if>
+			<if test="merchantId != null">
+				#{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="merchantName != null and merchantName !=''">
+				#{merchantName,jdbcType=VARCHAR},
+			</if>
+			<if test="commodityId != null">
+				#{commodityId,jdbcType=BIGINT},
+			</if>
+			<if test="commodityType != null">
+				#{commodityType,jdbcType=INTEGER},
+			</if>
+			<if test="commodityName != null and commodityName !=''">
+				#{commodityName,jdbcType=VARCHAR},
+			</if>
+			<if test="price != null">
+				#{price,jdbcType=DECIMAL},
+			</if>
+			<if test="saleCount != null">
+				#{saleCount,jdbcType=INTEGER},
+			</if>
+			<if test="refundCount != null">
+				#{refundCount,jdbcType=INTEGER},
+			</if>
+			<if test="amount != null">
+				#{amount,jdbcType=DECIMAL},
+			</if>
+			<if test="description != null and description !=''">
+				#{description,jdbcType=VARCHAR},
+			</if>
+			<if test="commoditySnapshotId != null">
+				#{commoditySnapshotId,jdbcType=BIGINT},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="cancelReason != null and cancelReason !=''">
+				#{cancel_reason,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopOrderDetail">
+		update shop_order_detail
+		<set>
+			<if test="memberId != null">
+				member_id= #{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="orderId != null">
+				order_id= #{orderId,jdbcType=BIGINT},
+			</if>
+			<if test="orderNo != null and orderNo !=''">
+				order_no= #{orderNo,jdbcType=VARCHAR},
+			</if>
+			<if test="merchantId != null">
+				merchant_id= #{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="merchantName != null and merchantName !=''">
+				merchant_name= #{merchantName,jdbcType=VARCHAR},
+			</if>
+			<if test="commodityId != null">
+				commodity_id= #{commodityId,jdbcType=BIGINT},
+			</if>
+			<if test="commodityType != null">
+				commodity_type= #{commodityType,jdbcType=INTEGER},
+			</if>
+			<if test="commodityName != null and commodityName !=''">
+				commodity_name= #{commodityName,jdbcType=VARCHAR},
+			</if>
+			<if test="price != null">
+				price= #{price,jdbcType=DECIMAL},
+			</if>
+			<if test="saleCount != null">
+				sale_count= #{saleCount,jdbcType=INTEGER},
+			</if>
+			<if test="refundCount != null">
+				refund_count= #{refundCount,jdbcType=INTEGER},
+			</if>
+			<if test="amount != null">
+				amount= #{amount,jdbcType=DECIMAL},
+			</if>
+			<if test="description != null and description !=''">
+				description= #{description,jdbcType=VARCHAR},
+			</if>
+			<if test="commoditySnapshotId != null">
+				commodity_snapshot_id= #{commoditySnapshotId,jdbcType=BIGINT},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="cancelReason != null and cancelReason !=''">
+				cancel_reason= #{cancelReason,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_detail where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_order_detail where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_detail where 1=1
+		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_detail where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+	
+	<select id="selectByOrderIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_order_detail where order_id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+	<resultMap id="salesVolumeByMerchantMap" type="com.genyuanlian.consumer.shop.model.ShopMerchant">
+		<result property="id" column="merchant_id"/>
+		<result property="salesVolume" column="salesVolume"/>
+	</resultMap>
+	<select id="getSalesVolumeByMerchant" resultMap="salesVolumeByMerchantMap">
+		SELECT merchant_id ,SUM(sale_count) as salesVolume 
+		from shop_order_detail
+		WHERE `status`<![CDATA[>=]]>3 and `status`<![CDATA[<=]]>8
+		GROUP BY merchant_id
+	</select>
+</mapper>

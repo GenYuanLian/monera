@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopCommodityMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopCommodity">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="merchant_id" property="merchantId" jdbcType="BIGINT" />
+		<result column="commodity_type" property="commodityType" jdbcType="INTEGER" />
+		<result column="product_id" property="productId" jdbcType="BIGINT" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="brief_intro" property="briefIntro" jdbcType="VARCHAR" />
+		<result column="logo" property="logo" jdbcType="VARCHAR" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="price" property="price" jdbcType="DECIMAL" />
+		<result column="discount" property="discount" jdbcType="DECIMAL" />
+		<result column="inventory_quantity" property="inventoryQuantity" jdbcType="INTEGER" />
+		<result column="sale_quantity" property="saleQuantity" jdbcType="INTEGER" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="merchantId != null"> and merchant_id= #{merchantId}</if>	
+		<if test="commodityType != null"> and commodity_type= #{commodityType}</if>	
+		<if test="productId != null"> and product_id= #{productId}</if>	
+		<if test="title != null and title !=''"> and title= #{title}</if>
+		<if test="briefIntro != null and briefIntro !=''"> and brief_intro= #{briefIntro}</if>
+		<if test="logo != null and logo !=''"> and logo= #{logo}</if>
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="price != null"> and price= #{price}</if>	
+		<if test="discount != null"> and discount= #{discount}</if>	
+		<if test="inventoryQuantity != null"> and inventory_quantity= #{inventoryQuantity}</if>	
+		<if test="saleQuantity != null"> and sale_quantity= #{saleQuantity}</if>	
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		merchant_id ,
+		commodity_type ,
+		product_id ,
+		title ,
+		brief_intro ,
+		logo ,
+		remark ,
+		price ,
+		discount ,
+		inventory_quantity ,
+		sale_quantity ,
+		status ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_commodity
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopCommodity">
+		insert into shop_commodity
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="merchantId != null">merchant_id,</if>	
+			<if test="commodityType != null">commodity_type,</if>	
+			<if test="productId != null">product_id,</if>	
+			<if test="title != null and title !=''">title,</if>
+			<if test="briefIntro != null and briefIntro !=''">brief_intro,</if>
+			<if test="logo != null and logo !=''">logo,</if>
+			<if test="remark != null and remark !=''">remark,</if>
+			<if test="price != null">price,</if>	
+			<if test="discount != null">discount,</if>	
+			<if test="inventoryQuantity != null">inventory_quantity,</if>	
+			<if test="saleQuantity != null">sale_quantity,</if>	
+			<if test="status != null">status,</if>	
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="merchantId != null">
+				#{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="commodityType != null">
+				#{commodityType,jdbcType=INTEGER},
+			</if>
+			<if test="productId != null">
+				#{productId,jdbcType=BIGINT},
+			</if>
+			<if test="title != null and title !=''">
+				#{title,jdbcType=VARCHAR},
+			</if>
+			<if test="briefIntro != null and briefIntro !=''">
+				#{briefIntro,jdbcType=VARCHAR},
+			</if>
+			<if test="logo != null and logo !=''">
+				#{logo,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="price != null">
+				#{price,jdbcType=DECIMAL},
+			</if>
+			<if test="discount != null">
+				#{discount,jdbcType=DECIMAL},
+			</if>
+			<if test="inventoryQuantity != null">
+				#{inventoryQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="saleQuantity != null">
+				#{saleQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopCommodity">
+		update shop_commodity
+		<set>
+			<if test="merchantId != null">
+				merchant_id= #{merchantId,jdbcType=BIGINT},
+			</if>
+			<if test="commodityType != null">
+				commodity_type= #{commodityType,jdbcType=INTEGER},
+			</if>
+			<if test="productId != null">
+				product_id= #{productId,jdbcType=BIGINT},
+			</if>
+			<if test="title != null and title !=''">
+				title= #{title,jdbcType=VARCHAR},
+			</if>
+			<if test="briefIntro != null and briefIntro !=''">
+				brief_intro= #{briefIntro,jdbcType=VARCHAR},
+			</if>
+			<if test="logo != null and logo !=''">
+				logo= #{logo,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>
+			<if test="price != null">
+				price= #{price,jdbcType=DECIMAL},
+			</if>
+			<if test="discount != null">
+				discount= #{discount,jdbcType=DECIMAL},
+			</if>
+			<if test="inventoryQuantity != null">
+				inventory_quantity= #{inventoryQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="saleQuantity != null">
+				sale_quantity= #{saleQuantity,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_commodity where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_commodity where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>

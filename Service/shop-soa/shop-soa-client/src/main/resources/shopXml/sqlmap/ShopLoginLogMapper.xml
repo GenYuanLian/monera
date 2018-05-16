@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ShopLoginLogMapper">
+	<resultMap id="BaseResultMap" type="com.genyuanlian.consumer.shop.model.ShopLoginLog">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="member_id" property="memberId" jdbcType="BIGINT" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="memb_token" property="membToken" jdbcType="VARCHAR" />
+		<result column="valid_time" property="validTime" jdbcType="TIMESTAMP" />
+		<result column="login_ip" property="loginIp" jdbcType="VARCHAR" />
+		<result column="latitude" property="latitude" jdbcType="VARCHAR" />
+		<result column="longitude" property="longitude" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="Base_Where">
+		<if test="id != null"> and id= #{id}</if>	
+		<if test="memberId != null"> and member_id= #{memberId}</if>	
+		<if test="mobile != null and mobile !=''"> and mobile= #{mobile}</if>
+		<if test="status != null"> and status= #{status}</if>	
+		<if test="membToken != null and membToken !=''"> and memb_token= #{membToken}</if>
+		<if test="validTime != null"> and valid_time= #{validTime}</if>	
+		<if test="loginIp != null and loginIp !=''"> and login_ip= #{loginIp}</if>
+		<if test="latitude != null and latitude !=''"> and latitude= #{latitude}</if>
+		<if test="longitude != null and longitude !=''"> and longitude= #{longitude}</if>
+		<if test="createTime != null"> and create_time= #{createTime}</if>	
+	</sql>
+	<sql id="Base_Column_List">
+		id ,
+		member_id ,
+		mobile ,
+		status ,
+		memb_token ,
+		valid_time ,
+		login_ip ,
+		latitude ,
+		longitude ,
+		create_time 
+	</sql>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from shop_login_log
+		where
+		id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from shop_login_log
+		where
+		id = #{id,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopLoginLog">
+		insert into shop_login_log
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">id,</if>	
+			<if test="memberId != null">member_id,</if>	
+			<if test="mobile != null and mobile !=''">mobile,</if>
+			<if test="status != null">status,</if>	
+			<if test="membToken != null and membToken !=''">memb_token,</if>
+			<if test="validTime != null">valid_time,</if>	
+			<if test="loginIp != null and loginIp !=''">login_ip,</if>
+			<if test="latitude != null and latitude !=''">latitude,</if>
+			<if test="longitude != null and longitude !=''">longitude,</if>
+			<if test="createTime != null">create_time,</if>	
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=BIGINT},
+			</if>
+			<if test="memberId != null">
+				#{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				#{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="membToken != null and membToken !=''">
+				#{membToken,jdbcType=VARCHAR},
+			</if>
+			<if test="validTime != null">
+				#{validTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="loginIp != null and loginIp !=''">
+				#{loginIp,jdbcType=VARCHAR},
+			</if>
+			<if test="latitude != null and latitude !=''">
+				#{latitude,jdbcType=VARCHAR},
+			</if>
+			<if test="longitude != null and longitude !=''">
+				#{longitude,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.genyuanlian.consumer.shop.model.ShopLoginLog">
+		update shop_login_log
+		<set>
+			<if test="memberId != null">
+				member_id= #{memberId,jdbcType=BIGINT},
+			</if>
+			<if test="mobile != null and mobile !=''">
+				mobile= #{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				status= #{status,jdbcType=INTEGER},
+			</if>
+			<if test="membToken != null and membToken !=''">
+				memb_token= #{membToken,jdbcType=VARCHAR},
+			</if>
+			<if test="validTime != null">
+				valid_time= #{validTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="loginIp != null and loginIp !=''">
+				login_ip= #{loginIp,jdbcType=VARCHAR},
+			</if>
+			<if test="latitude != null and latitude !=''">
+				latitude= #{latitude,jdbcType=VARCHAR},
+			</if>
+			<if test="longitude != null and longitude !=''">
+				longitude= #{longitude,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time= #{createTime,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where
+		id = #{id,jdbcType=BIGINT}
+	</update>
+
+	<select id="getAll" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_login_log where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
+		select count(1) from shop_login_log where 1=1
+		<include refid="Base_Where" />
+	</select>
+	<select id="pageData" resultMap="BaseResultMap" parameterType="map">
+		select
+		<include refid="Base_Column_List" />
+		from shop_login_log where 1=1
+		<include refid="Base_Where" />
+	</select>
+
+	<select id="selectByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_login_log where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+</mapper>
