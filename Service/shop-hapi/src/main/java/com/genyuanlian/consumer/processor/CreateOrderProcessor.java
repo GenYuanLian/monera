@@ -63,7 +63,7 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 		// 提货卡订单
 		if (commodityType.equals("1")) {
 			messageVo = cardOrderApi.createPuCardOrder(Long.valueOf(commodityId), Integer.valueOf(saleCount),
-					Integer.valueOf(commodityType), new BigDecimal(amount), Long.valueOf(memberId), remark);
+					Integer.valueOf(commodityType), new BigDecimal(amount), Long.valueOf(memberId), remark, addressId);
 		} else if (commodityType.equals("3")) {
 			// 零售商品订单
 			CreateCommodityOrderParamsVo params = new CreateCommodityOrderParamsVo();

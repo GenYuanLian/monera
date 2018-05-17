@@ -22,18 +22,20 @@ import com.genyuanlian.consumer.shop.api.ICardOrderApi;
 import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
+import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
 import com.genyuanlian.consumer.shop.model.ShopOrderCommoditySnapshot;
+import com.genyuanlian.consumer.shop.model.ShopOrderDelivery;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
-import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.utils.ShopUtis;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
+import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
 @Component("cardOrderApi")
@@ -54,7 +56,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 	@Transactional(isolation = Isolation.SERIALIZABLE)
 	@Override
 	public ShopMessageVo<String> createPuCardOrder(Long puCardTypeId, Integer payCount, Integer cardType,
-			BigDecimal amount, Long memberId, String remark) {
+			BigDecimal amount, Long memberId, String remark, String addressId) {
 		ShopMessageVo<String> result = new ShopMessageVo<>();
 
 		// 查询提货卡类型
@@ -66,7 +68,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		// 查询该类型未售提货卡
-		List<ShopPuCard> puCards = puCardApi.getPuCardsByTypeId(puCardTypeId, 0,2,6);
+		List<ShopPuCard> puCards = puCardApi.getPuCardsByTypeId(puCardTypeId, 0, 2, 6);
 
 		// 库存验证
 		if (puCards == null || puCards.size() < payCount) {
@@ -141,7 +143,32 @@ public class CardOrderApiImpl implements ICardOrderApi {
 			orderDetail.setStatus(0);
 			orderDetail.setRemark(remark);
 			commonService.save(orderDetail);
+
+			// 配送信息
+			if (ProUtility.isNotNull(addressId) && Long.parseLong(addressId) > 0) {
+				ShopMemberAddress address = commonService.get(Long.parseLong(addressId), ShopMemberAddress.class);
+				if (address != null && address.getMemberId() == memberId) // 是当前用户地址
+				{
+					ShopOrderDelivery delivery = new ShopOrderDelivery();
+					delivery.setMemberId(memberId);
+					delivery.setOrderId(order.getId());
+					delivery.setOrderDetailId(orderDetail.getId());
+					delivery.setReceiver(address.getReceiver());
+					delivery.setGender(address.getGender());
+					delivery.setAreaId(address.getAreaId());
+					delivery.setAreaName(address.getAreaName());
+					delivery.setAddress(address.getAddress());
+					delivery.setMobile(address.getMobile());
+					delivery.setTel(address.getTel());
+					delivery.setRemark(address.getRemark());
+					delivery.setEmail(address.getEmail());
+					delivery.setCreateTime(now);
+
+					commonService.save(delivery);
+				}
+			}
 		}
+
 		result.setResult(true);
 		result.setT(order.getOrderNo());
 		result.setMessage("下单成功，请尽快支付");
@@ -236,7 +263,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		// 查询订单
-		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", params.getOrderNo(), "memberId",
+		ShopOrder order = commonService.get(ShopOrder.class, "id", orderDetails.get(0).getOrderId(), "memberId",
 				params.getMemberId());
 		if (order == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200006.getErrorCode().toString());
@@ -314,14 +341,13 @@ public class CardOrderApiImpl implements ICardOrderApi {
 
 		List<ShopOrderDetail> list = commonService.getListBySqlId(ShopOrderDetail.class, "pageData", "memberId",
 				memberId, "pageIndex", pageIndex, "pageSize", pageSize + 1);
-		
-		//商户集合
-		List<ShopMerchant> merchants=new ArrayList<>();
-		if (list!=null && list.size()>0) {
-			List<Long> merchantIds = list.stream().map(i->i.getMerchantId()).distinct().collect(Collectors.toList());
+
+		// 商户集合
+		List<ShopMerchant> merchants = new ArrayList<>();
+		if (list != null && list.size() > 0) {
+			List<Long> merchantIds = list.stream().map(i -> i.getMerchantId()).distinct().collect(Collectors.toList());
 			merchants = commonService.get(merchantIds, ShopMerchant.class);
 		}
-		
 
 		if (list == null || list.size() == 0) {
 			result.put("hasNext", 0);
@@ -342,8 +368,9 @@ public class CardOrderApiImpl implements ICardOrderApi {
 				order.setDescription(imageDomain + order.getDescription());
 				order.setSurplusPayTime(
 						DateUtil.diffDateTime(DateUtil.addMinute(order.getCreateTime(), time), new Date()));
-				if (merchants!=null && merchants.size()>0) {
-					order.setMerchType(merchants.stream().filter(i->i.getId()==order.getMerchantId()).map(i->i.getMerchType()).findFirst().get());
+				if (merchants != null && merchants.size() > 0) {
+					order.setMerchType(merchants.stream().filter(i -> i.getId() == order.getMerchantId())
+							.map(i -> i.getMerchType()).findFirst().get());
 				}
 			}
 		}

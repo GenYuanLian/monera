@@ -171,7 +171,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		// 配送信息
 		if (params.getAddressId() != null && params.getAddressId() > 0) {
 			ShopMemberAddress address = commonService.get(params.getAddressId(), ShopMemberAddress.class);
-			if (address.getMemberId() == params.getMemberId()) // 是当前用户地址
+			if (address != null && address.getMemberId() == params.getMemberId()) // 是当前用户地址
 			{
 				ShopOrderDelivery delivery = new ShopOrderDelivery();
 				delivery.setMemberId(params.getMemberId());

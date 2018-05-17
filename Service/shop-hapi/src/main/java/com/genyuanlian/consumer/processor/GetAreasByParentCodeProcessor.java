@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import com.genyuanlian.consumer.shop.api.IBaseAreaApi;
-import com.genyuanlian.consumer.shop.model.ShopBaseArea;
+import com.genyuanlian.consumer.shop.vo.AreaVo;
 import com.genyuanlian.consumer.shop.vo.BaseAreaParentCodeParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.constant.ErrorCodeEnum;
@@ -34,7 +34,7 @@ public class GetAreasByParentCodeProcessor extends BaseApiProcessor {
 
 		BaseAreaParentCodeParamsVo params = new BaseAreaParentCodeParamsVo();
 		params.setParentCode(Integer.parseInt(parentCode));
-		ShopMessageVo<List<ShopBaseArea>> messageVo = baseAreaApi.getAreasByParentCode(params);
+		ShopMessageVo<List<AreaVo>> messageVo = baseAreaApi.getAreasByParentCode(params);
 		if (messageVo.isResult()) {
 			sender.put("result", messageVo.getT());
 			sender.success(response, messageVo.getMessage());

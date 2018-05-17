@@ -18,6 +18,8 @@ import com.hnair.consumer.dao.spi.ICommonDao;
 import com.hnair.consumer.utils.DateUtil;
 import com.hnair.consumer.utils.HttpClientUtils;
 
+import java.math.BigDecimal;
+
 /**
  * BWS 调用Service Created by hunter.wang on 2018/5/10.
  */
@@ -76,7 +78,7 @@ public class BWSServiceImpl implements IBWSService {
 	 * @return
 	 */
 	@Override
-	public Double walletBalance(String walletId) {
+	public BigDecimal walletBalance(String walletId) {
 
 		try {
 
@@ -89,7 +91,7 @@ public class BWSServiceImpl implements IBWSService {
 			BWSWalletResponse result = JSONObject.parseObject(response, BWSWalletResponse.class);
 			BWSWalletBalanceResponseVo voResult = JSONObject.parseObject(result.getData(),
 					BWSWalletBalanceResponseVo.class);
-			return voResult.getAvailableAmount() / 100000000;
+			return new BigDecimal(voResult.getAvailableAmount() / 100000000l);
 		} catch (Exception ex) {
 			logger.error("查询钱包余额失败.", ex);
 		}
@@ -105,7 +107,7 @@ public class BWSServiceImpl implements IBWSService {
 	 */
 	@Override
 	public String walletRecharge(Long businessId, Long ownerId, int ownerType, String walletMainAddress,
-			Double amount) {
+			BigDecimal amount) {
 		try {
 			String resultVo = null;
 			// 保存数据到库
@@ -124,7 +126,7 @@ public class BWSServiceImpl implements IBWSService {
 				JSONObject params = new JSONObject();
 				params.put("senderWallet", BWSProperties.serverWallet);
 				params.put("receiverAddress", walletMainAddress);
-				params.put("amount", amount * 100000000l);
+				params.put("amount",amount.multiply(new BigDecimal(100000000)));
 				reocrd.setCallReq(params.toJSONString());
 				String response = HttpClientUtils.bwsPost(BWSProperties.bswWalletTransferAPI, params);
 				reocrd.setCallResp(response);
@@ -157,7 +159,7 @@ public class BWSServiceImpl implements IBWSService {
 	 * @return
 	 */
 	@Override
-	public String walletConsume(Long businessId, Long ownerId, int ownerType, String walletId, Double amount) {
+	public String walletConsume(Long businessId, Long ownerId, int ownerType, String walletId, BigDecimal amount) {
 		try {
 			String resultVo = null;
 			// 保存数据到库
@@ -176,7 +178,7 @@ public class BWSServiceImpl implements IBWSService {
 				JSONObject params = new JSONObject();
 				params.put("senderWallet", walletId);
 				params.put("receiverAddress", BWSProperties.serverWalletMainAddress);
-				params.put("amount", amount * 100000000l);
+				params.put("amount",amount.multiply(new BigDecimal(100000000)));
 				reocrd.setCallReq(params.toJSONString());
 				String response = HttpClientUtils.bwsPost(BWSProperties.bswWalletTransferAPI, params);
 				reocrd.setCallResp(response);

@@ -1,6 +1,7 @@
 package com.genyuanlian.consumer.processor;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -42,17 +43,15 @@ public class GetPuCardOrderDetailProcessor extends BaseApiProcessor {
 			return;
 		}
 
-		ShopOrder order=commonService.get(ShopOrder.class, "orderNo",orderNo);
-		ShopOrderDetail orderDetail = commonService.get(ShopOrderDetail.class, "orderNo", orderNo);
-
+		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", orderNo);
+		List<ShopOrderDetail> orderDetailList = commonService.getList(ShopOrderDetail.class, "orderNo", orderNo);
+		ShopOrderDetail orderDetail = orderDetailList.get(0);
 		if (orderDetail == null) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10006.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10006.getErrorMessage(),
 					response);
 			return;
 		}
-		
-		
-		
+
 		ShopOrderDelivery delivery = commonService.get(ShopOrderDelivery.class, "orderId", orderDetail.getOrderId(),
 				"orderDetailId", orderDetail.getId());
 		if (delivery != null) {
@@ -75,18 +74,19 @@ public class GetPuCardOrderDetailProcessor extends BaseApiProcessor {
 		}
 
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
-		//商户
-		ShopMerchant merchan = commonService.get(ShopMerchant.class, "id",orderDetail.getMerchantId());
+		// 商户
+		ShopMerchant merchan = commonService.get(ShopMerchant.class, "id", orderDetail.getMerchantId());
 		// 支付等待时长，单位分钟
 		Integer time = ConfigPropertieUtils.getLong("wait_pay_time", 30l).intValue();
 		orderDetail.setMerchType(merchan.getMerchType());
+		orderDetail.setMerchLogo(imageDomain + orderDetail.getMerchLogo());
 		orderDetail.setPayType(order.getPayType());
 		orderDetail.setDescription(imageDomain + orderDetail.getDescription());
 		orderDetail.setSurplusPayTime(
 				DateUtil.diffDateTime(DateUtil.addMinute(orderDetail.getCreateTime(), time), new Date()));
 
 		sender.put("cardOrder", orderDetail);
-		sender.put("delivery", delivery == null ? "" : delivery);
+		sender.put("delivery", delivery);
 
 		sender.success(response);
 	}

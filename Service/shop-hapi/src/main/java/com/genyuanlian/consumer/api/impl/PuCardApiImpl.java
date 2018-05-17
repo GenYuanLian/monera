@@ -23,6 +23,7 @@ import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
+import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
@@ -42,7 +43,7 @@ public class PuCardApiImpl implements IPuCardApi {
 
 	@Resource
 	private ICommonService commonService;
-	
+
 	@Resource
 	private IBWSService bwsService;
 
@@ -64,6 +65,17 @@ public class PuCardApiImpl implements IPuCardApi {
 
 		resultMap.put("merchant", merchant);
 
+		// 商户背景图
+		List<ShopMerchantPic> pics = commonService.getList(ShopMerchantPic.class, "merchId", merchant.getId(), "status",
+				1, "picType", 2);
+		if (pics != null && pics.size() > 0) {
+			for (ShopMerchantPic pic : pics) {
+				pic.setUrl(imageDomain + pic.getUrl());
+			}
+		}
+
+		resultMap.put("pics", pics);
+
 		// 提货卡类型集合
 		List<ShopPuCardType> types = commonService.getList(ShopPuCardType.class, "status", 1, "merchantId", merchantId);
 		if (types == null || types.size() == 0) {
@@ -76,7 +88,7 @@ public class PuCardApiImpl implements IPuCardApi {
 
 		// 获取库存及销量
 		List<ShopPuCardType> puCardTypes = commonService.getListBySqlId(ShopPuCard.class, "groupByCardType", "list",
-				typeIds,"type",2,"channel",6);
+				typeIds, "type", 2, "channel", 6);
 
 		if (puCardTypes == null || puCardTypes.size() == 0) {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100100.getErrorCode().toString());
@@ -84,9 +96,9 @@ public class PuCardApiImpl implements IPuCardApi {
 			return result;
 		}
 
-		List<ShopPuCardType>list=new ArrayList<>();
+		List<ShopPuCardType> list = new ArrayList<>();
 		for (ShopPuCardType vo : puCardTypes) {
-			if (vo.getInventory()>0) {
+			if (vo.getInventory() > 0) {
 				for (ShopPuCardType type : types) {
 					if (vo.getId().equals(type.getId())) {
 						vo.setPic(imageDomain + type.getPic());
@@ -98,15 +110,15 @@ public class PuCardApiImpl implements IPuCardApi {
 				}
 				list.add(vo);
 			}
-			
+
 		}
 
 		resultMap.put("puCardTypes", list);
 
-		if (list.size()==0) {
+		if (list.size() == 0) {
 			result.setMessage("提货卡全部售完");
 		}
-		
+
 		result.setT(resultMap);
 		result.setResult(true);
 
@@ -114,8 +126,9 @@ public class PuCardApiImpl implements IPuCardApi {
 	}
 
 	@Override
-	public List<ShopPuCard> getPuCardsByTypeId(Long typeId, Integer status,Integer type, Integer channel) {
-		return commonService.getList(ShopPuCard.class, "cardTypeId", typeId, "status", status,"type",type,"channel",channel);
+	public List<ShopPuCard> getPuCardsByTypeId(Long typeId, Integer status, Integer type, Integer channel) {
+		return commonService.getList(ShopPuCard.class, "cardTypeId", typeId, "status", status, "type", type, "channel",
+				channel);
 	}
 
 	@Override
@@ -123,7 +136,8 @@ public class PuCardApiImpl implements IPuCardApi {
 	public ShopMessageVo<String> activation(Long memberId, String activationCode, String channel) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<>();
 
-		List<ShopPuCard> list = commonService.getList(ShopPuCard.class, "activationCode", activationCode,"type",1,"channel",0);
+		List<ShopPuCard> list = commonService.getList(ShopPuCard.class, "activationCode", activationCode, "type", 1,
+				"channel", 0);
 
 		if (list == null || list.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100101.getErrorCode().toString());
@@ -148,13 +162,14 @@ public class PuCardApiImpl implements IPuCardApi {
 
 		messageVo.setT(card.getCode());
 		messageVo.setResult(true);
-		
-		ShopBstkWallet bstkWallet=commonService.get(ShopBstkWallet.class, "ownerId",memberId,"ownerType",1);
-		String transactionNo = bwsService.walletRecharge(0l, memberId, 1, bstkWallet.getPublicKeyAddr(), card.getTotelValue());
-		logger.info("调用bstk接口返回值："+transactionNo);
 
-		//保存提货卡交易记录
-		ShopPuCardTradeRecord tradeRecord=new ShopPuCardTradeRecord();
+		ShopBstkWallet bstkWallet = commonService.get(ShopBstkWallet.class, "ownerId", memberId, "ownerType", 1);
+		String transactionNo = bwsService.walletRecharge(0l, memberId, 1, bstkWallet.getPublicKeyAddr(),
+				card.getTotelValue());
+		logger.info("调用bstk接口返回值：" + transactionNo);
+
+		// 保存提货卡交易记录
+		ShopPuCardTradeRecord tradeRecord = new ShopPuCardTradeRecord();
 		tradeRecord.setAmount(card.getTotelValue());
 		tradeRecord.setCreateTime(now);
 		tradeRecord.setMemberId(memberId);
@@ -162,7 +177,7 @@ public class PuCardApiImpl implements IPuCardApi {
 		tradeRecord.setTitle(card.getTitle());
 		tradeRecord.setTransactionNo(transactionNo);
 		commonService.save(tradeRecord);
-		
+
 		return messageVo;
 	}
 
@@ -193,15 +208,16 @@ public class PuCardApiImpl implements IPuCardApi {
 				existStatus.add(7);
 			}
 		}
-		
-		Map<String,Object> statistics = commonService.getBySqlId(ShopPuCard.class, "getStatistics", "memberId", memberId, "existStatus", existStatus);
-		
+
+		Map<String, Object> statistics = commonService.getBySqlId(ShopPuCard.class, "getStatistics", "memberId",
+				memberId, "existStatus", existStatus);
+
 		result.put("cardCount", statistics.get("count"));
 		result.put("sumBalance", statistics.get("sumBalance"));
 
-		List<ShopPuCard> list = commonService.getListBySqlId(ShopPuCard.class, "pageData", "memberId", memberId, "existStatus", existStatus,
-				"pageIndex", pageIndex, "pageSize", pageSize + 1);
-		
+		List<ShopPuCard> list = commonService.getListBySqlId(ShopPuCard.class, "pageData", "memberId", memberId,
+				"existStatus", existStatus, "pageIndex", pageIndex, "pageSize", pageSize + 1);
+
 		if (list == null || list.size() == 0) {
 			result.put("hasNext", 0);
 		} else {
@@ -213,9 +229,9 @@ public class PuCardApiImpl implements IPuCardApi {
 				result.put("hasNext", 0);
 
 			}
-			
-			//提货卡类型集合
-			List<Long> cardTypeIds = list.stream().map(i->i.getCardTypeId()).distinct().collect(Collectors.toList());
+
+			// 提货卡类型集合
+			List<Long> cardTypeIds = list.stream().map(i -> i.getCardTypeId()).distinct().collect(Collectors.toList());
 			List<ShopPuCardType> types = commonService.get(cardTypeIds, ShopPuCardType.class);
 
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
@@ -224,15 +240,15 @@ public class PuCardApiImpl implements IPuCardApi {
 			for (ShopPuCard card : list) {
 				for (ShopPuCardType type : types) {
 					if (card.getCardTypeId().equals(type.getId())) {
-						card.setPicUrl(imageDomain+type.getPic());
+						card.setPicUrl(imageDomain + type.getPic());
 						break;
 					}
 				}
 			}
 		}
-		
+
 		result.put("puCards", list);
-		
+
 		messageVo.setT(result);
 		messageVo.setResult(true);
 

@@ -1,5 +1,6 @@
 package com.genyuanlian.consumer.api.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -27,23 +28,23 @@ public class BaseAreaApiImpl implements IBaseAreaApi {
 	@Resource
 	private IBaseAreaService baseAreaService;
 
-	// @SuppressWarnings("rawtypes")
-	// @Resource(name = "masterRedisTemplate")
-	// private RedisTemplate masterRedisTemplate;
-	//
-	// @SuppressWarnings("rawtypes")
-	// @Resource(name = "slaveRedisTemplate")
-	// private RedisTemplate slaveRedisTemplate;
-
 	@Override
-	public ShopMessageVo<List<ShopBaseArea>> getAreasByParentCode(BaseAreaParentCodeParamsVo params) {
-		ShopMessageVo<List<ShopBaseArea>> messageVo = new ShopMessageVo<List<ShopBaseArea>>();
+	public ShopMessageVo<List<AreaVo>> getAreasByParentCode(BaseAreaParentCodeParamsVo params) {
+		ShopMessageVo<List<AreaVo>> messageVo = new ShopMessageVo<List<AreaVo>>();
 		logger.info("根据parentCode获取区域列表调用到这里了=================");
 
 		List<ShopBaseArea> list = baseAreaService.getAreasByParentCode(params.getParentCode());
 		if (list != null) {
+			List<AreaVo> result = new ArrayList<AreaVo>();
+			for (ShopBaseArea a : list) {
+				AreaVo v = new AreaVo();
+				v.setName(a.getAreaName());
+				v.setValue(a.getAreaCode().toString());
+				v.setParent(a.getParentCode().toString());
+				result.add(v);
+			}
 			messageVo.setResult(true);
-			messageVo.setT(list);
+			messageVo.setT(result);
 			messageVo.setMessage("数据获取成功");
 			return messageVo;
 		} else {
@@ -59,16 +60,6 @@ public class BaseAreaApiImpl implements IBaseAreaApi {
 		logger.info("获取全部区域数据调用到这里了=================");
 
 		List<AreaVo> areas = null;
-		// String cacheKeyAreas = "cacheKeyAreas-genyuanlian";
-		// Object list = masterRedisTemplate.opsForValue().get(cacheKeyAreas);
-		// if (list != null) {
-		// areas = (List<AreaVo>) list;
-		// } else {
-		//
-		// masterRedisTemplate.delete(cacheKeyAreas);
-		// masterRedisTemplate.opsForValue().set(cacheKeyAreas, areas);
-		// masterRedisTemplate.expire(cacheKeyAreas, 30, TimeUnit.DAYS);
-		// }
 		areas = commonService.getListBySqlId(ShopBaseArea.class, "selectShortAll");
 		messageVo.setResult(true);
 		messageVo.setT(areas);

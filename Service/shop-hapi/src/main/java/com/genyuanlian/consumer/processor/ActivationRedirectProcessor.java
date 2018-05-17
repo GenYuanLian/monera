@@ -44,10 +44,10 @@ public class ActivationRedirectProcessor extends BaseApiProcessor {
 		}
 
 		ShopPuCard card = list.get(0);
-		if (card.getStatus() != 0) {
-			sender.fail(ShopErrorCodeEnum.ERROR_CODE_100102.getErrorCode(), ShopErrorCodeEnum.ERROR_CODE_100102.getErrorMessage(), response);
-			return;
-		}
+//		if (card.getStatus() != 0) {
+//			sender.fail(ShopErrorCodeEnum.ERROR_CODE_100102.getErrorCode(), ShopErrorCodeEnum.ERROR_CODE_100102.getErrorMessage(), response);
+//			return;
+//		}
 		
 		
 //		sender.directSend(redirectUrl+"?cardCode="+card.getCode()+"&cardValue="+card.getPrice()+"&cardChannel="+channel+"&activeCode="+activationCode, response);
