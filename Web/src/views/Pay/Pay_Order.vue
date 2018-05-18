@@ -1,7 +1,7 @@
 <template>
   <div class="gyl-pay-order">
     <div v-title>订单支付</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
       <div class="order-info">
         <div class="pay-title">{{order.commodityType==1?'提货卡':'商品'}}购买</div>
@@ -23,12 +23,12 @@
         </div>
         <div class="pay-money">
           <span class="lab-title">订单金额</span>
-          <span class="money">&yen;{{order.amount}}</span>
+          <span class="money">{{order.commodityType==1?'&yen;':'BSTK'}}{{order.amount}}</span>
         </div>
       </div>
       <div class="paytype" v-if="order.commodityType==1">
         <div class="pay-title">选择支付方式</div>
-        <div class="wxpay">
+        <div class="wxpay hide">
           <span class="ico-wx"><i class="ico-wxpay"></i></span>
           <span class="lab-title">微信支付</span>
           <span class="pay-radio" @click="payCheck(1)"><i class="ico-radio" :class="payType==1?'checked':''"></i></span>
@@ -56,7 +56,7 @@
 </template>
 <script>
 import { mapActions, mapGetters } from "vuex";
-import { showMsg, valid } from '@/utils/common.js';
+import { showMsg, valid, versions } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
 import { md5 } from 'vux';
@@ -64,7 +64,7 @@ export default {
   data() {
     return {
       headTitle: "订单支付",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -74,8 +74,14 @@ export default {
       payType:0,
       productType:0,
       order:{},
-      delivery:{},
-      address:""
+      delivery:{
+        receiver:"",
+        mobile:"",
+        areaName:"",
+        address:""
+      },
+      address:"",
+      isWxPay:false
     };
   },
   components: {
@@ -102,7 +108,7 @@ export default {
       this.$httpPost(apiUrl.getPuCardOrderDetail, param).then((res) => {
         if(res.status.code==0&&res.data) {
           this.order = res.data.cardOrder||{};
-          this.delivery = res.data.delivery||{};
+          this.delivery = res.data.delivery||this.delivery;
           this.productType = this.order.commodityType||0;
         } else {
           showMsg(res.status.message);
@@ -161,7 +167,7 @@ export default {
       this.$httpPost(apiUrl.orderPay, param).then((res) => {
         if(res.status.code==0&&res.data) {
           let data = res.data;
-          this.$router.push("pay_success");
+          this.$router.push({name:"pay_success", query: {orderNo:this.orderNo, proType:this.productType}});
         } else {
           showMsg(res.status.message);
         }
@@ -171,6 +177,7 @@ export default {
     }
   },
   mounted() {
+    this.isWxPay = versions.wx;
     this.orderNo = this.$route.query.orderNo||0;
     if(this.orderNo!=0) {
       this.getOrderDetail();
@@ -213,7 +220,7 @@ html,body{
         line-height: 80px;
         margin-left:30px;
         padding-right:30px;
-        border-bottom:2px solid #e8e8e8;
+        border-bottom:2px solid #efefef;
         overflow: hidden;
         .lab-title{
           width:120px;
@@ -232,7 +239,7 @@ html,body{
         line-height: 80px;
         margin-left:30px;
         padding-right:30px;
-        border-bottom:2px solid #e8e8e8;
+        border-bottom:2px solid #efefef;
         overflow: hidden;
         .lab-title{
           width:120px;
@@ -257,13 +264,13 @@ html,body{
         }
       }
       .detail{
-        background-color: #f8f8f8;
+        background-color: #F3F4F6;
         color:#999999;
         font-size:26px;
         padding:30px 25px;
         overflow: hidden;
         p{
-          height:35px;
+          height:auto;
           line-height: 35px;
         }
         .title{
@@ -296,7 +303,7 @@ html,body{
         line-height: 80px;
         margin-left:30px;
         padding-right:30px;
-        border-bottom:2px solid #e8e8e8;
+        border-bottom:2px solid #efefef;
         .lab-title{
           margin-left:25px;
           line-height: 80px;
@@ -370,13 +377,13 @@ html,body{
       height:80px;
       line-height: 80px;
       padding:0 75px;
-      margin-top:60px;
+      margin-top:80px;
       .pay-confirm{
         width:100%;
         height:80px;
         line-height: 80px;
         text-align: center;
-        font-size:34px;
+        font-size:30px;
         color:#fff;
         background-color: #317db9;
         border-radius:10px;

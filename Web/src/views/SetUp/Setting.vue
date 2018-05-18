@@ -6,8 +6,7 @@
       <div class="con-row"><span class="title">消息推送</span><span class="con-r"><label class="gyl-label"><input class="mui-switch" type="checkbox"></label></span></div>
       <div class="con-row"><span class="title">清除图片缓存</span><span class="con-r">0.0MB</span></div>
       <div class="con-row"><span class="title">非WIFI下图片质量</span><span class="con-r">普通</span></div>
-      <div class="con-row" @click="loginPwdClick"><span class="title">登录密码</span><span class="con-r"><i class="ico-arrow-r"></i></span></div>
-      <div class="con-row"><span class="title">当前版本</span><span class="con-r"><p v-if="isVerTip" class="ver-tip">有新版本更新</p><p :class="!isVerTip?'no-tip':'version'">v1.0.0</p><i class="ico-arrow-r"></i></span></div>
+      <div class="con-row"><span class="title">当前版本</span><span class="con-r"><p v-if="isVerTip" class="ver-tip">有新版本更新</p><p :class="!isVerTip?'no-tip':'version'">v1.0.0</p><i class="ico-more"></i></span></div>
     </section>
     <div class="con-about">
       <span>关于我们</span>
@@ -22,7 +21,6 @@ import { mapActions, mapGetters } from "vuex";
 import Header from "@/components/common/Header";
 import { showMsg, loading, valid } from "@/utils/common.js";
 import apiUrl from "@/config/apiUrl.js";
-import { setTimeout } from 'timers';
 export default {
   data() {
     return {
@@ -52,14 +50,13 @@ export default {
       //TODO 退出登录
       let param = {};
       this.$httpPost(apiUrl.loginOut, param).then((res) => {
-        if(res.data&&res.data.status==="1000") {
+        if(res.status.code==0&&res.data) {
           this.loginOut(res.data);
-          showMsg(res.data.msg);
-          setTimeout(() => {
+          showMsg(res.status.message, () => {
             this.$router.replace("/");
-          }, 3000);
+          });
         } else {
-          showMsg(res.data.msg);
+          showMsg(res.status.message);
         }
       }).catch((err) => {
         console.log(err);
@@ -107,7 +104,7 @@ html,body{
     .con-row{
       height: 100px;
       line-height: 100px;
-      border-bottom: 1px solid  #E2E2E2;/*no*/
+      border-bottom: 1px solid  #efefef;/*no*/
       text-align: left;
       .title{
         font-size: 32px;
@@ -139,13 +136,14 @@ html,body{
           margin-top:19px;
         }
         i{
-          width:13px;
-          height:26px;
-          margin-bottom:-7px;
+          width:14px;
+          height:24px;
+          margin-top:-4px;
+          vertical-align: middle;
         }
       }
       &:last-child{
-        border-bottom: 0px solid  #E2E2E2;/*no*/
+        border-bottom: 0px solid  #efefef;/*no*/
       }
     }
   }

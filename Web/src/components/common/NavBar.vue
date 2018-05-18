@@ -92,11 +92,11 @@ export default {
   padding: 0 30px;
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
-  height: 98px;
-  line-height: 98px;
+  height: 96px;
+  line-height: 96px;
   background-color: #FFFFFF;
   box-sizing: border-box;
-  border-top: 1px solid #e3e3e3; /*no*/
+  border-top: 1px solid #efefef; /*no*/
   // -moz-box-shadow: 0 -10px 10px rgba(0,0,0,0.05); /* 老的 Firefox */
   // box-shadow: 0 -10px 10px rgba(0,0,0,0.05);  
   &.fixed{

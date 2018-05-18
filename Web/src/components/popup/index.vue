@@ -65,6 +65,10 @@
             }
           };
         }
+      },
+      isShow: {
+        type:Boolean,
+        default:false
       }
     },
     computed:{
@@ -73,7 +77,10 @@
       }
     },
     watch:{
-      popText(newValue, oldValue) {}
+      popText(newValue, oldValue) {},
+      isShow (newValue, oldValue) {
+        this.showWin = newValue;
+      }
     },
     methods:{
       closeWin:function() {
@@ -99,6 +106,9 @@
         }
         this.closeWin();
       }
+    },
+    mounted: function() {
+      // this.showWin = this.isShow;
     }
   };
 </script>
@@ -135,14 +145,14 @@
           height: 70px;
           line-height: 70px;
           text-align: center;
-          font-size: 26px;
+          font-size: 30px;
           color: #317db9;
           border: 1px solid #317db9;/*no*/
           border-radius: 10px;
         }
       }
       .pop_title{
-        font-size: 30px;
+        font-size: 34px;
         line-height: 100px;
         text-align: center;
         color: #333;
@@ -155,7 +165,7 @@
         padding: 15px 30px;
         min-height: 132px;
         max-height: 172;
-        font-size: 28px;
+        font-size: 30px;
         line-height: 48px;
         text-align: center;
         color: #191919;
@@ -179,7 +189,7 @@
       line-height: 70px;
       text-align: center;
       float: left;
-      font-size: 26px;
+      font-size: 30px;
       color: #ffa936;
       border: 1px solid #ffa936;/*no*/
       border-radius: 10px;

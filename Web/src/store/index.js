@@ -12,7 +12,7 @@ import { getStore, setStore, removeStore } from '../utils/storage.js';
 import login from './modules/login';
 import register from './modules/register';
 import user from './modules/user';
-// import { userInfo } from 'os';
+import center from './modules/center';
 
 Vue.use(Vuex);
 
@@ -70,7 +70,8 @@ export default new Vuex.Store({
   modules: {
     register,
     login,
-    user
+    user,
+    center
   },
   state: state,
   mutations: mutations,

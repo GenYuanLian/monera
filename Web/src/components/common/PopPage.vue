@@ -128,7 +128,7 @@ export default {
       position: fixed;
     }
     &.border-b {
-      border-bottom: 1px solid #dddddd;/*no*/
+      border-bottom: 1px solid #efefef;/*no*/
     }
     .head-l {
       width: 130px;

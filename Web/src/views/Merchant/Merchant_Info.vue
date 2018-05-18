@@ -1,11 +1,12 @@
 <template>
   <div class="gyl-merchants">
-    <div v-title>商家信息</div>
-    <Header :border="true" :title="headTitle" :left="headLift" :right="headRight" >
+    <div v-title>{{headTitle}}</div>
+    <Header :border="true" :title="headTitle" :left="headLeft" :right="headRight" :rightFn="collection">
     </Header>
     <section class="content">
       <div class="merchant-bg">
-        <img class="img-bg" src="../../assets/images/Bg/merchant-bg@2x.png" alt="">
+        <img v-if="merchantBgImg!=''" class="img-bg" :src="merchantBgImg" alt="">
+        <img v-else class="img-bg" src="../../assets/images/Bg/merchant-bg@2x.png" alt="">
         <div class="mer-logo" @click="openMerchant">
           <img class="img-logo" :src="merchant.logoPic" :alt="merchant.merchName">
           <div class="mer-name">
@@ -15,9 +16,11 @@
         </div>
       </div>
       <div class="notice">
-        <span class="i-notice"><i class="ico-notice"></i></span>
-        <span class="title">公告</span>
-        <span class="message" v-text="merchant.notice"></span>
+        <span class="i-notice fl"><i class="ico-notice"></i></span>
+        <div class="title fl">公告</div>
+        <div class="message fl" > 
+          <msgScroll :id="'infoMsg'" ref="msgScroll" :msg="merchant.notice"></msgScroll>
+        </div>
       </div>
       <div class="mer-pro" v-show="merchantType==1">
         <div class="product" v-for="(item,idx) in merchantProduct" v-bind:key="idx">
@@ -59,12 +62,13 @@ import { mapActions, mapGetters } from "vuex";
 import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
+import msgScroll from '@/components/messageScroll/index';
 import { md5 } from 'vux';
 export default {
   data() {
     return {
-      headTitle: "商家列表",
-      headLift: {
+      headTitle: "",
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -72,16 +76,21 @@ export default {
         label: "",
         className: "ico-collect"
       },
+      isCollect:0, // 是否收藏（默认未收藏）
       merchantId: "",
       merchantType: 0,
       merchant: {},
       merchantProduct: null,
       cardMerchant: {},
-      cardMerchantProduct: null
+      cardMerchantProduct: null,
+      merchantBgImg:""
     };
   },
+  computed:{
+    ...mapGetters(["getLoginUser"])
+  },
   components: {
-    Header
+    Header, msgScroll
   },
   methods: {
     openMerchant: function() {
@@ -97,6 +106,11 @@ export default {
         if(res.status.code==0&&res.data) {
           this.merchant = res.data.merch;
           this.merchantProduct = res.data.commoditys;
+          this.headTitle = res.data.merch.merchName;
+          this.isCollect = res.data.isCollection ? res.data.isCollection : 0;
+          this.collectChange();
+          this.merchantBgImg = res.data.pics&&res.data.pics.length>0?res.data.pics[0].url:"";
+          this.$refs.msgScroll.scroll();
         }else{
           showMsg(res.status.message);
         }
@@ -112,7 +126,12 @@ export default {
       this.$httpPost(apiUrl.getPuCardTypes, param).then((res) => {
         if(res.status.code==0&&res.data) {
           this.merchant = res.data.merchant;
+          this.headTitle = res.data.merchant.merchName;
           this.cardMerchantProduct = res.data.puCardTypes;
+          this.merchantBgImg = res.data.pics&&res.data.pics.length>0?res.data.pics[0].url:"";
+          this.isCollect = res.data.isCollection ? res.data.isCollection : 0;
+          this.collectChange();
+          this.$refs.msgScroll.scroll();
         }else{
           showMsg(res.status.message);
         }
@@ -128,6 +147,36 @@ export default {
       if(this.merchantType==2) {
         this.$router.push({name: "order_place", query: {proId:id, proType:type}});
       }
+    },
+    collection:function() {
+      // TODO 收藏按钮
+      this.userId = this.getLoginUser?this.getLoginUser.id:"";
+      if(!this.userId) {
+        showMsg('请先登录');
+        return;
+      }
+      let param = {
+        collectionId: this.merchantId,
+        collectionType:1
+      };
+      this.$httpPost(apiUrl.addCollection, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.isCollect = res.data.operate==1?1:0;
+          this.collectChange();
+          showMsg(res.status.message);
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    collectChange:function() {
+      if(this.isCollect) {
+        this.headRight.className = 'ico-collected';
+      } else {
+        this.headRight.className = 'ico-collect';
+      }
     }
   },
   mounted() {
@@ -139,6 +188,12 @@ export default {
     if(this.merchantType==2) {
       this.getCardMerchant();
     }
+  },
+  beforeDestroy() {
+    this.$refs.msgScroll.destroyScroll();
+  },
+  activated() {
+    this.$refs.msgScroll.scroll();
   }
 };
 </script>
@@ -149,6 +204,7 @@ html,body{
 }
 
 .gyl-merchants{
+  width: 100%;
   height: 100%;
   overflow: hidden;
   .head-r span>i{
@@ -166,6 +222,7 @@ html,body{
     .merchant-bg{
       width:100%;
       height:300px;
+      overflow: hidden;
       img{
         width:100%;
         height:300px;
@@ -178,14 +235,14 @@ html,body{
           display: block;
           width:160px;
           height:160px;
-          border-radius:100%;
+          border-radius:20px;
           float:left;
         }
         .mer-name{
           display: block;
           width:520px;
           height:130px;
-          padding-top:30px;
+          padding:15px 0;
           margin-left:180px;
           overflow: hidden;
           p{
@@ -197,8 +254,10 @@ html,body{
           .mer-desc{
             max-height:50px;
             font-size:26px;
+            line-height: 36px;
             word-wrap: break-word;
             color:#e9e8e8;
+            margin-top: 10px;
           }
         }
       }
@@ -209,13 +268,14 @@ html,body{
       padding:20px 30px;
       background-color:#fff;
       font-size:24px;
+      overflow: hidden;
       span{
         height:50px;
         line-height: 50px;
       }
       .i-notice{
         display: inline-block;
-        width:65px;
+        width:64px;
         i{
           width:44px;
           height:36px;
@@ -223,14 +283,11 @@ html,body{
         }
       }
       .title{
-        display: inline-block;
         width:80px;
         height:48px;
         line-height: 48px;
-        text-align: center;
-        border:2px solid #317db9;
         color:#317db9;
-        margin-right:35px;
+        margin-right:20px;
         border-radius:10px;
       }
       .message{
@@ -255,22 +312,28 @@ html,body{
       overflow: hidden;
       .pro-img{
         display: block;
-        width:180px;
+        width:200px;
         height:200px;
         float:left;
+        border: 1px solid #efefef; /*no*/
+        border-radius: 14px;
+        overflow: hidden;
+        margin-right: 20px;
         img{
           width:100%;
           height:100%;
         }
       }
       .pro-info{
-        margin-left:220px;
+        float: left;
+        width: calc(~"100% - 225px");
         overflow: hidden;
         .mer-title{
           height:45px;
           line-height:45px;
           color:#333;
           font-size:30px;
+          margin-top: 10px;
         }
         .pro-title{
           height:40px;
@@ -278,18 +341,21 @@ html,body{
           color:#666;
           font-size:26px;
           overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
         }
         .pro-count{
           display:block;
           width:280px;
-          margin-top:30px;
+          margin-top:10px;
           float:left;
           .pro-money{
             height:40px;
             line-height: 40px;
-            color:#dd3e3e;
+            color:#ffa936;
             font-size:30px;
             overflow: hidden;
+            margin-bottom: 10px;
           }
           .pro-sale{
             height:30px;
@@ -305,7 +371,7 @@ html,body{
           float:right;
           height:70px;
           line-height: 70px;
-          margin-top:30px;
+          margin-top:20px;
           .btn-buy{
             width:160px;
             height:60px;

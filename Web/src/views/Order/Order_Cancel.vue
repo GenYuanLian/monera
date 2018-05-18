@@ -60,7 +60,7 @@ export default {
       });
       let param = {
         orderNo:this.orderNo,
-        reason:this.reason
+        cancelReason:this.reason
       };
       this.$httpPost(apiUrl.cancelOrder, param).then((res) => {
         if(res.status.code==0&&res.data) {
@@ -121,7 +121,7 @@ export default {
       .reason-row{
         line-height: 60px;
         padding: 30px;
-        border-bottom:1px solid #f3f4f6;
+        border-bottom:1px solid #efefef;
         &:last-child{
           border-bottom:none;
         }

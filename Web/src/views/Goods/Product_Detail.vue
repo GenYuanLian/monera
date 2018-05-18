@@ -1,16 +1,16 @@
 <template>
   <div class="gyl-product-detail">
-    <div v-title>人民电商</div>
-    <Header :left="headLift" ></Header>
+    <div v-title>{{headTitle}}</div>
+    <Header :left="headLeft" :title="headTitle"></Header>
     <section class="content">
       <swiper class="pro-swiper" :list="proImgs" v-model="proImgIdx" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'pro-dots'"></swiper>
       <div class="pro-detail">
         <p class="pro-name" v-text="commodity.title"></p>
-        <p class="pro-sale">TSBK {{commodity.price}}<span class="pro-sale-num">月售{{commodity.saleQuantity}}份</span></p>
+        <p class="pro-sale">BSTK {{commodity.price}}<span class="pro-sale-num">月售{{commodity.saleQuantity}}份</span></p>
       </div>
       <div class="pro-intro">
         <p>商品简介</p>
-        <div class="intro-box" v-html="commodity.briefIntro"></div>
+        <div class="intro-box" v-html="product.description"></div>
       </div>
       <div class="pro-features">
         <p>产品特点</p>
@@ -39,10 +39,11 @@ var moment = require("moment");
 export default {
   data() {
     return {
-      headLift: {
+      headLeft: {
         label: "",
-        className: "ico-back-arrow"
+        className: "ico-back"
       },
+      headTitle:"",
       proImgIdx: 0,
       proImgs: [],
       productId: 0,
@@ -76,6 +77,7 @@ export default {
           this.commodity = res.data.commodity;
           this.product = res.data.product;
           this.maxNum = res.data.commodity.inventoryQuantity;
+          this.headTitle = res.data.commodity.title;
           if(res.data.pics) {
             res.data.pics.forEach(item => {
               this.proImgs.push({url: 'javascript:', img: item.url, title: item.title});
@@ -117,7 +119,7 @@ html,body{
     box-sizing:border-box;
     position: relative;
     width:100%;
-    height: calc(~"100% - 170px");
+    height: calc(~"100% - 180px");
     background-color: #F3F4F6;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -155,7 +157,7 @@ html,body{
       .pro-sale{
         line-height: 66px;
         font-size: 26px;
-        color: #b93131;
+        color: #ffa936;
         font-weight: 600;
         overflow: hidden;
         span{
@@ -178,7 +180,7 @@ html,body{
         border-left:4px solid #317db9;
         padding-left: 10px;
         color: #666666;
-        margin-bottom: 30px; 
+        margin-bottom: 30px;
       }
       .intro-box,.features-box,.standard-box{
         line-height: 40px;
@@ -188,13 +190,13 @@ html,body{
   .foot{
     position: absolute;
     bottom: 0;
-    width: 750px;
-    height: 80px;
+    width: 100%;
+    height: 98px;
     background: #fff;
     .buy-btn{
       width: 375px;
-      font-size: 28px;
-      line-height: 80px;
+      font-size: 30px;
+      line-height: 98px;
       color: #fff;
       background-color: #317db9;
       text-align: center;
@@ -207,7 +209,7 @@ html,body{
       height: 70px;
       float: left;
       text-align: center;
-      padding-top: 10px;
+      padding-top: 25px;
       .vux-number-round .vux-number-selector-plus {
         border: 1px solid #999999;
         background-color: #999999;

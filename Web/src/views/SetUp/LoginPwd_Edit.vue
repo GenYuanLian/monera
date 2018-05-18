@@ -1,7 +1,7 @@
 <template>
   <div class="gyl-login-pwd">
-    <div v-title>修改登录密码</div>
-    <Header title="修改登录密码" :border="true"></Header>
+    <div v-title>登录密码</div>
+    <Header title="登录密码" :border="true"></Header>
     <section class="content">
       <div class="con-row">
         <label>手机号：</label><input class="txt-mobile" type="text" @focus="phoneClear=true" @blur="phoneClear=false" v-model="mobile" placeholder="请输入手机号"><span @click="clearClick(1)" v-show="phoneClear" class="txt-clear ico-clear"></span>
@@ -14,7 +14,7 @@
         <label>设置新密码：</label><input class="txt-pwd" @focus="pwdClear=true" @blur="pwdClear=false" v-model="newPwd" type="password" placeholder="6-20位字母、数字、字符组合"><span @click="clearClick(3)" v-show="pwdClear" class="txt-clear ico-clear"></span>
       </div>
     </section>
-    <footer class="gyl-footer m-t160">
+    <footer class="gyl-footer m-t80">
       <input class="gyl-btn btn-l btn-primary" type="button" @click="confirmClick" value="确认">
     </footer>
   </div>
@@ -79,16 +79,16 @@ export default {
       let param = {
         mobile: this.mobile,
         smsCode: this.smsCode,
-        loginPwd: md5(this.newPwd),
+        pwd: md5(this.newPwd),
         smsNumber: this.smsNumber
       };
       this.$httpPost(apiUrl.findLoginPwd, param).then((res) => {
-        if(res.data&&res.data.status==="1000") {
+        if(res.status.code==0&&res.data) {
           let data = res.data;
-          showMsg(res.data.msg);
-          this.$router.replace("setting");
+          showMsg(res.status.message);
+          this.$router.replace("personal_infor");
         } else {
-          showMsg(res.data.msg);
+          showMsg(res.status.message);
         }
       }).catch((err) => {
         console.log(err);
@@ -115,7 +115,7 @@ html,body{
       height: 100px;
       line-height: 100px;
       margin: 0 30px;
-      border-bottom:1px solid #E2E2E2;/*no*/
+      border-bottom:1px solid #efefef;/*no*/
       text-align: left;
       label{
         display: inline-block;

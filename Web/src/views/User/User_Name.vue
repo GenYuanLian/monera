@@ -40,22 +40,19 @@ export default {
         return false;
       }
       let param = {
-        memberId: this.userId,
         loginName: this.userName
       };
-      this.$httpPost(apiUrl.setLoginName, param)
-        .then(res => {
-          if (res.status.code==0&&res.data) {
-            showMsg(res.status.message, () => {
-              this.$router.replace("personal_infor");
-            });
-          } else {
-            showMsg(res.status.message);
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      this.$httpPost(apiUrl.setLoginName, param).then(res => {
+        if (res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            this.$router.replace("personal_infor");
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch(err => {
+        console.log(err);
+      });
     }
   },
   mounted() {
@@ -85,7 +82,7 @@ export default {
         font-size: 40px;
         color: #222;
         font-size:30px;
-        border-bottom: 1px solid #e2e2e2; /*no*/
+        border-bottom: 1px solid #efefef; /*no*/
       }
       ::-webkit-input-placeholder { /* WebKit browsers */
         color:#aaa;
@@ -104,7 +101,7 @@ export default {
       height:80px;
       line-height: 80px;
       padding:0 75px;
-      margin-top:60px;
+      margin-top:80px;
       input[type="button"]{
         display: block;
         width:100%;

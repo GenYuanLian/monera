@@ -99,10 +99,9 @@ export default {
   height:100%;
   width:100%;
   overflow: hidden;
-  background: #F3F4F6;;
+  background: #F3F4F6;
   .content{
     box-sizing:border-box;
-    height:auto;
     width:100%;
     height:100%;
     overflow-y:auto;
@@ -136,7 +135,7 @@ export default {
           line-height: 80px;
           font-size: 24px;
           color: #AAAAAA;
-          border-top: 1px solid #E2E2E2;/*no*/
+          border-top: 1px solid #efefef;/*no*/
           span{
             float:right;
             margin-right:10px;

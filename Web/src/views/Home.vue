@@ -1,12 +1,12 @@
 <template>
   <div class="gyl-home">
-      <div v-title>人民电商</div>
+      <div v-title>买卖大集</div>
       <header class="head fixed border-b">
         <!-- <div class="head-l" @click="showService">
           <span><i class="ico-service"></i></span>
           <a href="javascript:;"></a>
         </div> -->
-        <div class="head-title"><i class="ico-logo"></i>人民电商</div>
+        <div class="head-title"><i class="ico-logo"></i>买卖大集</div>
         <!-- <div class="head-r" @click="newsClick">
           <a href="javascript:;"></a>
           <span><i class="ico-news"></i></span>
@@ -15,7 +15,7 @@
       <section class="content">
         <swiper class="home-swiper" :list="shopImgs" v-model="shopImgIdx" @on-index-change="shopImgOnIndexChange" :interval="5000" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'home-dots'"></swiper>
         <div class="merchants">
-          <p class="title"><i class="ico-supplier"></i>附近商家</p>
+          <p class="title hide"><i class="ico-supplier"></i>附近商家</p>
           <div class="mer-box" v-for="(mer,index) in merchantsList" :key="index" @click="jumpProDetail(mer.id,mer.merchType)">
             <img class="mer-img" :src="mer.logoPic" alt="">
             <div class="mer-detail">
@@ -24,10 +24,11 @@
                 <p class="mer-evaluate">
                   <i :class="startClass(mer.praise)"></i>
                 </p>
-                <p class="mer-sale-num">月售{{mer.salesVolume}}单</p>
+                <p class="mer-sale-num ">月售{{mer.salesVolume}}单</p>
               </div>
             </div>
           </div>
+          <p class="hope">更多产品即将上线~</p>
         </div>
       </section>
       <NavBar :isShow="true"></NavBar>
@@ -176,7 +177,7 @@ html,body{
       z-index: 9;
     }
     &.border-b{
-      border-bottom:1px solid #e3e3e3;/*no*/
+      border-bottom:1px solid #efefef;/*no*/
     }
     // .head-l{
     //   width:130px;
@@ -278,7 +279,7 @@ html,body{
       }
     }
     .merchants{
-      padding: 10px 30px;
+      padding: 20px 30px 10px 30px;
       .title{
         flex:1;
         overflow: hidden;
@@ -302,28 +303,33 @@ html,body{
         margin-bottom: 20px;
         border-radius: 10px;
         .mer-img{
-          width: 130px;
-          height: 130px;
-          border-radius: 50%;
-          margin-right: 15px;
+          width: 120px;
+          height: 120px;
+          border-radius: 14px;
+          margin-right: 20px;
           display: block;
           float: left;
         }
         .mer-detail{
           float: left;
-          padding: 10px 0;
+          width: calc(~"100% - 140px");
+          // padding: 10px 0;
           .mer-name{
-            height: 58px;
-            line-height: 58px;
+            height: 70px;
+            line-height: 70px;
             font-size: 30px;
-            color: #333333; 
+            color: #333333;
           }
           .mer-sale{
             line-height: 44px;
             font-size: 22px;
             color: #999999;
+            overflow: hidden;
             p{
               float: left;
+            }
+            .mer-sale-num{
+              float: right;
             }
             .mer-evaluate{
               line-height: 44px;
@@ -338,6 +344,14 @@ html,body{
             }
           }
         }
+      }
+      .hope{
+        height: 80px;
+        line-height: 80px;
+        font-size: 24px;
+        color: #ccc;
+        text-align: center;
+        margin-top: 20px;
       }
     }
   }

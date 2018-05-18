@@ -18,7 +18,10 @@
       <section class="content">
         <div class="mine-top">
           <div class="headinfo" @click="personalClick">
-            <span class="head-img"><img :src="headImg" alt=""></span>
+            <span class="head-img">
+              <img v-if="headImg!=''" :src="headImg" alt="">
+              <img v-else src="../../assets/images/Bg/head-default.png" alt="">
+            </span>
             <span class="user-noinfo" v-if="!isLogin">未登录</span>
             <span class="user-info" v-if="isLogin">
               <p v-text="userName"></p>
@@ -28,34 +31,32 @@
         </div>
         <div class="mine-card">
           <div class="card-row" @click="cardClick">
-            <span class="card"><i class="ico-card"></i></span>
-            <span class="nav-title">提货卡</span>
-            <span class="num">{{cardCount}}张</span>
-            <span class="card-account">余额合计：<span v-text="cardBalance"></span><strong>BSTK</strong></span>
+            <div class="card-num"><span class="card"><i class="ico-card"></i></span><span class="nav-title">提货卡</span><span class="num">{{cardCount}}张</span></div>
+            <div class="card-acc"><span class="card-account"><i class="ico-balances"></i></span><span class="nav-title">余额合计</span><span class="total">{{cardBalance}}BSTK</span></div>
           </div>
         </div>
         <div class="mine-block">
           <div class="block-row" @click="addressClick">
             <span class="address"><i class="ico-address"></i></span>
             <span class="nav-title">收货地址</span>
-            <span class="row-right"><i class="ico-arr-r"></i></span>
+            <span class="row-right"><i class="ico-more"></i></span>
           </div>
           <div class="block-row" @click="collectionClick">
             <span class="collection"><i class="ico-collection"></i></span>
             <span class="nav-title">我的收藏</span>
-            <span class="row-right"><i class="ico-arr-r"></i></span>
+            <span class="row-right"><i class="ico-more"></i></span>
           </div>
         </div>
         <div class="mine-block">
           <div class="block-row" @click="serviceClick">
             <span class="service"><i class="ico-service"></i></span>
             <span class="nav-title">服务中心</span>
-            <span class="row-right"><i class="ico-arr-r"></i></span>
+            <span class="row-right"><i class="ico-more"></i></span>
           </div>
           <div class="block-row" @click="scoreClick">
             <span class="score"><i class="ico-score"></i></span>
             <span class="nav-title">欢迎评分</span>
-            <span class="row-right"><i class="ico-arr-r"></i></span>
+            <span class="row-right"><i class="ico-more"></i></span>
           </div>
         </div>
       </section>
@@ -104,15 +105,21 @@ export default {
     },
     cardClick: function() {
       //TODO 提货卡
-      this.$router.push("card");
+      if(this.isLogin) {
+        this.$router.push("card");
+      }
     },
     addressClick: function() {
       //TODO 收获地址
-      this.$router.push("address");
+      if(this.isLogin) {
+        this.$router.push("address");
+      }
     },
     collectionClick: function() {
       //TODO 我的收藏
-      this.$router.push("collection");
+      if(this.isLogin) {
+        this.$router.push("collection");
+      }
     },
     serviceClick: function() {
       //TODO 服务中心
@@ -204,7 +211,7 @@ html,body{
       position: fixed;
     }
     &.border-b {
-      border-bottom: 1px solid #dddddd;/*no*/
+      border-bottom: 1px solid #efefef;/*no*/
     }
     &.bg-col{
       background-color: #317db9;
@@ -333,44 +340,56 @@ html,body{
     }
     .mine-card{
       margin:-60px 30px 0;
-      padding:60px 0;
+      padding:30px 0;
       border-radius:10px;
       background-color: #fff;
       .card-row{
-        height:60px;
-        line-height: 60px;
         padding:0 40px;
-        .card{
-          display: inline-block;
-          width:60px;
-          height:60px;
-          i{
-            width:57px;
-            height:43px;
-            margin-bottom:-10px;
-          }
-        }
         .nav-title{
           margin-left:20px;
           font-size:30px;
           color:#333333;
         }
-        .num{
-          color:#ffa936;
-          font-size:30px;
-          margin-left:20px;
-        }
-        .card-account{
-          float:right;
-          width:50%;
+        .card-num{
           height:60px;
           line-height: 60px;
           overflow: hidden;
-          text-align: right;
-          font-size:30px;
-          color:#666666;
-          span{
+          .card{
+            display: inline-block;
+            width:60px;
+            height:60px;
+            i{
+              width:57px;
+              height:43px;
+              margin-bottom:-10px;
+            }
+          }
+          .num{
             color:#ffa936;
+            font-size:30px;
+            float:right;
+          }
+        }
+        .card-acc{
+          height:60px;
+          line-height:60px;
+          margin-top:20px;
+          overflow: hidden;
+          .card-account{
+            display: inline-block;
+            height:60px;
+            line-height: 60px;
+            font-size:30px;
+            i{
+              width:52px;
+              height:40px;
+              margin-bottom:-8px;
+            }
+          }
+          .total{
+            color:#ffa936;
+            float:right;
+            font-size:30px;
           }
           strong{
             color:#ffa936;
@@ -381,14 +400,17 @@ html,body{
     }
     .mine-block{
       margin:20px 30px 0;
-      padding:30px 0;
       border-radius:10px;
       background-color: #fff;
       .block-row{
-        border-radius:10px;
         height:60px;
         line-height: 60px;
-        padding:20px 40px;
+        padding:30px 40px 30px 0;
+        margin-left:40px;
+        border-bottom: 1px solid #efefef; /*no*/
+        &:last-child{
+          border-bottom:none;
+        }
         .address,.collection,.service,.score{
           display: inline-block;
           width:60px;
@@ -409,8 +431,8 @@ html,body{
           height:60px;
           line-height: 60px;
           i{
-            width:12px;
-            height:20px;
+            width: 14px;
+            height: 24px;
           }
         }
       }

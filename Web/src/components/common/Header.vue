@@ -136,11 +136,11 @@ export default {
     width: 100%;
     height: 88px;
     line-height: 88px;
-    font-size: 32px;
+    font-size: 34px;
     color: #191919;
     box-sizing: border-box;
     &.border-b {
-      border-bottom: 1px solid #d6d6d6;/*no*/
+      border-bottom: 1px solid #efefef;/*no*/
     }
     .head-l {
       width: 130px;
@@ -172,7 +172,7 @@ export default {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 32px;
+      font-size: 34px;
     }
     .head-r {
       width: 130px;

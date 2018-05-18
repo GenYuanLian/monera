@@ -13,9 +13,11 @@ export default {
   imgFileUpload: '/shop/api.go?action=imageUpload',
   findLoginPwd: '/shop/api.go?action=findPwd',
   getPuCardTypes: '/shop/api.go?action=getPuCardTypes',
+  getPuCardTradeRecord: '/shop/api.go?action=getPuCardTradeRecord',
   createOrder: '/shop/api.go?action=createOrder',
   uploadHeadPortrait: '/shop/api.go?action=uploadHeadPortrait',
   setLoginName: '/shop/api.go?action=setLoginName',
+  setNickname: '/shop/api.go?action=setNickname',
   getAreas: '/shop/api.go?action=getAreas',
   getAreasByParentCode: '/shop/api.go?action=getAreasByParentCode',
   getMemberAddressList: '/shop/api.go?action=getMemberAddressList',
@@ -28,6 +30,7 @@ export default {
   getPuCardOrders: '/shop/api.go?action=getPuCardOrders',
   getPuCardOrderDetail: '/shop/api.go?action=getPuCardOrderDetail',
   activationPuCard: '/shop/api.go?action=activationPuCard',
+  activationPuCardImpl: '/shop/api.go?action=activationPuCardImpl',
   myPuCards: '/shop/api.go?action=myPuCards',
   getCommodityList: '/shop/api.go?action=getCommodityList',
   getCommodityInfo: '/shop/api.go?action=getCommodityInfo',
@@ -38,5 +41,7 @@ export default {
   orderPay: '/shop/api.go?action=orderPay',
   queryMessage: '/shop/api.go?action=queryMessage',
   queryProducts: '/shop/api.go?action=queryProducts',
-  alipayH5: '/shop/api.go?action=alipayH5'
+  alipayH5: '/shop/api.go?action=alipayH5',
+  addCollection: '/shop/api.go?action=addCollection',
+  myFavorite: '/shop/api.go?action=myFavorite'
 };

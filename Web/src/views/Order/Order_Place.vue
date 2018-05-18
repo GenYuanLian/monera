@@ -1,16 +1,25 @@
 <template>
   <div class="gyl-order-detail">
     <div v-title>确认订单</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
       <div class="order-address" @click="openAddress">
         <div class="person-infor">
-          <p>{{deliver.addrName + '  ' +deliver.addrPhone}}</p>
-          <p class="per-address">{{deliver.address}}</p>
+          <div class="no-address" v-if="!deliver">添加收货地址</div>
+          <div v-if="deliver">
+            <p>{{deliver.addrName + '  ' +deliver.addrPhone}}</p>
+            <p class="per-address">{{deliver.address}}</p>
+          </div>
         </div>
         <div class="add-more"><i class="ico-more"></i></div>
       </div>
-      <div class="order-send">
+      <div v-if="productType==1" class="order-send">
+        <div class="order-row">
+          <div class="row-key">配送</div>
+          <div class="row-val">无需配送</div>
+        </div>
+      </div>
+      <div v-else class="order-send">
         <div class="order-row">
           <div class="row-key">配送</div>
           <div class="row-val">{{express.expressCom}}</div>
@@ -78,7 +87,7 @@ export default {
   data() {
     return {
       headTitle: "确认订单",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -89,33 +98,66 @@ export default {
       productType: 0,
       productList: [],
       merchant: {},
-      buyNum: 0,
+      buyNum: 1,
       amount: 0,
       money: 0,
       totalMoney: 0,
       orderNo:"",
       remark: "",
       addressId:"",
-      deliver: {
-        addrName:'',
-        addrPhone:'',
-        address:''
-      },
+      deliver: null,
       express:{
         expressCom:"顺丰快递",
         arriveTime: moment().add(3, 'd').format('YYYY-MM-DD HH:mm'),
         distMode:'商家配送',
-        distFee:"0"
-      }
+        distFee:0
+      },
+      addressList:[]
     };
   },
   components: {
     Header, InlineXNumber
   },
   methods: {
+    ...mapActions({
+      saveAddressBackUrl: "saveAddressBackUrl"
+    }),
     openAddress: function() {
       //TODO 选择快递地址
-      this.$router.push({name:"address", query: {backUrl:this.$route.fullPath}});
+      this.saveAddressBackUrl(this.$route.fullPath);
+      this.$router.push({name:"address"});
+    },
+    getAddressList: function() {
+      //TODO 查询地址
+      this.$httpPost(apiUrl.getMemberAddressList, {}).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.addressList = res.data.result;
+          if(this.addressList.length>0) {
+            this.deliver = {};
+            this.addressId = this.addressList[0].id;
+            this.deliver.addrName = this.addressList[0].mobile;
+            this.deliver.addrPhone = this.addressList[0].receiver;
+            this.deliver.address = this.addressList[0].areaName+this.addressList[0].address;
+          }
+        }else{
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    computePrice: function() {
+      //TODO 计算总价
+      this.productList.forEach((item) => {
+        this.$set(item, "buyNum", this.buyNum);
+        this.amount = item.commodityPrice;
+        this.totalMoney += parseFloat(item.commodityPrice*Number(item.buyNum));
+      });
+      if(this.productType==1) {
+        this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(2);
+      }else {
+        this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(8);
+      }
     },
     getProductDetail: function(flag) {
       //TODO 查询商家和产品详情
@@ -127,16 +169,7 @@ export default {
         if(res.status.code==0&&res.data) {
           this.merchant = res.data.result;
           this.productList = res.data.result.commodityList;
-          this.productList.forEach((item) => {
-            this.$set(item, "buyNum", this.buyNum);
-            this.amount = item.commodityPrice;
-            this.totalMoney += parseFloat(item.commodityPrice*item.buyNum);
-          });
-          if(this.productType==1) {
-            this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(1);
-          }else {
-            this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(8);
-          }
+          this.computePrice();
         } else {
           showMsg(res.status.message);
         }
@@ -149,6 +182,10 @@ export default {
       this.productList.forEach((item) => {
         this.buyNum = item.buyNum;
       });
+      if(this.addressId=="") {
+        showMsg("请添加收获地址信息");
+        return;
+      }
       if(this.buyNum<1) {
         showMsg("请选择数量");
         return;
@@ -164,6 +201,7 @@ export default {
       this.$httpPost(apiUrl.createOrder, param).then((res) => {
         if(res.status.code==0&&res.data) {
           this.orderNo = res.data.orderNo;
+          localStorage.removeItem("address");
           this.$router.push({name:"pay_order", query: {orderNo: this.orderNo}});
         } else {
           showMsg(res.status.message);
@@ -176,15 +214,21 @@ export default {
   mounted() {
     this.productType = this.$route.query.proType||0;
     this.productId = this.$route.query.proId||"";
-    this.buyNum = this.$route.query.num||0;
+    this.buyNum = this.$route.query.num||1;
     if(this.productId!="") {
       this.getProductDetail();
     }
     if(window.localStorage.getItem("address")) {
       let address = JSON.parse(localStorage.getItem("address"));
-      this.deliver.addrName = address.mobile;
-      this.deliver.addrPhone = address.receiver;
-      this.deliver.address = address.areaName+address.address;
+      if(address) {
+        this.deliver = {};
+        this.addressId = address?address.id:"";
+        this.deliver.addrName = address?address.mobile:"";
+        this.deliver.addrPhone = address?address.receiver:"";
+        this.deliver.address = address?address.areaName+address.address:"";
+      }
+    }else {
+      this.getAddressList();
     }
   },
   watch: {
@@ -224,7 +268,7 @@ html,body{
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    background-color: #efefef;
+    background-color: #F3F4F6;
     .order-address{
       padding: 30px 30px 25px 30px;
       margin-bottom: 20px;
@@ -234,9 +278,14 @@ html,body{
         width: calc(~"100% - 25px");
         height: auto;
         float: left;
+        .no-address{
+          height:90px;
+          line-height:90px;
+          font-size: 30px;
+        }
         p{
           line-height:45px;
-          font-size: 28px;
+          font-size: 30px;
           color: #555555;
           &.per-address{
             padding: 5px 0;
@@ -252,9 +301,9 @@ html,body{
           display: inline-block;
           vertical-align: middle;
           width: 14px;
-          height: 22px;
+          height: 24px;
           margin-left: 10px;
-          margin-top: 33px;
+          margin-top: 30px;
         }
       }
     }
@@ -268,7 +317,7 @@ html,body{
         border-bottom: 1px solid #efefef; /*no*/
         overflow: hidden;
         .or-mer{
-          border-bottom:1px solid #e8e8e8;/*no*/
+          border-bottom:1px solid #efefef;/*no*/
           padding:10px 30px 10px 0;
           .or-img{
             display: block;
@@ -282,25 +331,15 @@ html,body{
           .mer-detail{
             height:80px;
             line-height: 80px;
-            font-size: 28px;
+            font-size: 30px;
             color: #333;
             vertical-align: middle;
             .mer-r{
               float: right;
-              font-size: 28px;
+              font-size: 30px;
             }
             .mer-price{
               color:#ffa936;              
-            }
-          }
-          .mer-paied{
-            height: 80px;
-            line-height: 80px;
-            font-size: 22px;
-            color: #999999;
-            .paied-num{
-              font-size: 20px;
-              float: right;
             }
           }
         }
@@ -313,7 +352,7 @@ html,body{
             width:120px;
             height:75px;
             float:left;
-            border:1px solid #e8e8e8;/*no*/
+            border:1px solid #efefef;/*no*/
             border-radius:10px;
             padding:22px 0;
             img{
@@ -332,7 +371,7 @@ html,body{
               height:40px;
               line-height: 40px;
               color:#333;
-              font-size:28px;
+              font-size:30px;
             }
             .pro-price{
               margin-top:25px;
@@ -367,7 +406,7 @@ html,body{
       padding-left: 30px;
       background-color: #fff;
       .order-row{
-        font-size: 28px;
+        font-size: 30px;
         border-bottom: 1px solid #efefef; /*no*/
         overflow: hidden;
         &.no-border-bot{
@@ -394,7 +433,7 @@ html,body{
           float: right;
           width: 375px;
           height: 62px;
-          font-size: 22px;
+          font-size: 24px;
           line-height: 62px;
           color: #555;
           padding-left: 15px;
@@ -409,12 +448,12 @@ html,body{
   .foot{
     position: absolute;
     bottom: 0;
-    width: 750px;
+    width: 100%;
     height: 98px;
     background: #fff;
     input,p{
       display: block;
-      font-size: 26px;
+      font-size: 30px;
       line-height: 98px;
       color: #fff;
       text-align: center;
@@ -430,7 +469,7 @@ html,body{
     }
     .buy-btn{
       width: 250px;
-      font-size: 26px;
+      font-size: 30px;
       background-color: #317db9;
     }
   }

@@ -1,10 +1,13 @@
 <template>
   <div class="gyl-nick-name">
-    <div v-title>个人信息</div>
-    <Header title="个人信息" :border="true"></Header>
+    <div v-title>修改昵称</div>
+    <Header title="修改昵称" :border="true"></Header>
     <section class="content">
-      <div>
-        <input type="text" placeholder="取一个你喜欢的昵称吧，2-8个字" v-model="nickName" @blur="saveNickName">
+      <div class="txt-name">
+        <input type="text" placeholder="取一个你喜欢的昵称吧，2-8个字" v-model="nickName">
+      </div>
+      <div class="btn-modify">
+        <input type="button" value="确认修改" @click="saveNickName">
       </div>
     </section>
   </div>
@@ -40,19 +43,17 @@ export default {
       let param = {
         nickName: this.nickName
       };
-      this.$httpPost(apiUrl.updateByPrimaryKeySelective, param)
-        .then(res => {
-          if (res.data && res.data.status === "1000") {
-            showMsg(res.data.msg, () => {
-              this.$router.replace("personal_infor");
-            });
-          } else {
-            showMsg(res.data.msg);
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      this.$httpPost(apiUrl.setNickname, param).then(res => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            this.$router.replace("personal_infor");
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch(err => {
+        console.log(err);
+      });
     }
   },
   mounted() {
@@ -70,10 +71,10 @@ export default {
   }
   .content {
     margin-top: 20px;
-    background: #fff;
-    div {
+    .txt-name {
       margin-top: 20px;
       padding-left: 30px;
+      background: #fff;
       input {
         display: block;
         width: 100%;
@@ -81,7 +82,7 @@ export default {
         line-height: 32px;
         font-size: 32px;
         color: #222;
-        border-bottom: 1px solid #e2e2e2; /*no*/
+        border-bottom: 1px solid #efefef; /*no*/
       }
       ::-webkit-input-placeholder { /* WebKit browsers */
         color:#aaa;
@@ -94,6 +95,23 @@ export default {
       }
       :-ms-input-placeholder { /* Internet Explorer 10+ */
         color:#aaa;
+      }
+    }
+    .btn-modify{
+      height:80px;
+      line-height: 80px;
+      padding:0 75px;
+      margin-top:80px;
+      input[type="button"]{
+        display: block;
+        width:100%;
+        height:80px;
+        line-height: 80px;
+        margin:0 auto;
+        color:#fff;
+        background-color: #317db9;
+        border-radius: 10px;
+        font-size:30px;
       }
     }
   }

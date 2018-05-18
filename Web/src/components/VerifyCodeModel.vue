@@ -153,12 +153,12 @@ export default {
         div{
           width: 550px;
           height: 80px;
-          background: #F7F7F7;
+          background: #F3F4F6;
           border-radius: 12px;
           overflow: hidden;
           margin: 30px 0;
           input{
-            background: #F7F7F7;
+            background: #F3F4F6;
           }
           .sms-code{
             width: 280px;
@@ -187,9 +187,9 @@ export default {
         text-align: center;
         line-height: 90px;
         font-size: 32px;
-        color: #D7AE5C;
+        color: #317db9;
         background: #fff;
-        border-top: 1px solid #E2E2E2;/*no*/
+        border-top: 1px solid #efefef;/*no*/
       }
     }
 

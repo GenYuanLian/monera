@@ -126,9 +126,9 @@ export default {
     padding: 0;
     margin: 0 auto;
     margin-top: 60px;
-    border-top: 1px solid #bcbfc9;/*no*/
-    border-bottom: 1px solid #bcbfc9;/*no*/
-    border-right: 1px solid #bcbfc9;/*no*/
+    border-top: 1px solid #efefef;/*no*/
+    border-bottom: 1px solid #efefef;/*no*/
+    border-right: 1px solid #efefef;/*no*/
     overflow: hidden;
   }
 
@@ -137,7 +137,7 @@ export default {
     height: 140px;
     padding: 0;
     float: left;
-    border-left: 1px solid #bcbfc9;/*no*/
+    border-left: 1px solid #efefef;/*no*/
   }
 
   .ipt-pay input {
@@ -171,8 +171,8 @@ export default {
     background: #fff;
     list-style-type: none;
     font-size: 36px;
-    border-right: 1px solid #ddd;/*no*/
-    border-top: 1px solid #ddd;/*no*/
+    border-right: 1px solid #efefef;/*no*/
+    border-top: 1px solid #efefef;/*no*/
     &:nth-child(3n) {
       border-right: none;
     }

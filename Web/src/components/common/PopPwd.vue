@@ -88,7 +88,7 @@ export default {
   z-index: 10;
   background-color: rgba(0,0,0,.3);
   .pay-mask{
-    width: 750px;
+    width: 100%;
     height: 752px;
     position: absolute;
     bottom: 0;
@@ -127,9 +127,9 @@ export default {
     height: 101px;
     padding: 0;
     margin: 0 auto;
-    border-top: 1px solid #bcbfc9;/*no*/
-    border-bottom: 1px solid #bcbfc9;/*no*/
-    border-right: 1px solid #bcbfc9;/*no*/
+    border-top: 1px solid #efefef;/*no*/
+    border-bottom: 1px solid #efefef;/*no*/
+    border-right: 1px solid #efefef;/*no*/
     overflow: hidden;
     margin-bottom: 108px;
     margin-top: 2px;
@@ -140,7 +140,7 @@ export default {
     height: 100%;
     padding: 0;
     float: left;
-    border-left: 1px solid #bcbfc9;/*no*/
+    border-left: 1px solid #efefef;/*no*/
   }
 
   .ipt-pay input {
@@ -174,8 +174,8 @@ export default {
     background: #fff;
     list-style-type: none;
     font-size: 36px;
-    border-right: 1px solid #ddd;/*no*/
-    border-top: 1px solid #ddd;/*no*/
+    border-right: 1px solid #efefef;/*no*/
+    border-top: 1px solid #efefef;/*no*/
     &:nth-child(3n) {
       border-right: none;
     }

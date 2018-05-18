@@ -1,7 +1,7 @@
 <template>
   <div class="gyl-login">
     <div v-title>{{headTitle}}</div>
-    <Header :title="headTitle" :left="headLift" :right="headRight" :rightFn="rightFn"></Header>
+    <Header :title="headTitle" :left="headLeft" :right="headRight" :rightFn="rightFn" :backFun="backTo"></Header>
     <section class="content">
       <div class="login-tab">
         <span class="tab" :class="tabType==0?'active':''" @click="tabClick(0)">账号密码登录</span><span class="tab" :class="tabType==1?'active':''" @click="tabClick(1)">手机号快捷登录</span>
@@ -29,7 +29,7 @@ export default {
   data() {
     return {
       headTitle: "登录",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -190,7 +190,6 @@ html,body{
   height:100%;
   .content{
     height: auto;
-    padding:0 30px;
     .login-tab{
       height: 96px;
       line-height: 96px;
@@ -209,13 +208,14 @@ html,body{
     }
     .login-name{
       margin-top:115px;
-      padding: 0 45px;
+      padding: 0 75px;
+      overflow: hidden;
       .row{
         height: 70px;
         line-height: 70px;
         margin-top:34px;
         padding:15px 0;
-        border-bottom:1px solid #E2E2E2;/*no*/
+        border-bottom:1px solid #efefef;/*no*/
         text-align: left;
         i{
           margin-left:20px;
@@ -247,21 +247,21 @@ html,body{
         color: #9FA2AE;
         text-align: right;
         a{
-          color: #9FA2AE;
+          color: #317db9;
           text-decoration:none;
         }
       }
     }
     .login-phone{
       margin-top:115px;
-      padding: 0 45px;
-      margin-bottom:110px;
+      padding: 0 75px;
+      overflow: hidden;
       .row{
         height: 70px;
         line-height: 70px;
         margin-top:34px;
         padding:15px 0;
-        border-bottom:1px solid #E2E2E2;/*no*/
+        border-bottom:1px solid #efefef;/*no*/
         text-align: left;
         i{
           margin-left:20px;
@@ -303,7 +303,6 @@ html,body{
           line-height: 70px;
           font-size: 28px;
           color: #317db9;
-          border-left: 1px solid #e3e3e3;/*no*/
           background-color: #fff;
           float:right;
           &.disabled{
@@ -313,15 +312,15 @@ html,body{
       }
     }
     .btn-login{
-      height: 76px;
-      line-height: 76px;
-      margin-top:70px;
+      height: 80px;
+      line-height: 80px;
+      margin-top:80px;
       text-align: center;
       padding:0 75px;
       .logining{
         width:100%;
-        height: 76px;
-        line-height: 76px;
+        height: 80px;
+        line-height: 80px;
         background: #317db9;
         border-radius: 10px;
         font-size: 30px;

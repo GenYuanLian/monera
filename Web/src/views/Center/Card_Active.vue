@@ -110,7 +110,7 @@ export default {
       height:80px;
       line-height: 80px;
       padding:0 75px;
-      margin-top:60px;
+      margin-top:80px;
       input[type="button"]{
         display: block;
         width:100%;

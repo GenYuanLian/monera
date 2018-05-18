@@ -18,7 +18,7 @@
 
 
 html, body {
-  font-family:-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', "Helvetica Neue" Helvetica, Arial, 'Microsoft Yahei', '微软雅黑', sans-serif;
+  font-family:'PingFang SC', 'Hiragino Sans GB', "Helvetica Neue", Helvetica, Arial, 'Microsoft Yahei', '微软雅黑', sans-serif;
 }
 
 body {
@@ -51,6 +51,7 @@ input{
   -webkit-appearance: none;
   border:none;
   outline: none;
+  border-radius: 0;
 }
 
 .scroller{
@@ -59,25 +60,25 @@ input{
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 0;
+  height: 0;
 }
 
 ::-webkit-scrollbar-track-piece {
-  background-color: rgba(0, 0, 0, 0.2);
-  -webkit-border-radius: 6px;
+  background-color: transparent;
+  // -webkit-border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:vertical {
-  height: 5px;
-  background-color: rgba(125, 125, 125, 0.7);
-  -webkit-border-radius: 6px;
+  // height: 5px;
+  background-color: transparent;
+  // -webkit-border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:horizontal {
-  width: 5px;
-  background-color: rgba(125, 125, 125, 0.7);
-  -webkit-border-radius: 6px;
+  // width: 5px;
+  background-color: transparent;
+  // -webkit-border-radius: 6px;
 }
 /* input[number] 去除上下箭头 */ 
 input::-webkit-outer-spin-button,
@@ -217,6 +218,9 @@ select:-webkit-autofill {
 .m-t50{
   margin-top:50px;
 }
+.m-t80{
+  margin-top:80px;
+}
 .m-t100{
   margin-top:100px;
 }
@@ -247,10 +251,9 @@ select:-webkit-autofill {
 * 按钮样式
 */
 .gyl-btn{
-  height:90px;
-  line-height: 90px;
+  height:80px;
+  line-height: 80px;
   background: #E2E2E2;
-  border-radius: 90px;
   color:#666;
   border-radius: 10px;
   text-align: center;
@@ -623,9 +626,9 @@ select:-webkit-autofill {
   background-size:auto 100%;
 }
 
-.ico-collection{
+.ico-balances{
   display: inline-block;
-  background: url('../images/Icon/ico-collection@2x.png') center no-repeat;
+  background: url('../images/Icon/ico-balances@2x.png') center no-repeat;
   background-size:auto 100%;
 }
 
@@ -714,7 +717,19 @@ select:-webkit-autofill {
   background: url('../images/Icon/ico-delete.png') center no-repeat;
 }
 
+.ico-collection{
+  display: inline-block;
+  background: url('../images/Icon/ico-collect.png') center no-repeat;
+  background-size:auto 100%;
+}
+
 .ico-collect{
+  display: inline-block;
+  background: url('../images/Icon/ico-collection@2x.png') center no-repeat;
+  background-size:auto 100%;
+}
+
+.ico-collected{
   display: inline-block;
   background: url('../images/Icon/ico-collect@2x.png') center no-repeat;
   background-size:auto 100%;
@@ -743,4 +758,18 @@ select:-webkit-autofill {
   display: inline-block;
   background: url('../images/Icon/ico-balance@2x.png') center no-repeat;
   background-size:auto 100%;
+}
+
+.ico-praise{
+  display: inline-block;
+  background: url('../images/Icon/ico-praise.png') center no-repeat;
+  &.check{
+    display: inline-block;
+    background: url('../images/Icon/ico-praise-click.png') center no-repeat;
+  }
+}
+
+.ico-praise-check{
+  display: inline-block;
+  background: url('../images/Icon/ico-praise-click.png') center no-repeat;
 }

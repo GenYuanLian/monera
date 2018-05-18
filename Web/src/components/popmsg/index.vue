@@ -165,7 +165,7 @@ import {Hi} from "assets/js/ddbase";
     line-height: 44px;
     font-size: 16px;
     color:#191919;
-    border-bottom: 1px solid #e6e6e6;
+    border-bottom: 1px solid #efefef;
     box-sizing: border-box;
     .left{
       width:44px;
@@ -198,8 +198,8 @@ import {Hi} from "assets/js/ddbase";
       width:12px;
       height: 12px;
       top:13px;
-      border-top:2px solid #afafaf;
-      border-left:2px solid #afafaf;
+      border-top:2px solid #efefef;
+      border-left:2px solid #efefef;
       transform: rotate(180deg);
     }
   }

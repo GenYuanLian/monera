@@ -1,7 +1,7 @@
 <template>
   <div class="gyl-register">
     <div v-title>注册</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
       <div class="reg-row">
         <div class="row"><i class="ico-phone"></i><input class="txt-phone" type="text" name="" id="txtPhone" @focus="phoneClear=true" @blur="phoneClear=false"  v-model="userName" placeholder="请输入手机号" /><span @click="clearClick(1)" v-show="phoneClear" class="txt-clear ico-clear"></span></div>
@@ -27,7 +27,7 @@ export default {
   data() {
     return {
       headTitle: "注册",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -192,7 +192,7 @@ html,body{
         padding:17px 0;
         height: 56px;
         line-height: 56px;
-        border-bottom: 1px solid #e3e3e3;/*no*/
+        border-bottom: 1px solid #efefef;/*no*/
         i{
           margin-left:20px;
           font-size:0;
@@ -233,7 +233,6 @@ html,body{
           line-height: 56px;
           font-size: 28px;
           color: #317db9;
-          border-left: 1px solid #e3e3e3;/*no*/
           background-color: #fff;
           float:right;
           &.disabled{
@@ -271,13 +270,13 @@ html,body{
     // }
     .reg-btn{
       width:100%;
-      height: 76px;
-      margin-top:110px;
+      height: 80px;
+      margin-top:80px;
       text-align: center;
       .register{
         width:600px;
-        height: 76px;
-        line-height: 76px;
+        height: 80px;
+        line-height: 80px;
         background: #317db9;
         border-radius: 10px;
         font-size: 30px;

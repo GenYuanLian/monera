@@ -1,11 +1,11 @@
 <template>
   <div class="gyl-card-history">
     <div v-title>{{headTitle}}</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
-      <scroller ref="scroll" v-if="cardList.length >0" use-pullup :pullup-config="pullUpConfig" @on-pullup-loading="pullUpHandle">
+      <Scroller ref="scroller" height="100%" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullUpConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
         <div class="card-box">
-          <div class="card-row used" :class="classHandle(card.status)"  v-for="(card, index) in cardList" :key="index">
+          <div class="card-row used" :class="classHandle(card.status)"  v-for="(card, index) in cardList" :key="index" @click="jumpCardDetail(card.id)">
             <p class="card-amount">{{card.bstkValue}}BSTK</p>
             <div class="card-row-right">
               <p class="card-number">卡号&nbsp;&nbsp;&nbsp;{{card.code}}</p>
@@ -14,85 +14,85 @@
             </div>
           </div>
         </div>
-      </scroller>
+      </Scroller>
     </section>
   </div>
 </template>
 <script>
 import { showMsg, loading, valid } from "@/utils/common.js";
+import { dateFormat, Scroller } from 'vux';
 import apiUrl from "@/config/apiUrl.js";
 import Header from '@/components/common/Header';
 export default {
   data() {
     return {
       headTitle: "历史提货卡",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
       cardList:[], // 提货卡列表
-      pageIndex:0, // 当前页
       pullUpConfig: { // 上拉组件配置
+        pullUpHeight: 60,
+        height: 40,
+        autoRefresh: false,
         content: '上拉加载更多',
         downContent: '松开进行加载',
         upContent: '上拉加载更多',
-        loadingContent: '加载中...'
-      }
+        loadingContent: '加载中...',
+        clsPrefix: 'xs-plugin-pullup-'
+      },
+      usePullup: true,
+      pageIndex:0,
+      pageSize:5,
+      status: {
+        pullupStatus: 'disabled'
+      },
+      hasNext: false
     };
   },
-  components: {Header},
+  filters: {
+    dateFormat
+  },
+  components: {Header, Scroller},
   methods: {
     getCardHistory: function() {
-      //TODO 查询提货卡信息
+      // TODO 查询提货卡列表信息
       let param = {
         isValid:0,
-        pageIndex:this.pageIndex,
-        pageSize:10
+        pageIndex: this.pageIndex,
+        pageSize: this.pageSize
       };
       this.$httpPost(apiUrl.myPuCards, param).then((res) => {
         if(res.status.code==0&&res.data) {
-          this.sumBalance = res.data.sumBalance;
-          this.cardCount = res.data.cardCount;
-          this.cardList = res.data.list;
-          this.pageIndex += 1;
-          if(this.cardList.length > 0) {
+          let list = res.data.list||[];
+          this.hasNext = res.data.hasNext;
+          if(this.hasNext) {
+            this.cardList = this.cardList.concat(list);
             this.$nextTick(() => {
-              this.$refs.scroller.reset();
+              this.$refs.scroller.donePullup();
             });
-            if(res.data.hasNext==0) {
+          }else{
+            this.cardList = this.cardList.concat(list);
+            this.$nextTick(() => {
               this.$refs.scroller.disablePullup();
-            }
+            });
           }
-        }else{
+        } else {
           showMsg(res.status.message);
         }
       }).catch((err) => {
         console.log(err);
       });
     },
-    pullUpHandle:function() {
-      // TODO 处理上拉加载数据
-      let param = {
-        isValid:0,
-        pageIndex:this.pageIndex,
-        pageSize:10
-      };
-      this.$httpPost(apiUrl.myPuCards, param).then((res) => {
-        if(res.status.code==0&&res.data) {
-          this.cardList.push(res.data.list);
-          this.pageIndex += 1;
-          this.$nextTick(() => {
-            this.$refs.scroller.reset();
-          });
-          if(res.data.hasNext==0) {
-            this.$refs.scroller.disablePullup();
-          }
-        }else{
-          showMsg(res.status.message);
-        }
-      }).catch((err) => {
-        console.log(err);
-      });
+    onPullup() {
+      // TODO 上拉加载调取事件
+      if(this.hasNext) {
+        this.pageIndex++;
+        this.getCardHistory();
+      }else{
+        this.$refs.scroller.disablePullup();
+      }
     },
     classHandle:function(status) {
       // TODO 判断是已过期还是已使用提货卡
@@ -109,10 +109,16 @@ export default {
         _class = 'destroy';
       }
       return _class;
+    },
+    jumpCardDetail:function(id) {
+      // TODO 跳转提货卡使用详情页面
+      this.$router.push({name:'card_detail', query:{cardId:id}});
     }
   },
   mounted() {
-    this.getCardHistory();
+    this.$nextTick(() => {
+      this.getCardHistory();
+    });
   }
 };
 </script>
@@ -188,6 +194,12 @@ html,body{
           }
         }
       }
+    }
+    .xs-plugin-pullup-container{
+      line-height: 60px;
+      font-size: 28px;
+      color: #6F7281;
+      background: #F3F4F6;;
     }
   }
 }

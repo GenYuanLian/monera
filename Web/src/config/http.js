@@ -6,7 +6,6 @@ import store from '../store';
 import * as types from '../store/mutation_types';
 import { loading, showMsg, versions, objKeySort } from '@/utils/common.js';
 import {getStore, setStore, removeStore} from '@/utils/storage.js';
-import { setTimeout } from 'timers';
 Promise.polyfill();
 
 let env = require('../../config/dev.env');
@@ -18,7 +17,7 @@ if (process.env.NODE_ENV === 'development') {
   env = require('../../config/prod.env');
 } else {
   env.NODE_ENV = "production";
-  env.API_SERVER = "";
+  env.API_SERVER = "http://shopapi.genyuanlian.com";//http://58.87.112.65:8081 http://shopapi.genyuanlian.com
 }
 
 // axios 配置

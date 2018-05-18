@@ -5,12 +5,17 @@
     <section class="content">
       <div class="menue" @click="uploadHeader">
         <div class="header-row">
-          <p>头像</p><span class="icon-box"><i class="ico-arrow-r"></i></span><span class="img-box"><img :src="headPortrait" alt=""><uploader class="btn-upload" ref="upload" :maximum="1" @input="uploadImage"></uploader></span>
+          <p>头像</p>
+          <span class="icon-box"><i class="ico-more"></i></span>
+          <span class="img-box"><img v-if="headPortrait!=''" :src="headPortrait" alt=""><img v-else src="../../assets/images/Bg/head-default.png" alt=""><uploader class="btn-upload" ref="upload" :maximum="1" @input="uploadImage"></uploader></span>
         </div>
       </div>
-      <div class="menue mg-b" @click="changeNickName">
-        <div class="no-border">
-          <p>昵称</p><span class="icon-box"><i class="ico-arrow-r"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="nickName" readonly>
+      <div class="menue mg-b">
+        <div @click="changeNickName">
+          <p>昵称</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="nickName" readonly>
+        </div>
+        <div class="no-border" @click="changeUserName">
+          <p>用户名</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="userName" readonly>
         </div>
       </div>
       <div class="menue">
@@ -20,22 +25,22 @@
       </div>
       <div class="menue">
         <div>
-          <p>手机</p><span class="icon-box"><i class="ico-arrow-r"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="mobile" readonly>
+          <p>手机</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="mobile" readonly>
         </div>
       </div>
       <div class="menue" @click="changeNickName">
         <div>
-          <p>微信</p><span class="icon-box"><i class="ico-arrow-r"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="wechat" readonly>
+          <p>微信</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="wechat" readonly>
         </div>
       </div>
       <div class="menue mg-b">
         <div class="no-border">
-          <p>QQ</p><span class="icon-box"><i class="ico-arrow-r"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="qq" readonly>
+          <p>QQ</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="qq" readonly>
         </div>
       </div>
       <div class="menue">
-        <div class="no-border">
-          <p>登录密码</p><span class="icon-box"><i class="ico-arrow-r"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="password" readonly>
+        <div class="no-border" @click="setLoginPwd">
+          <p>登录密码</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="hasPwd?'已设置':'未设置'" readonly>
         </div>
       </div>
     </section>
@@ -65,10 +70,12 @@ export default {
       headPortrait: "", // 头像
       headPortraitUp:'',
       nickName: "", // 昵称
+      userName: "",
       mobile: "", // 手机号
       wechat:"", // 微信
       qq:"", // QQ
       password:"", // 密码
+      hasPwd:"",
       uploadShow: false // 上传图片蒙版
     };
   },
@@ -91,12 +98,13 @@ export default {
       let param = {};
       this.$httpPost(apiUrl.getMemberInfo, param).then(res => {
         if (res.status.code==0&&res.data) {
-          this.headPortrait = res.data.info.headPortrait;
-          this.nickName = res.data.info.nickName;
-          this.mobile = res.data.info.mobile;
+          this.headPortrait = res.data.info.headPortrait||"";
+          this.nickName = res.data.info.nickName||"";
+          this.userName = res.data.info.userName||"";
+          this.mobile = res.data.info.mobile||"";
           this.wechat = "";
           this.qq = "";
-          this.password = "";
+          this.hasPwd = res.data.info.hasPwd;
         } else {
           showMsg(res.status.message);
         }
@@ -142,8 +150,16 @@ export default {
       });
     },
     changeNickName() {
-      // 修改昵称
+      //TODO 修改昵称
       this.$router.push({path:'nick_name', query:{nickName:this.nickName}});
+    },
+    changeUserName() {
+      //TODO 修改昵称
+      this.$router.push({path:'user_name', query:{userName:this.userName}});
+    },
+    setLoginPwd:function() {
+      //TODO 设置登录密码
+      this.$router.push("loginpwd_edit");
     },
     stopPop() {
       // 阻止冒泡
@@ -190,6 +206,8 @@ body,
           .icon-box{
             height: 90px;
             i{
+              width:14px;
+              height:24px;
               margin-top: 36px;
             }
           }
@@ -275,7 +293,7 @@ body,
     z-index: 10;
     background-color: rgba(0,0,0,.5);
     .updImg-mask{
-      width: 750px;
+      width: 100%;
       height: 220px;
       position: absolute;
       bottom: 0;

@@ -1,17 +1,17 @@
 <template>
   <div class="gyl-address">
     <div v-title>收货地址</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
-      <div class="addr-row" v-for="(addr,index) in addressList" :key="index">
+      <div class="addr-row" v-for="(addr,index) in addressList" :key="index" @click="defaultClick(addr.id)">
         <div class="addr-top">
           <p class="addr-person"><span>{{addr.receiver}}</span><span>{{addr.mobile}}</span></p>
           <p class="addr-address">{{addr.areaName.replace(/-/g,' ')}} {{addr.address}}</p>
         </div>
         <div class="addr-bot">
-          <span class="addr-check" @click="defaultClick(addr.id)"><i class="ico-radio" :class="addr.check ? 'checked' : ''"></i></span>
-          <span class="addr-edit" @click="editClick(addr.id)"><i class="ico-edit"></i>编辑</span>
-          <span class="addr-delete" @click="deleteClick(addr.id)"><i class="ico-delete"></i>删除</span>
+          <span class="addr-check"><i class="ico-radio" :class="addr.check ? 'checked' : ''"></i></span>
+          <span class="addr-edit" @click.stop="editClick(addr.id)"><i class="ico-edit"></i>编辑</span>
+          <span class="addr-delete" @click.stop="deleteClick(addr.id)"><i class="ico-delete"></i>删除</span>
         </div>
       </div>
     </section>
@@ -22,6 +22,7 @@
   </div>
 </template>
 <script>
+import { mapActions, mapGetters } from "vuex";
 import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
@@ -31,7 +32,7 @@ export default {
   data() {
     return {
       headTitle: "收货地址",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -50,8 +51,14 @@ export default {
   components: {
     Header, Popup
   },
+  computed:{
+    ...mapGetters(["getDeliveryAddressBackUrl"])
+  },
   methods: {
-    getAddressList: function(flag) {
+    ...mapActions({
+      saveDeliveryAddress: "saveDeliveryAddress"
+    }),
+    getAddressList: function() {
       //TODO 查询地址
       this.$httpPost(apiUrl.getMemberAddressList, {}).then((res) => {
         if(res.status.code==0&&res.data) {
@@ -72,6 +79,8 @@ export default {
         if(ele.id == id) {
           ele.check = true;
           window.localStorage.setItem('address', JSON.stringify(ele));
+          this.saveDeliveryAddress(ele);
+          this.backUrl = this.getDeliveryAddressBackUrl;
           if(this.backUrl) {
             this.$router.replace(this.backUrl);
           }
@@ -111,11 +120,10 @@ export default {
     },
     jumpAdressEdit:function() {
       // TODO 跳转增加地址页面
-      this.$router.push('address_edit');
+      this.$router.push({name:'address_edit'});
     }
   },
   mounted() {
-    this.backUrl = this.$route.query.backUrl;
     this.getAddressList();
   }
 };
@@ -136,7 +144,7 @@ html,body{
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    background-color: #efefef;
+    background-color: #F3F4F6;
     .addr-row{
       margin-bottom: 20px;
       padding-left: 30px;
@@ -145,7 +153,7 @@ html,body{
         padding: 24px 30px 24px 0;
         border-bottom: 1px solid #efefef; /*no*/
         p{
-          font-size: 28px;
+          font-size: 30px;
           color: #555;
         }
         .addr-person{
@@ -162,7 +170,7 @@ html,body{
           display: block;
           float: right;
           height: 40px;
-          font-size: 22px;
+          font-size: 24px;
           line-height: 40px;
           color: #555555;
           i{
@@ -177,11 +185,11 @@ html,body{
           height: 40px;
         }
         .addr-delete, .addr-edit{
-          width: 92px;
+          width: 102px;
           margin-left: 40px;
         }
         .ico-delete, .ico-edit{
-          width: 28px;
+          width: 30px;
           height: 40px;
           background-size: 100% auto;
           background-position: center;
@@ -202,7 +210,7 @@ html,body{
       height: 98px;
       line-height: 98px;
       text-align: center;
-      font-size: 28px;
+      font-size: 30px;
       color: #fff;
       background-color: #317db9;
       border-radius: 0;

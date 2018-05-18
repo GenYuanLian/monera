@@ -1,19 +1,19 @@
 <template>
   <div class="gyl-orders">
     <div v-title>订单</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content" v-show="ordersList&&ordersList.length>0">
-      <Scroller ref="scroller" height="100%" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullupConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
+      <Scroller ref="scroller" height="-80px" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullupConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
         <div class="order-row-box">
-          <div class="order-row" v-for="(order,index) in ordersList" :key="index" @click="jumpOrderDetail(order.commodityType, order.orderNo)">
+          <div class="order-row" v-for="(order,index) in ordersList" :key="index">
             <div class="or-top">
               <span class="or-time">{{new Date(order.createTime)|dateFormat('YYYY-MM-DD HH:mm')}}</span>
               <span class="or-status">{{orderStatusHandle(order.status)}}</span>
             </div>
-            <div class="or-center">
+            <div class="or-center" @click="jumpOrderDetail(order.commodityType, order.orderNo)">
               <img class="or-img" :src="order.description" alt="">
               <div class="or-pro">
-                <p class="pro-detail"><span class="pro-name">{{order.merchantName}}</span><span class="pro-price">￥{{order.amount}}</span></p>
+                <p class="pro-detail"><span class="pro-name">{{order.merchantName}}</span><span class="pro-price fr">&yen;{{order.amount}}</span></p>
                 <p class="pro-paied"><span class="paied-card">{{order.commodityName}}</span><span class="paied-num">x{{order.saleCount}}</span></p>
               </div>
             </div>
@@ -21,11 +21,12 @@
               <span v-if="order.status==0" class="or-tip" @timeOut="timeOut(order.surplusPayTime, order.timer)">{{order.timer}}</span>
               <input v-if="order.status==0" type="button" value="去支付" @click="goPay(order.orderNo)">
               <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
-              <input v-if="order.status==3" type="button" value="提醒发货">
-              <input v-if="order.status==6 || order.status==8"  type="button" value="再来一单">
+              <input v-if="order.commodityType!=1&&order.status==3" type="button" value="提醒发货">
+              <input v-if="order.status==6 || order.status==8"  type="button" value="再来一单" @click="buyAgainClick(order.commodityId, order.commodityType, order.merchantId, order.merchType)">
               <input v-if="order.status==6" class="evalue-btn"  type="button" value="去评价">
-              <input v-if="order.status==2" type="button" value="重新下单">
-              <input v-if="order.status==3 || order.status==3" type="button" value="申请退单">
+              <input v-if="order.status==2" type="button" value="重新下单" @click="reorderClick(order.merchantId,order.merchType)">
+              <input v-if="order.commodityType!=1&&(order.status==3 || order.status==3)" type="button" value="申请退单">
+              <!-- <input v-if="order.status==-1" class="evalue-btn"  type="button" value="确认收货"> -->
             </div>
           </div>
         </div>
@@ -36,7 +37,7 @@
 </template>
 <script>
 import { mapActions, mapGetters } from "vuex";
-import { dateFormat, md5, Scroller } from 'vux';
+import { dateFormat, Scroller } from 'vux';
 import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
@@ -45,7 +46,7 @@ export default {
   data() {
     return {
       headTitle: "订单",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -86,7 +87,7 @@ export default {
     onPullup() {
       if(this.hasNext) {
         this.pageIndex++;
-        this.getPuCardOrders();
+        this.getOrderList();
       }else{
         this.$refs.scroller.disablePullup();
       }
@@ -148,6 +149,9 @@ export default {
           }
         } else {
           showMsg(res.status.message);
+          this.$nextTick(() => {
+            this.$refs.scroller.disablePullup();
+          });
         }
       }).catch((err) => {
         console.log(err);
@@ -190,6 +194,19 @@ export default {
     },
     cancelOrder: function(orderNo) {
       //TODO 取消订单
+      this.$router.push({name:"order_cancel", query: {orderNo:orderNo}});
+    },
+    buyAgainClick: function(proId, proType, id, type) {
+      //TODO 再来一单
+      if(proType==1) {
+        this.$router.push({name:"merchant_info", query: {id:id, type:type}});
+      } else {
+        this.$router.push({name:"order_place", query: {proId:proId, proType:proType}});
+      }
+    },
+    reorderClick: function(id, type) {
+      //TODO 重新下单
+      this.$router.push({name:"merchant_info", query: {id:id, type:type}});
     }
   },
   mounted() {
@@ -210,38 +227,44 @@ html,body{
 
 .gyl-orders{
   height: 100%;
+  width:100%;
   overflow: hidden;
   .content{
     box-sizing:border-box;
     width:100%;
-    height:calc(~'100% - 166px');
+    height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     background-color: #f3f4f6;
+    padding-bottom:180px;
     .order-row-box{
       width: 100%;
       height: 100%;
       .order-row{
-        padding: 0 30px;
+        padding: 0 0 0 30px;
         background-color: #fff;
+        margin-bottom: 20px;
+        &:first-of-type{
+          margin-top: 20px;
+        }
         .or-top{
           height: 69px;
           line-height: 70px;
+          padding-right:30px;
           border-bottom: 1px solid #efefef; /*no*/
-          margin-top: 20px;
           .or-time{
-            font-size: 20px;
+            font-size: 24px;
             color: #999;
           }
           .or-status{
-            font-size: 20px;
+            font-size: 30px;
             color: #317db9;
             float: right;
           }
         }
         .or-center{
-          padding: 20px 0;
+          padding: 20px 0 20px 0;
           border-bottom: 1px solid #efefef; /*no*/
           overflow: hidden;
           .or-img{
@@ -255,21 +278,18 @@ html,body{
           }
           .or-pro{
             float: right;
-            width: calc(~"100% - 150px");
+            padding-right:30px;
+            width: calc(~"100% - 180px");
             .pro-detail{
               height: 48px;
               line-height: 48px;
-              font-size: 28px;
+              font-size: 30px;
               color: #333;
-              .pro-price{
-                font-size: 24px;
-                float: right;
-              }
             }
             .pro-paied{
               height: 45px;
               line-height: 45px;
-              font-size: 22px;
+              font-size: 26px;
               color: #999999;
               .paied-num{
                 font-size: 20px;
@@ -283,13 +303,13 @@ html,body{
           line-height: 100px;
           .or-tip{
             color: #999;
-            font-size: 22px;
+            font-size: 24px;
           }
           input{
             width: 160px;
             height: 60px;
             line-height: 60px;
-            font-size: 28px;
+            font-size: 30px;
             color: #fff;
             margin: 20px 20px 0 0;
             border-radius: 10px;

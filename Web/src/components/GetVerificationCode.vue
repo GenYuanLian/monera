@@ -58,13 +58,13 @@ export default {
         smstype: this.smstype
       };
       this.$httpPost(apiUrl.sendSmsCode, param).then((res) => {
-        if(res.data&&res.data.status=='1000') {
+        if(res.status.code==0&&res.data) {
           let data = res.data;
           this.smsNumber = res.data.smsNumber;
           this.$emit("sms-num", this.smsNumber);
-          showMsg(res.data.msg);
+          showMsg(res.status.message);
         }else{
-          showMsg(res.data.msg);
+          showMsg(res.status.message);
         }
       }).catch((err) => {
         console.log(err);
@@ -83,7 +83,7 @@ export default {
       line-height: 66px;
       text-align: center;
       font-size: 28px;
-      color: #D7AE5C;
+      color: #317db9;
       background: #fff;
     }
   }

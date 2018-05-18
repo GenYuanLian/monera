@@ -24,10 +24,12 @@ export default {
   data() {
     return {
       headTitle: "支付成功",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
-      }
+      },
+      orderNo:"",
+      productType:""
     };
   },
   components: {
@@ -36,14 +38,21 @@ export default {
   methods: {
     backHome: function(flag) {
       //TODO 返回首页
-      this.$route.push("home");
+      this.$router.push("home");
     },
     goOrderDetail: function(flag) {
       //TODO 查看订单列表
-      this.$route.push("order_detail");
+      if(this.productType==1) {
+        this.$router.push({name: "order_detail_card", query:{orderNo: this.orderNo}});
+      } else {
+        this.$router.push({name: "order_detail_product", query:{orderNo: this.orderNo}});
+      }
     }
   },
-  mounted() {}
+  mounted() {
+    this.orderNo = this.$route.query.orderNo||"";
+    this.productType = this.$route.query.proType||"";
+  }
 };
 </script>
 <style lang="less">

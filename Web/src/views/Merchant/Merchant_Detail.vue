@@ -1,7 +1,7 @@
 <template>
   <div class="gyl-mer-detail">
-    <div v-title>商家详情</div>
-    <Header :border="true" :title="headTitle" :left="headLift" ></Header>
+    <div v-title>{{merchant.merchName}}</div>
+    <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
       <div class="mer-shop">
         <img :src="merchant.logoPic" alt="">
@@ -9,9 +9,11 @@
         <p class="mer-star"><i :class="getStarCss(merchant.praise)"></i></p>
       </div>
       <div class="notice">
-        <span class="i-notice"><i class="ico-notice"></i></span>
-        <span class="title">公告</span>
-        <span class="message" v-text="merchant.notice"></span>
+        <span class="i-notice fl"><i class="ico-notice"></i></span>
+        <div class="title fl">公告</div>
+        <div class="message fl" > 
+          <msgScroll :id="'detaileMsg'" ref="msgScroll" :msg="merchant.notice"></msgScroll>
+        </div>
       </div>
       <div class="mer-adv">
         <swiper class="pro-swiper" height="150px" :list="proImgs" v-model="proImgIdx" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'pro-dots'"></swiper>
@@ -20,7 +22,7 @@
         <div class="scene-title">商家实景</div>
         <div class="scene-img">
           <div class="scene-con" :style="{width:sceneWidth}">
-            <div v-for="(item,i) in merchantPic" v-bind:key="i">
+            <div :ref="'scenePic'+i" v-for="(item,i) in merchantPic" v-bind:key="i">
               <img :src="item.url" :alt="item.title">
             </div>
           </div>
@@ -39,7 +41,7 @@
           <div><span class="info-lab">商家简介</span><span class="info-con" v-text="merchant.briefIntro"></span></div>
           <div><span class="info-lab">分类</span><span class="info-con" v-text="merchant.category"></span></div>
           <div><span class="info-lab">地址</span><span class="info-con" v-text="merchant.areaName+merchant.address"></span></div>
-          <div><span class="info-lab">联系方式</span><span class="info-con" v-html="merchant.contact+'<br />'+merchant.tel"></span></div>
+          <div class="no-bb"><span class="info-lab">联系方式</span><span class="info-con" v-html="merchant.contact+'<br />'+merchant.tel"></span></div>
         </div>
       </div>
     </section>
@@ -50,12 +52,13 @@ import { mapActions, mapGetters } from "vuex";
 import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
+import msgScroll from '@/components/messageScroll/index';
 import { Swiper, Scroller } from 'vux';
 export default {
   data() {
     return {
       headTitle: "商家详情",
-      headLift: {
+      headLeft: {
         label: "",
         className: "ico-back"
       },
@@ -69,11 +72,18 @@ export default {
     };
   },
   components: {
-    Header, Swiper, Scroller
+    Header, Swiper, Scroller, msgScroll
   },
   methods: {
     getStarCss: function(val) {
       return "ico-star-"+val;
+    },
+    computeScene:function() {
+      //计算实景图片宽度
+      this.$nextTick(() => {
+        let width = this.$refs.scenePic0[0].offsetWidth+this.$refs.scenePic0[0].offsetLeft;
+        this.sceneWidth = this.merchantPic.length*width+"px";
+      });
     },
     getMerchantDetail: function(flag) {
       //TODO 查询商家详情
@@ -85,12 +95,14 @@ export default {
           this.merchant = res.data.merch;
           this.merchantPic = res.data.pics;
           this.advertistPic = res.data.advertPics;
-          this.sceneWidth = res.data.pics.length*105+"px";
           if(res.data.advertPics) {
-            res.data.pics.forEach(item => {
+            res.data.advertPics.forEach(item => {
               this.proImgs.push({url: 'javascript:', img: item.url, title: item.title});
             });
           }
+          this.headTitle = res.data.merch.merchName;
+          this.$refs.msgScroll.scroll();
+          this.computeScene();
         } else {
           showMsg(res.status.message);
         }
@@ -104,6 +116,9 @@ export default {
     if(this.merchantId!="") {
       this.getMerchantDetail();
     }
+  },
+  beforeDestroy() {
+    // this.$refs.msgScroll.destroyScroll();
   }
 };
 </script>
@@ -168,7 +183,7 @@ html,body{
       }
       .i-notice{
         display: inline-block;
-        width:65px;
+        width:64px;
         i{
           width:44px;
           height:36px;
@@ -180,10 +195,8 @@ html,body{
         width:80px;
         height:48px;
         line-height: 48px;
-        text-align: center;
-        border:2px solid #317db9;
         color:#317db9;
-        margin-right:35px;
+        margin-right:20px;
         border-radius:10px;
       }
       .message{
@@ -195,25 +208,30 @@ html,body{
     .mer-adv{
       margin-top:20px;
       width:100%;
-      height:300px;
       background-color: #fff;
     }
     .mer-scene{
-      padding:0 30px 30px;
-      margin-top:30px;
+      padding-bottom:40px;
+      margin-top:20px;
       background-color: #fff;
+      overflow: hidden;
       .scene-title{
-        height:80px;
-        line-height: 80px;
+        padding: 0 30px;
+        height:90px;
+        line-height: 90px;
         color:#333;
         font-size:30px;
+        margin-top: 10px;
       }
       .scene-img{
+        padding-left: 30px;
         width:100%;
         height:185px;
         line-height:185px;
         overflow-y: hidden;
         overflow-x: auto;
+        box-sizing: border-box;
+        -webkit-overflow-scrolling: touch;
         .scene-con{
           width:auto;
           height:185px;
@@ -233,8 +251,8 @@ html,body{
       }
     }
     .mer-info{
-      padding:0 30px 50px;
-      margin-top:30px;
+      padding-left: 30px;
+      margin:20px 0;
       background-color: #fff;
       overflow: hidden;
       .info-title{
@@ -247,25 +265,30 @@ html,body{
         width:100%;
         div{
           display: inline-block;
-          width:100%;
+          width:calc(~"100% - 30px");
+          padding-right: 30px;
           margin-top:20px;
           overflow: hidden;
           vertical-align: middle;
+          padding-bottom: 20px;
+          border-bottom: 1px solid #efefef; /*no*/
+          &.no-bb{
+            border-bottom: 0;
+          }
           .info-lab{
             display: block;
             width:125px;
             height:45px;
             line-height:45px;
-            color:#317db9;
-            border:1px solid #317db9; /*no*/
+            color:#999;
             border-radius:10px;
-            text-align:center;
             float:left;
+            font-size: 26px;
           }
           .info-con{
             display: block;
             line-height:45px;
-            margin-left:165px;
+            margin-left:140px;
             word-wrap: break-word;
             color:#666;
             font-size:26px;

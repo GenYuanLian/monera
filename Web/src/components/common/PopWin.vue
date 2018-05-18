@@ -86,7 +86,7 @@ export default {
       height: 100px;
       line-height: 100px;
       margin: 0 30px;
-      border-bottom: 1px solid #E2E2E2;/*no*/
+      border-bottom: 1px solid #efefef;/*no*/
       text-align: center;
       background-color: #fff;
       font-size: 32px;
