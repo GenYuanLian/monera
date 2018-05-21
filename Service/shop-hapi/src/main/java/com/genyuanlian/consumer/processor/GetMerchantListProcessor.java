@@ -23,7 +23,7 @@ public class GetMerchantListProcessor extends BaseApiProcessor {
 	protected void process(HttpServletRequest request, HttpServletResponse response, ResultSender sender)
 			throws Exception {
 
-		ShopMessageVo<List<ShopMerchant>> messageVo = merchantApi.getMerchantList();
+		ShopMessageVo<List<ShopMerchant>> messageVo = merchantApi.getMerchantList(null);
 		if (messageVo.isResult()) {
 			sender.put("result", messageVo.getT());
 			sender.success(response, messageVo.getMessage());

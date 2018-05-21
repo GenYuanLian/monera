@@ -1,6 +1,7 @@
 package com.genyuanlian.consumer.api.impl;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import com.genyuanlian.consumer.shop.api.IMerchantApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
+import com.genyuanlian.consumer.shop.model.ShopComment;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopCommodityPic;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
@@ -37,27 +39,44 @@ public class MerchantApiImpl implements IMerchantApi {
 	private ICommonService commonService;
 
 	@Override
-	public ShopMessageVo<List<ShopMerchant>> getMerchantList() {
+	public ShopMessageVo<List<ShopMerchant>> getMerchantList(List<Long> ids) {
 		ShopMessageVo<List<ShopMerchant>> messageVo = new ShopMessageVo<List<ShopMerchant>>();
 		logger.info("获取有效的商户列表调用到这里了=================");
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
-		List<ShopMerchant> list = commonService.getList(ShopMerchant.class, "status", 1);
+		List<ShopMerchant> list = commonService.getList(ShopMerchant.class, "status", 1, "existIds", ids);
 		if (list != null) {
-			List<ShopMerchant> salesVolumeMap = commonService.getListBySqlId(ShopOrderDetail.class, "getSalesVolumeByMerchant");
-			
-			// 销量 好评
-			for (ShopMerchant merch : list) {
-				merch.setSalesVolume("0");
-				if (salesVolumeMap.size()>0) {
-					for (ShopMerchant map : salesVolumeMap) {
-						if (merch.getId().compareTo(map.getId())==0) {
-							merch.setSalesVolume(map.getSalesVolume());
-							break;
+			try {
+				// 销量 好评
+				List<ShopMerchant> salesVolumeMap = commonService.getListBySqlId(ShopOrderDetail.class,
+						"getSalesVolumeByMerchant");
+				List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
+						"getPraiseByMerchant");
+				for (ShopMerchant merch : list) {
+					merch.setSalesVolume("0");
+					if (salesVolumeMap.size() > 0) {
+						for (ShopMerchant map : salesVolumeMap) {
+							if (merch.getId().compareTo(map.getId()) == 0) {
+								merch.setSalesVolume(map.getSalesVolume());
+								break;
+							}
+						}
+					}
+
+					merch.setPraise("0");
+					if (praiseByMerchantMap.size() > 0) {
+						for (ShopMerchant map : praiseByMerchantMap) {
+							if (merch.getId().compareTo(map.getId()) == 0) {
+								merch.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
+								break;
+							}
 						}
 					}
 				}
-				
-				merch.setPraise("5");
+			} catch (Exception ex) {
+				logger.error("首页获取商户点评和销量信息异常:" + ex.getMessage());
+			}
+
+			for (ShopMerchant merch : list) {
 				merch.setLogoPic(imageDomain + merch.getLogoPic());
 			}
 
@@ -78,10 +97,26 @@ public class MerchantApiImpl implements IMerchantApi {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		logger.info("获取获取商户详细信息调用到这里了=================");
 		ShopMerchant merchant = commonService.get(params.getId(), ShopMerchant.class);
-		merchant.setPraise("5");
 		if (merchant != null) {
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 			merchant.setLogoPic(imageDomain + merchant.getLogoPic());
+
+			try {
+				// 好评
+				List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
+						"getPraiseByMerchant");
+				if (praiseByMerchantMap.size() > 0) {
+					for (ShopMerchant map : praiseByMerchantMap) {
+						if (merchant.getId().compareTo(map.getId()) == 0) {
+							merchant.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
+							break;
+						}
+					}
+				}
+			} catch (Exception ex) {
+				logger.error("获取获取商户点评信息数据异常:" + ex.getMessage());
+			}
+
 			resultMap.put("merch", merchant);
 
 			// 商户背景图
@@ -123,10 +158,26 @@ public class MerchantApiImpl implements IMerchantApi {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		logger.info("获取商户上架的商品列表调用到这里了=================");
 		ShopMerchant merchant = commonService.get(params.getId(), ShopMerchant.class);
-		merchant.setPraise("5");
 		if (merchant != null) {
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 			merchant.setLogoPic(imageDomain + merchant.getLogoPic());
+			
+			try {
+				// 好评
+				List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
+						"getPraiseByMerchant");
+				if (praiseByMerchantMap.size() > 0) {
+					for (ShopMerchant map : praiseByMerchantMap) {
+						if (merchant.getId().compareTo(map.getId()) == 0) {
+							merchant.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
+							break;
+						}
+					}
+				}
+			} catch (Exception ex) {
+				logger.error("获取获取商户点评信息数据异常:" + ex.getMessage());
+			}
+			
 			resultMap.put("merch", merchant);
 
 			// 商户背景图

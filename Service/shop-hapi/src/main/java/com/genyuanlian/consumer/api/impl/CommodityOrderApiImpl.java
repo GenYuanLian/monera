@@ -122,25 +122,6 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		// 持久化订单
 		commonService.save(order);
 
-		// 创建订单产品快照
-		ShopOrderCommoditySnapshot snapshot = new ShopOrderCommoditySnapshot();
-		snapshot.setCommodityId(commodity.getId());
-		snapshot.setCommodityType(3);
-		snapshot.setCreateTime(now);
-		snapshot.setMerchantId(merchant.getId());
-		String json = JSON.toJSONString(commodity);
-		if (commodity.getCommodityType() == 1) //// 商品类型：1-区块链计算机,2-通用商品
-		{
-			ShopProductChainComputer product = commonService.get(commodity.getProductId(),
-					ShopProductChainComputer.class);
-			json = json + "#" + JSON.toJSONString(product);
-		} else {
-			ShopProductCommon product = commonService.get(commodity.getProductId(), ShopProductCommon.class);
-			json = json + "#" + JSON.toJSONString(product);
-		}
-		snapshot.setCommodityJson(json);
-		commonService.save(snapshot);
-
 		// 创建订单明细
 		ShopOrderDetail orderDetail = new ShopOrderDetail();
 		orderDetail.setCreateTime(now);
@@ -155,13 +136,32 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		orderDetail.setCommodityId(commodity.getId());
 		orderDetail.setCommodityName(commodity.getTitle());
 		orderDetail.setCommodityType(3);
-		orderDetail.setCommoditySnapshotId(snapshot.getId());
 		orderDetail.setPrice(price.doubleValue());
 		orderDetail.setSaleCount(params.getSaleCount());
 		orderDetail.setAmount(params.getAmount().doubleValue());
 		orderDetail.setStatus(0);
 		orderDetail.setRemark(params.getRemark());
 		commonService.save(orderDetail);
+
+		// 创建订单产品快照
+		ShopOrderCommoditySnapshot snapshot = new ShopOrderCommoditySnapshot();
+		snapshot.setCommodityId(commodity.getId());
+		snapshot.setCommodityType(3);
+		snapshot.setCreateTime(now);
+		snapshot.setOrderDetailId(orderDetail.getId());
+		snapshot.setMerchantId(merchant.getId());
+		String json = JSON.toJSONString(commodity);
+		if (commodity.getCommodityType() == 1) //// 商品类型：1-区块链计算机,2-通用商品
+		{
+			ShopProductChainComputer product = commonService.get(commodity.getProductId(),
+					ShopProductChainComputer.class);
+			json = json + "#" + JSON.toJSONString(product);
+		} else {
+			ShopProductCommon product = commonService.get(commodity.getProductId(), ShopProductCommon.class);
+			json = json + "#" + JSON.toJSONString(product);
+		}
+		snapshot.setCommodityJson(json);
+		commonService.save(snapshot);
 
 		// 更新库存
 		commodity.setInventoryQuantity(commodity.getInventoryQuantity() - params.getSaleCount());
@@ -213,7 +213,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			return messageVo;
 		}
 
-		String commodityName = "";
+		ShopOrderDetail orderDetail = null;
 		List<ShopOrderDetail> orderDetails = commonService.getList(ShopOrderDetail.class, "orderNo",
 				params.getOrderNo());
 		if (orderDetails == null || orderDetails.size() == 0) {
@@ -221,7 +221,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorMessage());
 			return messageVo;
 		} else {
-			commodityName = orderDetails.get(0).getCommodityName();
+			orderDetail = orderDetails.get(0); // 目前只有一个订单明细
 		}
 
 		// 检查订单状态
@@ -271,8 +271,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
 			return messageVo;
 		}
-		Double walletBalance = bwsService.walletBalance(wallet.getWalletAddress());
-		if (BigDecimal.valueOf(walletBalance).compareTo(waitPayAmount) == -1) {
+		BigDecimal walletBalance = bwsService.walletBalance(wallet.getWalletAddress());
+		if (walletBalance.compareTo(waitPayAmount) == -1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorMessage());
 			return messageVo;
@@ -337,19 +337,27 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 		// 上传BSTK钱包交易
 		String transactionNo = bwsService.walletConsume(order.getId(), params.getMemberId(), 1,
-				wallet.getWalletAddress(), waitPayAmount.doubleValue());
+				wallet.getWalletAddress(), waitPayAmount);
 
 		// 记录提货卡交易日志表
 		for (Map.Entry<Long, Double> entry : puCardConsumeMap.entrySet()) {
 			ShopPuCardTradeRecord tradeRecord = new ShopPuCardTradeRecord();
 			tradeRecord.setMemberId(params.getMemberId());
 			tradeRecord.setPuCardId(entry.getKey());
-			tradeRecord.setTitle(commodityName);
+			tradeRecord.setTitle(orderDetail.getCommodityName());
 			tradeRecord.setAmount(-entry.getValue());
 			tradeRecord.setTransactionNo(transactionNo);
 			tradeRecord.setRemark(order.getOrderNo());
 			commonService.save(tradeRecord);
 		}
+
+		// 查询商品
+		ShopCommodity commodity = commonService.get(orderDetail.getCommodityId(), ShopCommodity.class);
+
+		// 更新库存
+		commodity.setInventoryQuantity(commodity.getInventoryQuantity() - orderDetail.getSaleCount());
+		commodity.setSaleQuantity(commodity.getSaleQuantity() + orderDetail.getSaleCount());
+		commonService.update(commodity);
 
 		messageVo.setResult(true);
 		messageVo.setT(order.getOrderNo());

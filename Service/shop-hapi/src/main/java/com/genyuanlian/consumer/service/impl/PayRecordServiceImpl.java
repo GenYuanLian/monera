@@ -1,6 +1,7 @@
 package com.genyuanlian.consumer.service.impl;
 
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class PayRecordServiceImpl implements IPayRecordService {
 
 		List<ShopPayRecord> records = commonDao.getList(ShopPayRecord.class, "orderNo", orderNo);
 
-		String payNum = orderNo + System.currentTimeMillis();
+		String payNum = orderNo +DateUtil.formatDateByFormat(new Date(), "HHmmss");
 		ShopPayRecord payRecord = new ShopPayRecord();
 		if (records!=null && records.size()>0) {
 			for (ShopPayRecord r : records) {

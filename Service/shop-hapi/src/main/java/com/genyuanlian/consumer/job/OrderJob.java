@@ -85,81 +85,83 @@ public class OrderJob {
 	@Scheduled(cron="0 0/10 * * * ? ")
 	public void bwsAPIReTry()
 	{
-
-		List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class,"status",2);
-		if(tasks != null && tasks.size()>0)
-		{
-			for(ShopBstkRecord record:tasks)
-			{
-				ShopBstkRecord upRecord = new ShopBstkRecord();
-				upRecord.setId(record.getId());
-				//执行任务
-				try
-				{
-
-					/**
-					 * 调用接口
-					 */
-					String response =HttpClientUtils.bwsPost(record.getCallUrl(), JSONObject.parseObject(record.getCallReq(),JSONObject.class));
-					upRecord.setCallResp(response);
-					BWSWalletResponse result = JSONObject.parseObject(response,BWSWalletResponse.class);
-
-					/**
-					 * 创建钱包
-					 */
-					if(record.getCallType() == 1)
-					{
-
-						BWSWalletCreateResponseVo resultVo = JSONObject.parseObject(result.getData(),BWSWalletCreateResponseVo.class);
-
-						//调用接口更新
-						//插入 wallet
-						ShopBstkWallet upWallet = new ShopBstkWallet();
-						upWallet.setOwnerId(record.getOwnerId());
-						upRecord.setOwnerType(record.getOwnerType());
-						upWallet.setWalletAddress(resultVo.getWallet());
-						upWallet.setPublicKeyAddr(resultVo.getMainAddr());
-						upWallet.setCreateTime(DateUtil.getCurrentDateTime());
-						commonService.save(upWallet);
-
-					}
-					/**
-					 * 充值 消费
-					 */
-					else if(record.getCallType()==2 || record.getCallType()==3)
-					{
-						BWSWalletTransferResponseVo voResult = JSONObject.parseObject(result.getData(),BWSWalletTransferResponseVo.class);
-
-
-						//调用接口更新
-						ShopOrder upOrder = new ShopOrder();
-						upOrder.setId(record.getBusinessId());
-						upOrder.setTransactionNo(voResult.getTxid());
-						commonService.update(upOrder);
-
-					}
-
-					upRecord.setStatus(1);
-					upRecord.setRemark("自动任务调用");
-					upRecord.setCreateTime(DateUtil.getCurrentDateTime());
-					commonService.update(upRecord);
-
-
-
-				}
-				catch (Exception ex)
-				{
-					logger.error("自动任务调用bws接口失败",ex);
-					upRecord.setRetryCount(record.getRetryCount()+1);
-					upRecord.setStatus(2);
-					upRecord.setRemark("自动任务调用");
-					upRecord.setCreateTime(DateUtil.getCurrentDateTime());
-					commonService.update(upRecord);
-
-				}
-
-			}
-		}
+//		if ("1".equals(jobLock)) {
+//			return;
+//		}
+//		List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class,"status",2);
+//		if(tasks != null && tasks.size()>0)
+//		{
+//			for(ShopBstkRecord record:tasks)
+//			{
+//				ShopBstkRecord upRecord = new ShopBstkRecord();
+//				upRecord.setId(record.getId());
+//				//执行任务
+//				try
+//				{
+//
+//					/**
+//					 * 调用接口
+//					 */
+//					String response =HttpClientUtils.bwsPost(record.getCallUrl(), JSONObject.parseObject(record.getCallReq(),JSONObject.class));
+//					upRecord.setCallResp(response);
+//					BWSWalletResponse result = JSONObject.parseObject(response,BWSWalletResponse.class);
+//
+//					/**
+//					 * 创建钱包
+//					 */
+//					if(record.getCallType() == 1)
+//					{
+//
+//						BWSWalletCreateResponseVo resultVo = JSONObject.parseObject(result.getData(),BWSWalletCreateResponseVo.class);
+//
+//						//调用接口更新
+//						//插入 wallet
+//						ShopBstkWallet upWallet = new ShopBstkWallet();
+//						upWallet.setOwnerId(record.getOwnerId());
+//						upRecord.setOwnerType(record.getOwnerType());
+//						upWallet.setWalletAddress(resultVo.getWallet());
+//						upWallet.setPublicKeyAddr(resultVo.getMainAddr());
+//						upWallet.setCreateTime(DateUtil.getCurrentDateTime());
+//						commonService.save(upWallet);
+//
+//					}
+//					/**
+//					 * 充值 消费
+//					 */
+//					else if(record.getCallType()==2 || record.getCallType()==3)
+//					{
+//						BWSWalletTransferResponseVo voResult = JSONObject.parseObject(result.getData(),BWSWalletTransferResponseVo.class);
+//
+//
+//						//调用接口更新
+//						ShopOrder upOrder = new ShopOrder();
+//						upOrder.setId(record.getBusinessId());
+//						upOrder.setTransactionNo(voResult.getTxid());
+//						commonService.update(upOrder);
+//
+//					}
+//
+//					upRecord.setStatus(1);
+//					upRecord.setRemark("自动任务调用");
+//					upRecord.setCreateTime(DateUtil.getCurrentDateTime());
+//					commonService.update(upRecord);
+//
+//
+//
+//				}
+//				catch (Exception ex)
+//				{
+//					logger.error("自动任务调用bws接口失败",ex);
+//					upRecord.setRetryCount(record.getRetryCount()+1);
+//					upRecord.setStatus(2);
+//					upRecord.setRemark("自动任务调用");
+//					upRecord.setCreateTime(DateUtil.getCurrentDateTime());
+//					commonService.update(upRecord);
+//
+//				}
+//
+//			}
+//		}
 	}
 
 	/**
@@ -168,6 +170,10 @@ public class OrderJob {
 	@Scheduled(cron="0 0/10 * * * ? ")
 	public void bwsWarn()
 	{
+		if ("1".equals(jobLock)) {
+			return;
+		}
+
 		//钱包余额告警
 		try
 		{
@@ -179,6 +185,8 @@ public class OrderJob {
 
 			//查询余额
 			BigDecimal walletBalance = bwsService.walletBalance(walletId);
+			logger.debug("钱包余额：",walletBalance);
+			logger.debug("钱包限定额：",walletAccount);
 			if(walletBalance.compareTo(walletAccount)<0)
 			{
 				//发送短信
@@ -199,6 +207,7 @@ public class OrderJob {
 		{
 			Integer retryCount = Integer.parseInt(ConfigPropertieUtils.getString("bws.retryCount"));
 			List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class,"status",2,"retry_count",retryCount);
+			logger.debug("重试任务：",tasks);
 			if(tasks != null && tasks.size()>0)
 			{
 				String receiverPhoneNumber= ConfigPropertieUtils.getString("bws.walletRestWarnReceiveMobile");
@@ -218,5 +227,8 @@ public class OrderJob {
 		}
 
 	}
+
+
+
 
 }

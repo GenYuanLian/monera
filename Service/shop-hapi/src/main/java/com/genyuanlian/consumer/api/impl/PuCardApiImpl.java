@@ -1,6 +1,9 @@
 package com.genyuanlian.consumer.api.impl;
 
-import static org.hamcrest.CoreMatchers.nullValue;
+<<<<<<< .mine
+
+=======
+>>>>>>> .r750
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,10 +24,9 @@ import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
-import com.genyuanlian.consumer.shop.model.ShopCommodity;
+import com.genyuanlian.consumer.shop.model.ShopComment;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
-import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
@@ -58,6 +60,22 @@ public class PuCardApiImpl implements IPuCardApi {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 			return result;
+		}
+
+		try {
+			// 好评
+			List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
+					"getPraiseByMerchant");
+			if (praiseByMerchantMap.size() > 0) {
+				for (ShopMerchant map : praiseByMerchantMap) {
+					if (merchant.getId().compareTo(map.getId()) == 0) {
+						merchant.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
+						break;
+					}
+				}
+			}
+		} catch (Exception ex) {
+			logger.error("获取获取商户点评信息数据异常:" + ex.getMessage());
 		}
 
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
@@ -165,7 +183,7 @@ public class PuCardApiImpl implements IPuCardApi {
 
 		ShopBstkWallet bstkWallet = commonService.get(ShopBstkWallet.class, "ownerId", memberId, "ownerType", 1);
 		String transactionNo = bwsService.walletRecharge(0l, memberId, 1, bstkWallet.getPublicKeyAddr(),
-				card.getTotelValue());
+				BigDecimal.valueOf(card.getTotelValue()));
 		logger.info("调用bstk接口返回值：" + transactionNo);
 
 		// 保存提货卡交易记录

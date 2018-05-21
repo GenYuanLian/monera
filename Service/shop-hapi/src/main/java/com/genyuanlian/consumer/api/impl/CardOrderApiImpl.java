@@ -107,6 +107,51 @@ public class CardOrderApiImpl implements ICardOrderApi {
 
 		commonService.save(order);
 
+		// 创建订单明细
+		ShopOrderDetail orderDetail = new ShopOrderDetail();
+		orderDetail.setCreateTime(now);
+		orderDetail.setMemberId(memberId);
+		orderDetail.setOrderId(order.getId());
+		orderDetail.setOrderNo(order.getOrderNo());
+		orderDetail.setMerchantId(puCards.get(0).getMerchantId());
+		if (merchant != null) {
+			orderDetail.setMerchantName(merchant.getMerchName());
+			orderDetail.setDescription(merchant.getLogoPic());
+		}
+		orderDetail.setCommodityId(puCards.get(0).getCardTypeId()); // 提货卡存提货卡类型Id
+		orderDetail.setCommodityName(puCards.get(0).getTitle());
+		orderDetail.setCommodityType(puCards.get(0).getCommodityType());
+		orderDetail.setPrice(puCards.get(0).getPrice());
+		orderDetail.setSaleCount(payCount);
+		orderDetail.setAmount(amount.doubleValue());
+		orderDetail.setStatus(0);
+		orderDetail.setRemark(remark);
+		commonService.save(orderDetail);
+
+		// 配送信息
+		if (ProUtility.isNotNull(addressId) && Long.parseLong(addressId) > 0) {
+			ShopMemberAddress address = commonService.get(Long.parseLong(addressId), ShopMemberAddress.class);
+			if (address != null && address.getMemberId() == memberId) // 是当前用户地址
+			{
+				ShopOrderDelivery delivery = new ShopOrderDelivery();
+				delivery.setMemberId(memberId);
+				delivery.setOrderId(order.getId());
+				delivery.setOrderDetailId(orderDetail.getId());
+				delivery.setReceiver(address.getReceiver());
+				delivery.setGender(address.getGender());
+				delivery.setAreaId(address.getAreaId());
+				delivery.setAreaName(address.getAreaName());
+				delivery.setAddress(address.getAddress());
+				delivery.setMobile(address.getMobile());
+				delivery.setTel(address.getTel());
+				delivery.setRemark(address.getRemark());
+				delivery.setEmail(address.getEmail());
+				delivery.setCreateTime(now);
+
+				commonService.save(delivery);
+			}
+		}
+		
 		for (int i = 0; i < payCount; i++) {
 			// 锁定提货卡
 			ShopPuCard puCard = puCards.get(i);
@@ -119,54 +164,10 @@ public class CardOrderApiImpl implements ICardOrderApi {
 			snapshot.setCommodityType(puCard.getCommodityType());
 			snapshot.setCreateTime(now);
 			snapshot.setMerchantId(merchant.getId());
+			snapshot.setOrderDetailId(orderDetail.getId());
 			snapshot.setCommodityJson(JSON.toJSONString(puCardType) + "#" + JSON.toJSONString(puCard));
 			commonService.save(snapshot);
 
-			// 创建订单明细
-			ShopOrderDetail orderDetail = new ShopOrderDetail();
-			orderDetail.setCreateTime(now);
-			orderDetail.setMemberId(memberId);
-			orderDetail.setOrderId(order.getId());
-			orderDetail.setOrderNo(order.getOrderNo());
-			orderDetail.setMerchantId(puCard.getMerchantId());
-			if (merchant != null) {
-				orderDetail.setMerchantName(merchant.getMerchName());
-				orderDetail.setDescription(merchant.getLogoPic());
-			}
-			orderDetail.setCommodityId(puCard.getId());
-			orderDetail.setCommodityName(puCard.getTitle());
-			orderDetail.setCommodityType(puCard.getCommodityType());
-			orderDetail.setCommoditySnapshotId(snapshot.getId());
-			orderDetail.setPrice(puCard.getPrice());
-			orderDetail.setSaleCount(payCount);
-			orderDetail.setAmount(amount.doubleValue());
-			orderDetail.setStatus(0);
-			orderDetail.setRemark(remark);
-			commonService.save(orderDetail);
-
-			// 配送信息
-			if (ProUtility.isNotNull(addressId) && Long.parseLong(addressId) > 0) {
-				ShopMemberAddress address = commonService.get(Long.parseLong(addressId), ShopMemberAddress.class);
-				if (address != null && address.getMemberId() == memberId) // 是当前用户地址
-				{
-					ShopOrderDelivery delivery = new ShopOrderDelivery();
-					delivery.setMemberId(memberId);
-					delivery.setOrderId(order.getId());
-					delivery.setOrderDetailId(orderDetail.getId());
-					delivery.setReceiver(address.getReceiver());
-					delivery.setGender(address.getGender());
-					delivery.setAreaId(address.getAreaId());
-					delivery.setAreaName(address.getAreaName());
-					delivery.setAddress(address.getAddress());
-					delivery.setMobile(address.getMobile());
-					delivery.setTel(address.getTel());
-					delivery.setRemark(address.getRemark());
-					delivery.setEmail(address.getEmail());
-					delivery.setCreateTime(now);
-
-					commonService.save(delivery);
-				}
-			}
 		}
 
 		result.setResult(true);
@@ -187,23 +188,28 @@ public class CardOrderApiImpl implements ICardOrderApi {
 			return result;
 		}
 
-		List<Long> cardIds = new ArrayList<>();
 		// 修改订单详情
 		for (ShopOrderDetail orderDetail : orderDetails) {
 			if (orderDetail.getStatus().equals(0)) {
 				orderDetail.setStatus(status);
 				orderDetail.setCancelReason(cancelReason);
 				commonService.update(orderDetail);
-				if (orderDetail.getCommodityType().equals(1)) {
-					cardIds.add(orderDetail.getCommodityId());
-				}
 			} else {
 				logger.info("订单号：" + orderDetail.getOrderNo() + "状态：" + orderDetail.getStatus() + "不可取消");
 			}
 		}
 
+		// 要取消的订单中提货卡订单详情id集合
+		List<Long> puCardOrderDetailIds = orderDetails.stream().filter(i -> i.getCommodityType() == 1)
+				.map(i -> i.getId()).distinct().collect(Collectors.toList());
 		// 提货卡订单需要修改对应的提货卡信息
-		if (cardIds.size() > 0) {
+		if (puCardOrderDetailIds != null && puCardOrderDetailIds.size() > 0) {
+			// 根据订单详情ids查询，订单产品快照集合
+			List<ShopOrderCommoditySnapshot> list = commonService.getList(ShopOrderCommoditySnapshot.class,
+					"existOrderDetailIds", puCardOrderDetailIds);
+
+			List<Long> cardIds = list.stream().map(i -> i.getCommodityId()).distinct().collect(Collectors.toList());
+
 			// 修改相关联卡信息
 			List<ShopPuCard> cards = commonService.get(cardIds, ShopPuCard.class);
 			if (cards == null || cards.size() == 0) {
@@ -309,7 +315,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 
 		// 上传BSTK钱包交易
 		String transactionNo = bwsService.walletRecharge(order.getId(), merchant.getId(), 2, wallet.getPublicKeyAddr(),
-				waitPayAmount.doubleValue());
+				waitPayAmount);
 
 		messageVo.setResult(true);
 		messageVo.setT(orderDetails.get(0).getOrderNo());

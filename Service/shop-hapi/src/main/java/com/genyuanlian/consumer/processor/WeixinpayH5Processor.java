@@ -19,7 +19,7 @@ import com.hnair.consumer.utils.IpUtils;
 import com.hnair.consumer.utils.LoginCheck;
 import com.hnair.consumer.utils.ResultSender;
 
-@LoginCheck
+//@LoginCheck
 @Component("hapiweixinpayH5processor")
 public class WeixinpayH5Processor extends BaseApiProcessor {
 
@@ -55,7 +55,15 @@ public class WeixinpayH5Processor extends BaseApiProcessor {
 		req.setSubject(order.getCommodityName());
 		req.setTotalAmount(order.getAmount());
 		
-		ShopMessageVo<Map<String,Object>> unifiedOrder = weixinpayApi.unifiedOrder(req);
+		ShopMessageVo<Map<String,Object>> messageVo = weixinpayApi.unifiedOrder(req);
+		if (!messageVo.isResult()) {
+			sender.fail(Integer.valueOf(messageVo.getErrorCode()), messageVo.getErrorMessage(), response);
+			return;
+		}
+		
+		sender.put("weixinPayData", messageVo.getT());
+		sender.success(response);
+		
 	}
 
 }

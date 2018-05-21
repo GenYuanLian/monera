@@ -1,6 +1,8 @@
 package com.genyuanlian.consumer.api.impl;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +77,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		Map<String, Object> scene = new HashMap<>();
 		scene.put("h5_info", h5Info);
 
-		Map<String, String> payResult = unifiedOrder(WeixinpayProperties.WEIXIN_HOST_URL, payRecord.getPayNum(),
+		Map<String, String> payResult = unifiedOrder(WeixinpayProperties.WEIXIN_NOTIFY_URL, payRecord.getPayNum(),
 				req.getSubject(), req.getTotalAmount(), req.getSpbillCreateIp(), tradeType,
 				WeixinpayProperties.WEIXIN_APP_ID, req.getOpenId(), WeixinpayProperties.WEIXIN_MCHID, scene_info,
 				payRecord);
@@ -128,35 +130,35 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		resultMap.put("signType", "MD5");
 		resultMap.put("paySign", paySign);
 		resultMap.put("mwebUrl", mweb_url);
-		// 获取jsapi的token
-		String token = "";
-		// 获取jsapi的ticket
-		String tiket = "";
-		try {
-			token = getToken(appId, WeixinpayProperties.WEIXIN_APP_SECRET);
-			logger.info("微信支付，当前获取的token为：" + token);
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.info("微信支付，当前获取的token异常");
-		}
-
-		try {
-			tiket = getTicket(token);
-			logger.info("微信支付，当前获取的tiket为：" + tiket);
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.info("微信支付，当前获取的tiket异常");
-		}
+//		// 获取jsapi的token
+//		String token = "";
+//		// 获取jsapi的ticket
+//		String tiket = "";
+//		try {
+//			token = getToken(appId, WeixinpayProperties.WEIXIN_APP_SECRET);
+//			logger.info("微信支付，当前获取的token为：" + token);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			logger.info("微信支付，当前获取的token异常");
+//		}
+//
+//		try {
+//			tiket = getTicket(token);
+//			logger.info("微信支付，当前获取的tiket为：" + tiket);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			logger.info("微信支付，当前获取的tiket异常");
+//		}
 
 		// 重新获取随机数，以及时间串
-		String url = WeixinpayProperties.WEIXIN_HOST_URL + WeixinpayProperties.H5PayPage;
+//		String url = WeixinpayProperties.WEIXIN_HOST_URL + WeixinpayProperties.H5PayPage;
 
 		SortedMap<String, String> singnTiketMap = new TreeMap<String, String>();
 
 		singnTiketMap.put("noncestr", noncestr);
-		singnTiketMap.put("jsapi_ticket", tiket);
+//		singnTiketMap.put("jsapi_ticket", tiket);
 		singnTiketMap.put("timestamp", timestamp);
-		singnTiketMap.put("url", url);
+//		singnTiketMap.put("url", url);
 		String signature = "";
 		try {
 			signature = Sha1Util.createSHA1Sign(singnTiketMap);
@@ -169,7 +171,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		resultMap.put("orderId", payRecord.getId());
 
 		// 根据订单ID获取相关的订单信息
-		logger.info("微信支付，获取相关签名信息：url=" + url + ", noncestr=" + noncestr + ", jsapi_ticket=" + tiket + ", timestamp="
+		logger.info("微信支付，获取相关签名信息： noncestr=" + noncestr + ", timestamp="
 				+ timestamp);
 
 		messageVo.setResult(true);
@@ -189,7 +191,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 	 * @param payRecord
 	 * @return
 	 */
-	private Map<String, String> unifiedOrder(String hostUrl, String orderNum, String name, Double price,
+	private Map<String, String> unifiedOrder(String notifyUrl, String orderNum, String name, Double price,
 			String spbillCreateIp, String tradeType, String appId, String openId, String mchid, String scene_info,
 			ShopPayRecord payRecord) {
 
@@ -201,7 +203,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 
 		// 如果是微信支付，则调用微信创建订单的接口
 		WeixinUnifiedOrderVo reqData = new WeixinUnifiedOrderVo.UnifiedOrderReqDataBuilder(appId, mchid, name, orderNum,
-				productPrice, spbillCreateIp, hostUrl + "pay/weiXinNotifySuccess.go", tradeType, scene_info)
+				productPrice, spbillCreateIp, notifyUrl, tradeType, scene_info)
 						.setKey(WeixinpayProperties.WEIXIN_SELF_DEFINE).setOpenid(openId).build();
 		logger.info("微信支付问题查找，签名为：" + reqData.getSign());
 		logger.info("微信支付问题查找，orderNum:" + orderNum + ", productPrice:" + productPrice + ", spbillCreateIp:"
@@ -238,12 +240,14 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 			}
 			wxStr = strBuffer.toString();
 			logger.info("微信支付问题查找, 统一下单接口. 当前返回的数据转换为json格式:" + wxStr);
-			// wxStr = map.get("prepay_id").toString();
+			 wxStr = map.get("prepay_id").toString();
 			if (map.containsKey("prepay_id") && map.get("prepay_id") != null) {
 				result.put("prepay_id", map.get("prepay_id").toString());
 			}
 			if (map.containsKey("mweb_url") && map.get("mweb_url") != null) {
-				result.put("mweb_url", map.get("mweb_url").toString());
+				String returnUrl = WeixinpayProperties.WEIXIN_RETURN_URL+payRecord.getOrderNo();
+				result.put("mweb_url", map.get("mweb_url").toString()+"&redirect_url="+URLEncoder.encode(returnUrl, "UTF-8"));
+				logger.info("mweb_url="+result.get("mweb_url").toString());
 			}
 			result.put("return_code", "SUCCESS");
 			logger.info("不转为json格式的话，直接取prepay_id为：" + wxStr);
@@ -279,9 +283,10 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 
 	@SuppressWarnings("unchecked")
 	private String getToken(String appId, String appSecret) throws Exception {
-		String requestUrl = WeixinpayProperties.JSAPI_TOKEN + "?grant_type=client_credential&appid=" + appId
-				+ "&secret=" + appSecret;
-
+//		String requestUrl = WeixinpayProperties.JSAPI_TOKEN + "?grant_type=client_credential&appid=" + appId
+//				+ "&secret=" + appSecret;
+		String requestUrl =null;
+		
 		String res = HttpClientUtils.doGet(requestUrl);
 		logger.info(res);
 		Map<String, Object> resultMap = JSONObject.parseObject(res, HashMap.class);
@@ -295,7 +300,8 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 	@SuppressWarnings("unchecked")
 	private String getTicket(String token) throws Exception {
 
-		String requestUrl = WeixinpayProperties.JSAPI_TICKET + "?access_token=" + token + "&&type=jsapi";
+//		String requestUrl = WeixinpayProperties.JSAPI_TICKET + "?access_token=" + token + "&&type=jsapi";
+		String requestUrl=null;
 
 		String res = HttpClientUtils.doGet(requestUrl);
 		System.out.println(res);
@@ -369,7 +375,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		ShopMessageVo<String> result = new ShopMessageVo<>();
 
 		List<ShopPayRecord> payRecords = commonService.getList(ShopPayRecord.class, "payNum", req.get("out_trade_no"),
-				"accountType", 2);
+				"accountType", 1);
 		// 交易号验证
 		if (payRecords == null || payRecords.size() == 0) {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800003.getErrorCode().toString());
@@ -378,7 +384,8 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		}
 		ShopPayRecord payRecord = payRecords.get(0);
 		// 金额验证
-		if (payRecord.getAmount().compareTo(Double.valueOf(req.get("total_fee"))) != 0) {
+		
+		if (Double.compare(payRecord.getAmount()*100, Double.valueOf(req.get("total_fee"))) != 0) {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800005.getErrorCode().toString());
 			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800005.getErrorMessage());
 			return result;
@@ -391,15 +398,13 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 			return result;
 		}
 
-		// 构造要修改的支付记录
-		ShopPayRecord updateRecord = new ShopPayRecord();
-		updateRecord.setId(payRecord.getId());
+		// 修改支付记录
 		//微信只有openid
-		updateRecord.setPayAccount(req.get("openid"));
-		updateRecord.setStatus(req.get("trade_state").equals("SUCCESS") ? 1 : 2);
-		updateRecord.setTradeNo(req.get("transaction_id"));
+		payRecord.setPayAccount(req.get("openid"));
+		payRecord.setStatus(req.get("trade_state").equals("SUCCESS") ? 1 : 2);
+		payRecord.setTradeNo(req.get("transaction_id"));
 
-		return payRecordApi.paySuccess(updateRecord);
+		return payRecordApi.paySuccess(payRecord);
 	}
 
 	private static String setXML(String return_code, String return_msg) {

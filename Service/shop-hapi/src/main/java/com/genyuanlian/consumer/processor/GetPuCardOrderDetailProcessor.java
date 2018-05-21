@@ -79,7 +79,7 @@ public class GetPuCardOrderDetailProcessor extends BaseApiProcessor {
 		// 支付等待时长，单位分钟
 		Integer time = ConfigPropertieUtils.getLong("wait_pay_time", 30l).intValue();
 		orderDetail.setMerchType(merchan.getMerchType());
-		orderDetail.setMerchLogo(imageDomain + orderDetail.getMerchLogo());
+		orderDetail.setMerchLogo(imageDomain + merchan.getLogoPic());
 		orderDetail.setPayType(order.getPayType());
 		orderDetail.setDescription(imageDomain + orderDetail.getDescription());
 		orderDetail.setSurplusPayTime(
