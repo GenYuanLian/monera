@@ -19,7 +19,7 @@ export default {
     //
     //http://10.68.79.42:8091/api/weChat/weChatShare
     $vue.$httpPost(apiUrl.weChatShare, {shareLink: options.localUrl}).then((res) => {
-      if(res.data&&res.data.status==="1000") {
+      if(res.status.code==0&&res.data) {
         wx.config({
           debug: false,
           appId: res.data.appId, // 和获取Ticke的必须一样------必填，公众号的唯一标识
@@ -107,5 +107,74 @@ export default {
     }).catch((err) => {
       console.log(err);
     });
+  },
+  wxJsPay: function($vue, param = {}, success, fail) {
+    //TODO 获取微信config值
+    $vue.$httpPost(apiUrl.weixinpayH5, param).then((res) => {
+      if(res.status.code==0&&res.data) {
+        let config = res.data.weixinPayData;
+        wx.config({
+          debug: false,
+          appId: config.appId, // 和获取Ticke的必须一样------必填，公众号的唯一标识
+          timestamp: config.timestamp, // 必填，生成签名的时间戳
+          nonceStr: config.nonceStr, // 必填，生成签名的随机串
+          signature: config.paySign, // 必填，签名
+          jsApiList: [ 'chooseWXPay' ]
+        });
+        //处理验证失败的信息
+        wx.error(function (res) {
+          console.log('验证失败返回的信息:', res);
+        });
+        //处理验证成功的信息
+        wx.ready(function () {
+          wx.chooseWXPay({
+            timestamp: config.timestamp,
+            nonceStr: config.nonceStr,
+            package: config.packageStr,
+            signType: config.signType,
+            paySign: config.paySign,
+            success: function (res) {
+              // 支付成功后的回调函数
+              if(success) success();
+            }
+          });
+        });
+      }else {
+        if(fail) fail(res);
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+  },
+  wxChatPay: function(param={}, success, fail) {
+    if (typeof WeixinJSBridge == "undefined") {
+      if( document.addEventListener ) {
+        document.addEventListener('WeixinJSBridgeReady', onBridgeReady(param, success, fail), false);
+      }else if (document.attachEvent) {
+        document.attachEvent('WeixinJSBridgeReady', onBridgeReady(param, success, fail));
+        document.attachEvent('onWeixinJSBridgeReady', onBridgeReady(param, success, fail));
+      }
+    }else{
+      onBridgeReady(param, success, fail);
+    }
+    function onBridgeReady(param, success, fail) {
+      WeixinJSBridge.invoke(
+        'getBrandWCPayRequest', {
+          "appId":param.appId,
+          "timeStamp":param.timestamp,
+          "nonceStr":param.nonceStr,
+          "package":param.packageStr,
+          "signType":param.signType,
+          "paySign":param.paySign
+        },
+        function(res) {
+          if(res.err_msg == "get_brand_wcpay_request:ok" ) {
+            if(success) success();
+          }else if(res.err_msg == "get_brand_wcpay_request:cancel") {
+            if(fail) fail();
+          }
+        }
+      );
+    }
   }
 };

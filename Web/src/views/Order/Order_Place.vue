@@ -11,10 +11,9 @@
             <p class="per-address">{{deliver.address}}</p>
           </div>
         </div>
-        <div class="add-more"><i class="ico-more"></i></div>
       </div>
       <div v-if="productType==1" class="order-send">
-        <div class="order-row">
+        <div class="order-row no-border-bot">
           <div class="row-key">配送</div>
           <div class="row-val">无需配送</div>
         </div>
@@ -36,7 +35,7 @@
       <div class="order-pay-type">
         <div class="order-row">
           <div class="row-key">支付方式</div>
-          <div class="row-val">{{productType==1?'微信 支付宝':'提货卡'}}</div>
+          <div class="row-val">{{productType==1?'微信/支付宝':'提货卡'}}</div>
         </div>
         <div class="order-row no-border-bot">
           <div class="row-key">优惠券抵扣</div>
@@ -272,10 +271,12 @@ html,body{
     .order-address{
       padding: 30px 30px 25px 30px;
       margin-bottom: 20px;
-      background-color: #fff;
       overflow: hidden;
+      background: url('../../assets/images/Svg/ico-more-r.svg') no-repeat right center #fff;
+      background-size: 14px 24px;
+      background-position-x: calc(~"100% - 30px");
       .person-infor{
-        width: calc(~"100% - 25px");
+        width: calc(~"100% - 45px");
         height: auto;
         float: left;
         .no-address{
@@ -291,19 +292,6 @@ html,body{
             padding: 5px 0;
             line-height: 35px;
           }
-        }
-      }
-      .add-more{
-        width: 25px;
-        height: 90px;
-        float: right;
-        i{
-          display: inline-block;
-          vertical-align: middle;
-          width: 14px;
-          height: 24px;
-          margin-left: 10px;
-          margin-top: 30px;
         }
       }
     }

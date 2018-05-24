@@ -12,7 +12,8 @@
           <span><i class="ico-news"></i></span>
         </div> -->
       </header>
-      <section class="content">
+      <homeSkeleton v-if="!init"></homeSkeleton>
+      <section v-else class="content">
         <swiper class="home-swiper" :list="shopImgs" v-model="shopImgIdx" @on-index-change="shopImgOnIndexChange" :interval="5000" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'home-dots'"></swiper>
         <div class="merchants">
           <p class="title hide"><i class="ico-supplier"></i>附近商家</p>
@@ -31,7 +32,7 @@
           <p class="hope">更多产品即将上线~</p>
         </div>
       </section>
-      <NavBar :isShow="true"></NavBar>
+      <NavBar :isShow="true" :isLogin="isLogin"></NavBar>
       <!-- <PopWin ref="service" :isShow="false" :datas="serviceData"></PopWin> -->
       <!-- <CommingSon ref="comson" :imgUrl="imgurl"></CommingSon> -->
   </div>
@@ -42,6 +43,7 @@ import { Swiper } from "vux";
 import PopWin from '@/components/common/PopWin';
 import NavBar from '@/components/common/NavBar';
 import CommingSon from '@/components/common/CommingSon';
+import homeSkeleton from './Skeleton/home.skeleton.vue';
 import { showMsg, loading, valid, versions } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import weixin from "@/utils/wechat.js";
@@ -52,10 +54,12 @@ export default {
       imgurl:'',
       shopImgIdx: 0,
       shopImgs:[],
-      merchantsList:[]
+      merchantsList:[],
+      init:false,
+      isLogin:false  // 判断是否登录
     };
   },
-  components: { NavBar, PopWin, CommingSon, Swiper },
+  components: { NavBar, PopWin, CommingSon, Swiper, homeSkeleton },
   computed: {
     ...mapGetters({
       getToken: 'getToken',
@@ -78,8 +82,8 @@ export default {
     initWxChat: function() {
       let url = window.localStorage.getItem("LocalUrl")||window.location.href;
       let param = {
-        title: "欧罗巴聚财",
-        desc: "欢迎您体验欧罗巴聚财",
+        title: "买卖大集",
+        desc: "欢迎您体验买卖大集",
         link: window.location.href,
         imgUrl: this.headPortrait,
         localUrl: url
@@ -121,6 +125,7 @@ export default {
       this.$httpPost(apiUrl.getMerchantList, {}).then((res) => {
         if(res.status.code==0&&res.data) {
           this.merchantsList = res.data.result;
+          this.init = true;
         } else {
           showMsg(res.status.message);
         }
@@ -135,7 +140,12 @@ export default {
     if(versions.ios&&versions.wx) {
       //IOS终端&微信
       // this.initWxChat();
-    }
+    };
+    if(this.getToken) {
+      this.isLogin = true;
+    } else {
+      this.isLogin = false;
+    };
   }
 };
 </script>

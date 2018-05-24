@@ -2,7 +2,7 @@
   <div class="gyl-order-detail_product">
     <div v-title>订单详情</div>
     <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
-    <section class="content" :class="orderMsg.status==1 || orderMsg.status==2 || orderMsg.status==8 ? 'no-footer' : ''">
+    <section class="content" :class="isHaveFooter ? '' : 'no-footer'">
       <div class="order-status" :class="orderStatusBg">
         <p class="order-detail-status">{{orderStatusHandle(orderMsg.status)}}</p>
         <p class="order-tip">{{orderMsg.status==0 ? '逾期未支付订单将自动取消' : (orderMsg.status==2 ? '30分钟内未完成支付，订单已自动取消' : '')}}</p>
@@ -69,12 +69,13 @@
         </div>
       </div>
     </section>
-    <footer class="foot" v-if="!(orderMsg.status==1 || orderMsg.status==2 || orderMsg.status==8)">
+    <footer class="foot" v-if="orderMsg.status==0 || orderMsg.status==1 || orderMsg.status==2 || orderMsg.status==3 || orderMsg.status==6 ">
       <input v-if="orderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancleOrder">
       <input v-if="orderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="payOrder">
-      <input v-if="orderMsg.status==6" class="cancle-btn" type="button" value="去评价" @click="judgeOrder">
+      <input v-if="orderMsg.status==6" class="cancle-btn" type="button" value="去评价" @click="evaluateOrder">
       <input v-if="orderMsg.status==3 || orderMsg.status==6" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
       <input v-if="orderMsg.status==3" class="cancle-btn" type="button" value="申请退款" @click="refundOrder">
+      <input v-if="orderMsg.status==1 || orderMsg.status==2" class="one-btn" type="button" value="删除订单" @click="deleteOrder">
     </footer>
   </div>
 </template>
@@ -113,6 +114,15 @@ export default {
         className = 'order-wait-complete';
       }
       return className;
+    },
+    isHaveFooter:function() {
+      // TODO 计算content内容高度（当前页是否有button）
+      let status = this.orderMsg.status;
+      if(status==0 || status==1 || status==2 || status==3 || status==6) {
+        return true;
+      } else {
+        return false;
+      }
     }
   },
   components: {
@@ -226,8 +236,27 @@ export default {
     refundOrder:function() {
       // TODO 申请退款
     },
-    judgeOrder:function() {
-      // TODO 去评价
+    evaluateOrder: function() {
+      //TODO 去评价
+      this.$router.push({name:'order_evaluate', query:{orderNo:this.orderNo}});
+    },
+    deleteOrder: function() {
+      //TODO 删除订单
+      let param = {
+        orderNo: this.orderNo
+      };
+      let _this = this;
+      this.$httpPost(apiUrl.deleteOrder, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            _this.$router.replace('orders');
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
     }
   },
   mounted() {
@@ -418,6 +447,10 @@ html,body{
     .buy-btn{
       width: calc(~"100% - 250px");
       font-size: 30px;
+      background-color: #317db9;
+    }
+    .one-btn{
+      width: 100%;
       background-color: #317db9;
     }
   }

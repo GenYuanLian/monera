@@ -20,7 +20,7 @@
         </div>
         <msgScroll ref="msgS" :msg="'此处为公告栏2，啦啦啦啦啦啦啦啦啦,此处为公告栏，啦啦啦啦啦啦啦啦啦!!!'"></msgScroll>
         <div @click="clickSign">wwwwwwwwwww</div>
-    <actionsheet v-model="showSign" :menus="signList" @on-click-menu="chooseSign" ></actionsheet>
+        <Actionsheet v-model="showSign" :menus="signList" @on-click-menu="chooseSign" ></Actionsheet>
     </div>
 </template>
 

@@ -2,6 +2,8 @@ var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
 var vueLoaderConfig = require('./vue-loader.conf')
+var SkeletonWebpackPlugin = require('vue-skeleton-webpack-plugin')
+var PrerenderSpaPlugin = require('prerender-spa-plugin')
 
 function resolve(dir) {
     return path.join(__dirname, '..', dir)
@@ -81,5 +83,13 @@ const vuxLoader = require('vux-loader')
 const webpackConfig = originalConfig
 module.exports = vuxLoader.merge(webpackConfig, {
   options: {},
-  plugins: ['vux-ui', 'progress-bar', 'duplicate-style']
+  plugins: [
+      'vux-ui', 
+      'progress-bar', 
+      'duplicate-style',
+      new PrerenderSpaPlugin(
+        path.join(__dirname, '../dist'),
+        ['/home']
+      )
+    ]
 })

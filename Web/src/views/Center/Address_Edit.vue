@@ -65,7 +65,7 @@
         <input type="button" value="确定" @click="saveAddress">
       </div>
     </section>
-    <actionsheet v-model="showSign" :menus="signList" @on-click-menu="chooseSign" ></actionsheet>
+    <Actionsheet v-model="showSign" :menus="signList" @on-click-menu="chooseSign" ></Actionsheet>
   </div>
 </template>
 <script>
@@ -411,7 +411,7 @@ html,body{
     // height: 500px;
     position: absolute;
     bottom: 0;
-    background-color: rgba(0,0,0,.2);
+    background-color: rgba(0,0,0,.5);
     z-index: 9;
     .picker-box{
       width: 100%;
@@ -447,7 +447,7 @@ html,body{
     }
   }
   .weui-mask{
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.5);
     .vux-actionsheet-menu-default {
       color: #333;
     }

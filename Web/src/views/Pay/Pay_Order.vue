@@ -28,7 +28,7 @@
       </div>
       <div class="paytype" v-if="order.commodityType==1">
         <div class="pay-title">选择支付方式</div>
-        <div class="wxpay hide">
+        <div class="wxpay">
           <span class="ico-wx"><i class="ico-wxpay"></i></span>
           <span class="lab-title">微信支付</span>
           <span class="pay-radio" @click="payCheck(1)"><i class="ico-radio" :class="payType==1?'checked':''"></i></span>
@@ -52,6 +52,13 @@
         <input class="pay-confirm" type="button" value="确认支付" @click="orderPay">
       </div>
     </section>
+    <div class="pay-result-mask" v-show="payResult">
+      <div class="pay-result">
+        <p class="p-r-title">请确认微信支付是否已完成</p>
+        <p class="p-r-cen" @click="payOver">已完成支付</p>
+        <p class="p-r-bot" @click="rePay">支付遇到问题，重新支付</p>
+      </div>
+    </div>
   </div>
 </template>
 <script>
@@ -70,7 +77,7 @@ export default {
       },
       showDetail: false,
       showMore: true,
-      orderNo:0,
+      orderNo:"",
       payType:0,
       productType:0,
       order:{},
@@ -81,7 +88,9 @@ export default {
         address:""
       },
       address:"",
-      isWxPay:false
+      isWxPay:false,
+      payResult:false, // 支付结果弹窗
+      mask:0
     };
   },
   components: {
@@ -124,7 +133,12 @@ export default {
       }else {
         if(this.payType==1) {
           //微信支付
-          this.wxPay();
+          if(versions.wx) {
+            this.wxJsPay();
+          }else {
+            this.payResult = true;
+            this.wxWebPay();
+          }
         }
         if(this.payType==2) {
           //支付宝支付
@@ -136,8 +150,39 @@ export default {
         }
       }
     },
-    wxPay: function() {
-      //TODO 微信支付
+    wxJsPay: function() {
+      //TODO 微信内支付
+      let redirect = location.href.split("#")[0]+"?#/pay/pay_wx?orderNo=" + this.orderNo;
+      // let redirect = "http://service.genyuanlian.com/gylshoptest/?#/pay/pay_wx?orderNo=" + this.orderNo;
+      let param = {
+        calBackUrl: redirect
+      };
+      this.$httpPost(apiUrl.getWeixinCode, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          location.href = res.data.redirectUrl;
+          // console.log(res.data.redirectUrl);
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    wxWebPay: function() {
+      //TODO 网页微信支付
+      let param = {
+        orderNo: this.orderNo
+      };
+      this.$httpPost(apiUrl.weixinpayH5, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          let data = res.data.weixinPayData;
+          location.href = data.mwebUrl;
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
     },
     aliPay: function() {
       //TODO 支付宝支付
@@ -174,13 +219,26 @@ export default {
       }).catch((err) => {
         console.log(err);
       });
+    },
+    payOver:function() {
+      // TODO 支付完成
+      this.payResult = false;
+      this.$router.push({name:"pay_success", query: {orderNo:this.orderNo, proType:this.productType}});
+    },
+    rePay:function() {
+      // TODO 重新支付
+      this.payResult = false;
     }
   },
   mounted() {
     this.isWxPay = versions.wx;
-    this.orderNo = this.$route.query.orderNo||0;
-    if(this.orderNo!=0) {
+    this.orderNo = this.$route.query.orderNo||"";
+    this.mask = this.$route.query.mask||0;
+    if(this.orderNo!="") {
       this.getOrderDetail();
+    }
+    if(this.mask == 1) {
+      this.payResult = true;
     }
   }
 };
@@ -387,6 +445,41 @@ html,body{
         color:#fff;
         background-color: #317db9;
         border-radius:10px;
+      }
+    }
+  }
+  .pay-result-mask{
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,.5);
+    position: absolute;
+    top: 0;
+    z-index: 39;
+    .pay-result{
+      width: 550px;
+      height: 264px;
+      border-radius: 14px;
+      background-color: #fff;
+      position: relative;
+      top: 35%;
+      margin: auto;
+      p{
+        color: #333;
+        text-align: center;
+        &.p-r-bot, &.p-r-cen{
+          height: 80px;
+          font-size: 30px;
+          line-height: 80px;
+          border-top: 1px solid #efefef; /*no*/
+        }
+        &.p-r-cen{
+          color: #317db9;
+        }
+        &.p-r-title{
+          height: 100px;
+          font-size: 34px;
+          line-height: 100px;
+        }
       }
     }
   }

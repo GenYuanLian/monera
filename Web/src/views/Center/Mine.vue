@@ -61,7 +61,7 @@
         </div>
       </section>
     </div>
-    <NavBar :isShow="true"></NavBar>
+    <NavBar :isShow="true" :isLogin="isLogin"></NavBar>
   </div>
 </template>
 <script>
@@ -93,7 +93,11 @@ export default {
     }),
     personalClick: function() {
       //TODO 个人信息
-      this.$router.push("personal_infor");
+      if(this.isLogin) {
+        this.$router.push("personal_infor");
+      }else {
+        this.$router.push({path: "login", query: { redirect: this.$route.name }});
+      }
     },
     newClick: function() {
       //TODO 消息

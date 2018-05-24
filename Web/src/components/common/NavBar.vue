@@ -26,6 +26,10 @@ export default {
     isShow: {
       type: Boolean,
       default: false
+    },
+    isLogin: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
@@ -34,7 +38,11 @@ export default {
       this.$router.replace("/");
     },
     ordersClick: function() {
-      //TODO 高端理财
+      //TODO 订单列表
+      if(!this.isLogin) {
+        this.$router.push('login');
+        return;
+      }
       this.$router.push("orders");
     },
     mineClick: function() {

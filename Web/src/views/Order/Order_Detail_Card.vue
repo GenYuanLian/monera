@@ -2,7 +2,7 @@
   <div class="gyl-order-detail_card">
     <div v-title>订单详情</div>
     <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
-    <section class="content" :class="cardOrderMsg.status==0 ? '' : 'no-footer'">
+    <section class="content" :class="isHaveFooter ? '' : 'no-footer'">
       <div class="order-status" :class="orderStatusBg">
         <p class="order-detail-status">{{orderStatusHandle(cardOrderMsg.status)}}</p>
         <p class="order-tip">{{cardOrderMsg.status==0 ? '逾期未支付订单将自动取消' : (cardOrderMsg.status==2 ? '30分钟内未完成支付，订单已自动取消' : '')}}</p>
@@ -35,10 +35,12 @@
         </div>
       </div>
     </section>
-    <footer class="foot" v-if="cardOrderMsg.status==0 || cardOrderMsg.status==3 || cardOrderMsg.status==8">
+    <footer class="foot" v-if="cardOrderMsg.status==0 || cardOrderMsg.status==1 || cardOrderMsg.status==2 || cardOrderMsg.status==3 || cardOrderMsg.status==8">
       <input v-if="cardOrderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancelOrder">
       <input v-if="cardOrderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="payOrder">
-      <input v-if="cardOrderMsg.status==3 || cardOrderMsg.status==8" class="one-btn" type="button" value="再来一单" @click="buyAgain">
+      <input v-if="cardOrderMsg.status==3" class="cancle-btn" type="button" value="去评价" @click="evaluateOrder">
+      <input v-if="cardOrderMsg.status==3" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
+      <input v-if="cardOrderMsg.status==1 || cardOrderMsg.status==2" class="one-btn" type="button" value="删除订单" @click="deleteOrder">
     </footer>
   </div>
 </template>
@@ -76,10 +78,19 @@ export default {
         className = 'order-wait-complete';
       }
       return className;
+    },
+    isHaveFooter:function() {
+      // TODO 计算content内容高度（当前页是否有button）
+      let status = this.cardOrderMsg.status;
+      if(status==0 || status==1 || status==2 || status==3) {
+        return true;
+      } else {
+        return false;
+      }
     }
   },
   components: {
-    Header, Flow, FlowState, FlowLine, dateFormat
+    Header, Flow, FlowState, FlowLine
   },
   methods: {
     getOrderDetail: function(flag) {
@@ -174,6 +185,28 @@ export default {
     buyAgain: function() {
       //TODO 再来一单
       this.$router.push({name:"merchant_info", query: {proId:this.cardOrderMsg.merchantId, proType:this.cardOrderMsg.merchType}});
+    },
+    evaluateOrder: function() {
+      //TODO 去评价
+      this.$router.push({name:'order_evaluate', query:{orderNo:this.orderNo}});
+    },
+    deleteOrder: function() {
+      //TODO 删除订单
+      let param = {
+        orderNo: this.orderNo
+      };
+      let _this = this;
+      this.$httpPost(apiUrl.deleteOrder, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            _this.$router.replace('orders');
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
     }
   },
   mounted() {
@@ -338,7 +371,6 @@ html,body{
     }
     .one-btn{
       width: 100%;
-      font-size: 30px;
       background-color: #317db9;
     }
   }

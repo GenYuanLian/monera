@@ -8,59 +8,55 @@ import * as types from "../store/mutation_types";
 NProgress.configure({ showSpinner: false });
 const Test = resolve => require(["@/views/Test/test"], resolve);
 const Demo = resolve => require(["@/views/Test/demo"], resolve);
+const NotFound = resolve => require(["@/views/Error/NotFound"], resolve);
 const Home = resolve => require(["@/views/Home"], resolve);
 const Login = resolve => require(["@/views/Login"], resolve);
 const Register = resolve => require(["@/views/Register/Register"], resolve);
 const ForgetPwd = resolve => require(["@/views/Register/ForgetPwd"], resolve);
-const RegisterSucc = resolve =>
-    require(["@/views/Register/Register_Succ"], resolve);
+const RegisterSucc = resolve => require(["@/views/Register/Register_Succ"], resolve);
 const PayPwd = resolve => require(["@/views/Ident/Pay_Pwd"], resolve);
 const PaySucc = resolve => require(["@/views/Ident/Pay_Succ"], resolve);
 const Mine = resolve => require(["@/views/Center/Mine"], resolve);
 const News = resolve => require(["@/views/Center/News"], resolve);
 const Address = resolve => require(["@/views/Center/Address"], resolve);
-const AddressEdit = resolve =>
-    require(["@/views/Center/Address_Edit"], resolve);
+const AddressEdit = resolve => require(["@/views/Center/Address_Edit"], resolve);
 const Invite = resolve => require(["@/views/Center/Invite"], resolve);
-const InviteShare = resolve =>
-    require(["@/views/Center/Invite_Share"], resolve);
+const InviteShare = resolve => require(["@/views/Center/Invite_Share"], resolve);
 const Card = resolve => require(["@/views/Center/Card"], resolve);
-const CardHistory = resolve =>
-    require(["@/views/Center/Card_History"], resolve);
+const CardHistory = resolve => require(["@/views/Center/Card_History"], resolve);
 const CardActive = resolve => require(["@/views/Center/Card_Active"], resolve);
 const CardDetail = resolve => require(["@/views/Center/Card_Detail"], resolve);
 const Collection = resolve => require(["@/views/Center/Collection"], resolve);
-const PersonalInfor = resolve =>
-    require(["@/views/User/Personal_Infor"], resolve);
+const PersonalInfor = resolve => require(["@/views/User/Personal_Infor"], resolve);
 const NickName = resolve => require(["@/views/User/Nick_Name"], resolve);
 const UserName = resolve => require(["@/views/User/User_Name"], resolve);
 const Setting = resolve => require(["@/views/SetUp/Setting"], resolve);
-const LoginPwdEdit = resolve =>
-    require(["@/views/SetUp/LoginPwd_Edit"], resolve);
+const LoginPwdEdit = resolve => require(["@/views/SetUp/LoginPwd_Edit"], resolve);
 const PayPwdBack = resolve => require(["@/views/SetUp/PayPwd_Back"], resolve);
-const PayPwdBackNext = resolve =>
-    require(["@/views/SetUp/PayPwd_Back_Next"], resolve);
+const PayPwdBackNext = resolve => require(["@/views/SetUp/PayPwd_Back_Next"], resolve);
 const PayPwdEdit = resolve => require(["@/views/SetUp/PayPwd_Edit"], resolve);
 const GesturePwd = resolve => require(["@/views/SetUp/Gesture_Pwd"], resolve);
-const ProductDetail = resolve =>
-    require(["@/views/Goods/Product_Detail"], resolve);
+const ProductDetail = resolve => require(["@/views/Goods/Product_Detail"], resolve);
+const ProductEvaluate = resolve => require(["@/views/Goods/Product_Evaluate"], resolve);
 const Orders = resolve => require(["@/views/Order/Orders"], resolve);
 const OrderPlace = resolve => require(["@/views/Order/Order_Place"], resolve);
 const OrderCancel = resolve => require(["@/views/Order/Order_Cancel"], resolve);
-const OrderDetailCard = resolve =>
-    require(["@/views/Order/Order_Detail_Card"], resolve);
-const OrderDetailProduct = resolve =>
-    require(["@/views/Order/Order_Detail_Product"], resolve);
+const OrderDetailCard = resolve => require(["@/views/Order/Order_Detail_Card"], resolve);
+const OrderDetailProduct = resolve => require(["@/views/Order/Order_Detail_Product"], resolve);
 const OrderEvaluate = resolve => require(["@/views/Order/Order_Evaluate"], resolve);
 const PayOrder = resolve => require(["@/views/Pay/Pay_Order"], resolve);
 const PaySuccess = resolve => require(["@/views/Pay/Pay_Success"], resolve);
-const MerchantInfo = resolve =>
-    require(["@/views/Merchant/Merchant_Info"], resolve);
-const MerchantDetail = resolve =>
-    require(["@/views/Merchant/Merchant_Detail"], resolve);
+const PayWx = resolve => require(["@/views/Pay/Pay_Wx"], resolve);
+const MerchantInfo = resolve => require(["@/views/Merchant/Merchant_Info"], resolve);
+const MerchantDetail = resolve => require(["@/views/Merchant/Merchant_Detail"], resolve);
+const MerchantEval = resolve => require(["@/views/Merchant/Merchant_Evaluate"], resolve);
 const ActiveCard = resolve => require(["@/views/Other/Active_Card"], resolve);
 Vue.use(VueRouter);
 const routes = [{
+  path:"*",
+  component:NotFound
+},
+{
   path: "/test",
   name: "test",
   component: Test
@@ -228,10 +224,14 @@ const routes = [{
   component: ProductDetail
 },
 {
+  path: "/product_evaluate",
+  name: "product_evaluate",
+  component: ProductEvaluate
+},
+{
   path: "/orders",
   name: "orders",
-  component: Orders,
-  meta: { requiresAuth: true }
+  component: Orders
 },
 {
   path: "/order_place",
@@ -262,7 +262,13 @@ const routes = [{
 {
   path: "/pay_order",
   name: "pay_order",
-  component: PayOrder
+  component: PayOrder,
+  meta: { requiresAuth: true }
+},
+{
+  path: "/pay/pay_wx",
+  name: "pay_wx",
+  component: PayWx
 },
 {
   path: "/pay_success",
@@ -278,6 +284,11 @@ const routes = [{
   path: "/merchant_detail",
   name: "merchant_detail",
   component: MerchantDetail
+},
+{
+  path: "/merchant_evaluate",
+  name: "merchant_evaluate",
+  component: MerchantEval
 },
 {
   path: "/active_card",
@@ -309,7 +320,7 @@ router.beforeEach((to, from, next) => {
       NProgress.start();
       next();
     } else {
-      next({path: "/login", query: { redirect: to.fullPath }});
+      next({path: "/login", query: { redirect: to.name }});
     }
   } else {
     NProgress.start();

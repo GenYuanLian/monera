@@ -20,6 +20,24 @@
         <p>产品规格</p>
         <div class="standard-box" v-html="product.specification"></div>
       </div>
+      <div class="pro-evaluate" v-if="evalList.length>0">
+        <p>产品评价</p>
+        <div class="evaluate-box">
+          <div class="eval-detail" v-for="(eva,i) in evalList" v-bind:key="i">
+            <div class="eval-user">
+              <img v-if="eva.headPortrait&&eva.headPortrait!=''" :src="eva.headPortrait">
+              <img v-else src="../../assets/images/Bg/head-default.png" alt="">
+              <div class="user-r fl">
+                <p class="fl">{{eva.memberName}}</p>
+                <p class="fr">{{new Date(eva.createTime)|dateFormat('YYYY-MM-DD HH:mm')}}</p>
+              </div>
+              <div class="eval-score fl" :class="'ico-star-' + eva.score"></div>
+            </div>
+            <div class="eval-judge">{{eva.comment ? eva.comment : '默认好评'}}</div>
+          </div>
+          <div class="eval-more" @click="evalMore">查看更多 <i class="ico-more"></i></div>
+        </div>
+      </div>
     </section>
     <footer class="foot">
       <input class="buy-btn" type="button" value="立即购买" @click="clickBuy">
@@ -31,7 +49,7 @@
 </template>
 <script>
 import { mapGetters, mapActions, mapMutations } from "vuex";
-import { Swiper, InlineXNumber } from "vux";
+import { Swiper, InlineXNumber, dateFormat } from "vux";
 import Header from '@/components/common/Header';
 import { showMsg, loading, valid, versions } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
@@ -47,12 +65,17 @@ export default {
       proImgIdx: 0,
       proImgs: [],
       productId: 0,
+      productType: 0,
       commodity: {},
       product: {},
       buyNum: 1,
       minNum: 1,
-      maxNum: 0
+      maxNum: 0,
+      evalList:[] // 产品评价列表
     };
+  },
+  filters: {
+    dateFormat
   },
   components: { Swiper, Header, InlineXNumber },
   computed: {
@@ -97,12 +120,36 @@ export default {
         return;
       }
       this.$router.push({name:"order_place", query: {proId: this.productId, proType: this.commodity.commodityType, num: this.buyNum}});
+    },
+    getProductEvaluate: function(flag) {
+      //TODO 查询商家怕评价列表
+      let param = {
+        commodityId: this.productId,
+        commodityType: this.productType,
+        pageIndex:0,
+        pageSize:3
+      };
+      this.$httpPost(apiUrl.getCommodityCommens, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.evalList = res.data.comments;
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    evalMore:function() {
+      // TODO 产看更多商家评价
+      this.$router.push({name:'product_evaluate', query:{id:this.productId, proType:this.productType}});
     }
   },
   mounted() {
     this.productId = this.$route.query.proId||"";
+    this.productType = this.$route.query.proType||"";
     if(this.productId!="") {
       this.getProduct();
+      this.getProductEvaluate();
     }
   }
 };
@@ -168,7 +215,7 @@ html,body{
         }
       }
     }
-    .pro-intro, .pro-features, .pro-standard{
+    .pro-intro, .pro-features, .pro-standard, .pro-evaluate{
       min-height: 160px;
       padding: 30px;
       background-color: #fff;
@@ -184,6 +231,63 @@ html,body{
       }
       .intro-box,.features-box,.standard-box{
         line-height: 40px;
+      }
+    }
+    .pro-evaluate{
+      padding-bottom: 0;
+      .evaluate-box{
+        .eval-detail{
+          padding: 20px 0;
+          border-bottom: 1px solid #efefef; /*no*/
+          .eval-user{
+            padding: 15px 0;
+            overflow: hidden;
+            img{
+              display: block;
+              float: left;
+              width: 100px;
+              height: 100px;
+              margin-right: 20px;
+              border-radius: 50%;
+            }
+            .user-r{
+              width: calc(~"100% - 120px");
+              height: 60px;
+              overflow: hidden;
+              p{
+                font-size: 24px;
+                color: #999;
+                line-height: 60px;
+              }
+            }
+            .eval-score{
+              display: block;
+              width: 60%;
+              height: 20px;
+              margin: 10px 0;
+              background-size: 31% auto;
+            }
+          }
+          .eval-judge{
+            line-height: 40px;
+            font-size: 30px;
+            color: #555;
+            padding: 10px 0;
+          }
+        }
+        .eval-more{
+          height: 80px;
+          line-height: 80px;
+          font-size: 26px;
+          color: #999;
+          text-align: center;
+          i{
+            width: 14px;
+            height: 24px;
+            vertical-align: middle;
+            margin-top: -5px;
+          }
+        }
       }
     }
   }

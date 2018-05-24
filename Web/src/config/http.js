@@ -4,7 +4,7 @@ import {base64, md5} from 'vux';
 import Promise from 'es6-promise';
 import store from '../store';
 import * as types from '../store/mutation_types';
-import { loading, showMsg, versions, objKeySort } from '@/utils/common.js';
+import { loading, showMsg, versions, objKeySort, getQueryString } from '@/utils/common.js';
 import {getStore, setStore, removeStore} from '@/utils/storage.js';
 Promise.polyfill();
 
@@ -17,7 +17,7 @@ if (process.env.NODE_ENV === 'development') {
   env = require('../../config/prod.env');
 } else {
   env.NODE_ENV = "production";
-  env.API_SERVER = "http://shopapi.genyuanlian.com";//http://58.87.112.65:8081 http://shopapi.genyuanlian.com
+  env.API_SERVER = "http://shopapi.genyuanlian.com";//http://shoptestapi.genyuanlian.com http://shopapi.genyuanlian.com
 }
 
 // axios 配置
@@ -74,7 +74,10 @@ axios.interceptors.request.use((config) => {
 // 返回状态判断
 axios.interceptors.response.use((res) => {
   // let baseData = res.data.data?JSON.parse(base64.decode(res.data.data)):"";
-  // res.data.data = baseData;
+  let url = res.config.url;
+  if(getQueryString(url)["action"]=="getWeixinCode") {
+    return res;
+  }
   if (res.data.status.code === 0 ||(res.data.status.code > 0&&res.data.status.code !== 10003)) {
     return res;
   }
@@ -115,12 +118,10 @@ function getSign(param, key) {
   return md5(newStr);
 }
 
-function checkStatus (response) {
-  // loading
+function checkStatus (res) {
   // 如果http状态码正常，则直接返回数据
-  if (response && (response.status === 200 || response.status === 304 || response.status === 400)) {
-    return response;
-    // 如果不需要除了data之外的数据，可以直接 return response.data
+  if (res && (res.status === 200 || res.status === 304 || res.status === 400)) {
+    return res;
   }
   // 异常状态下，把错误信息返回去
   return {
@@ -148,7 +149,7 @@ export default {
     options = Object.assign(option, options);
     return new Promise((resolve, reject) => {
       if(options.isLoading) loading(true);
-      axios.get(url, params)
+      axios.get(url, params, options)
         .then(response => {
           if(options.isLoading) loading(false);
           resolve(response.data);
@@ -169,7 +170,7 @@ export default {
     options = Object.assign(option, options);
     return new Promise((resolve, reject) => {
       if(options.isLoading) loading(true);
-      axios.post(url, params)
+      axios.post(url, params, options)
         .then(response => {
           if(options.isLoading) loading(false);
           resolve(response.data);

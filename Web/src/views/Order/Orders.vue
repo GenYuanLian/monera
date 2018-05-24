@@ -14,7 +14,7 @@
               <img class="or-img" :src="order.description" alt="">
               <div class="or-pro">
                 <p class="pro-detail"><span class="pro-name">{{order.merchantName}}</span><span class="pro-price fr">&yen;{{order.amount}}</span></p>
-                <p class="pro-paied"><span class="paied-card">{{order.commodityName}}</span><span class="paied-num">x{{order.saleCount}}</span></p>
+                <p class="pro-paied"><span class="paied-card">{{order.commodityName}}</span><span class="paied-num fr">x{{order.saleCount}}</span></p>
               </div>
             </div>
             <div class="or-btn">
@@ -25,6 +25,7 @@
               <input v-if="order.status==6 || order.status==8"  type="button" value="再来一单" @click="buyAgainClick(order.commodityId, order.commodityType, order.merchantId, order.merchType)">
               <input v-if="order.status==6" class="evalue-btn"  type="button" value="去评价">
               <input v-if="order.status==2" type="button" value="重新下单" @click="reorderClick(order.merchantId,order.merchType)">
+              <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
               <input v-if="order.commodityType!=1&&(order.status==3 || order.status==3)" type="button" value="申请退单">
               <!-- <input v-if="order.status==-1" class="evalue-btn"  type="button" value="确认收货"> -->
             </div>
@@ -66,7 +67,7 @@ export default {
       },
       isShow: false,
       pageIndex:0,
-      pageSize:5,
+      pageSize:10,
       hasNext: false,
       ordersList:[] // 订单列表
     };
@@ -196,6 +197,24 @@ export default {
       //TODO 取消订单
       this.$router.push({name:"order_cancel", query: {orderNo:orderNo}});
     },
+    deleteOrder: function(orderNo) {
+      //TODO 删除订单
+      let param = {
+        orderNo: orderNo
+      };
+      this.$httpPost(apiUrl.deleteOrder, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            this.ordersList = [];
+            this.getOrderList();
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
     buyAgainClick: function(proId, proType, id, type) {
       //TODO 再来一单
       if(proType==1) {
@@ -291,10 +310,6 @@ html,body{
               line-height: 45px;
               font-size: 26px;
               color: #999999;
-              .paied-num{
-                font-size: 20px;
-                float: right;
-              }
             }
           }
         }

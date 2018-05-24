@@ -43,5 +43,10 @@ export default {
   queryProducts: '/shop/api.go?action=queryProducts',
   alipayH5: '/shop/api.go?action=alipayH5',
   addCollection: '/shop/api.go?action=addCollection',
-  myFavorite: '/shop/api.go?action=myFavorite'
+  myFavorite: '/shop/api.go?action=myFavorite',
+  orderComment: '/shop/api.go?action=orderComment',
+  getMerchCommens:'/shop/api.go?action=getMerchCommens',
+  getCommodityCommens:'/shop/api.go?action=getCommodityCommens',
+  weixinpayH5: '/shop/api.go?action=weixinpayH5',
+  getWeixinCode:'/shop/api.go?action=getWeixinCode'
 };
