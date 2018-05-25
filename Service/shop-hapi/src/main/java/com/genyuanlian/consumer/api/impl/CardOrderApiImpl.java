@@ -151,7 +151,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 				commonService.save(delivery);
 			}
 		}
-		
+
 		for (int i = 0; i < payCount; i++) {
 			// 锁定提货卡
 			ShopPuCard puCard = puCards.get(i);
@@ -200,8 +200,9 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		// 要取消的订单中提货卡订单详情id集合
-		List<Long> puCardOrderDetailIds = orderDetails.stream().filter(i -> i.getCommodityType() == 1)
-				.map(i -> i.getId()).distinct().collect(Collectors.toList());
+		List<Long> puCardOrderDetailIds = orderDetails.stream()
+				.filter(i -> i.getCommodityType() == 1 && i.getStatus() == 0).map(i -> i.getId()).distinct()
+				.collect(Collectors.toList());
 		// 提货卡订单需要修改对应的提货卡信息
 		if (puCardOrderDetailIds != null && puCardOrderDetailIds.size() > 0) {
 			// 根据订单详情ids查询，订单产品快照集合
@@ -234,17 +235,17 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		logger.info("用户删除订单调用到这里了=================,用户ID:" + params.getMemberId() + "订单编号:" + params.getOrderNo());
 
 		// 查询订单明细集合
-		List<ShopOrderDetail> orderDetails = commonService.get(ShopOrderDetail.class, "orderNo", params.getOrderNo(),
-				"memberId", params.getMemberId());
+		List<ShopOrderDetail> orderDetails = commonService.getList(ShopOrderDetail.class, "orderNo",
+				params.getOrderNo(), "memberId", params.getMemberId());
 		if (orderDetails == null || orderDetails.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorMessage());
 			return messageVo;
 		}
 
-		// 修改订单详情
+		// 修改订单删除标记
 		for (ShopOrderDetail orderDetail : orderDetails) {
-			orderDetail.setStatus(9); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成，9-用户已删除
+			orderDetail.setDeleteFlag(1); // 删除标记:0-未删除,1-删除
 			commonService.update(orderDetail);
 		}
 
@@ -304,14 +305,13 @@ public class CardOrderApiImpl implements ICardOrderApi {
 
 		// 修改订单详情
 		for (ShopOrderDetail orderDetail : orderDetails) {
-			orderDetail.setStatus(8); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成，9-用户已删除
+			orderDetail.setStatus(8); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
 			commonService.update(orderDetail);
 		}
 
-		// 商户费率
+		// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
 		BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
-		BigDecimal rate = new BigDecimal(1).subtract(merchantFee);
-		BigDecimal waitPayAmount = BigDecimal.valueOf(order.getAmount()).multiply(rate);
+		BigDecimal waitPayAmount = BigDecimal.valueOf(order.getAmount()).subtract(merchantFee);
 
 		// 上传BSTK钱包交易
 		String transactionNo = bwsService.walletRecharge(order.getId(), merchant.getId(), 2, wallet.getPublicKeyAddr(),
@@ -346,7 +346,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		List<ShopOrderDetail> list = commonService.getListBySqlId(ShopOrderDetail.class, "pageData", "memberId",
-				memberId, "pageIndex", pageIndex, "pageSize", pageSize + 1);
+				memberId, "deleteFlag", 0, "pageIndex", pageIndex, "pageSize", pageSize + 1);
 
 		// 商户集合
 		List<ShopMerchant> merchants = new ArrayList<>();

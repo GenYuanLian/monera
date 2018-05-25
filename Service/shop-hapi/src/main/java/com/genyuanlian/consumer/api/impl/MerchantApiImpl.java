@@ -1,7 +1,6 @@
 package com.genyuanlian.consumer.api.impl;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +22,7 @@ import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopProductChainComputer;
 import com.genyuanlian.consumer.shop.model.ShopProductCommon;
+import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
 import com.genyuanlian.consumer.shop.vo.CommodityIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.CommodityVo;
 import com.genyuanlian.consumer.shop.vo.IdParamsVo;
@@ -43,16 +43,27 @@ public class MerchantApiImpl implements IMerchantApi {
 		ShopMessageVo<List<ShopMerchant>> messageVo = new ShopMessageVo<List<ShopMerchant>>();
 		logger.info("获取有效的商户列表调用到这里了=================");
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
-		List<ShopMerchant> list = commonService.getList(ShopMerchant.class, "status", 1, "existIds", ids);
+		List<ShopMerchant> list = null;
+		if (ids == null || ids.size() == 0) {
+			list = commonService.getList(ShopMerchant.class, "status", 1);
+		} else {
+			list = commonService.getList(ShopMerchant.class, "status", 1, "existIds", ids);
+		}
+
 		if (list != null) {
 			try {
 				// 销量 好评
 				List<ShopMerchant> salesVolumeMap = commonService.getListBySqlId(ShopOrderDetail.class,
 						"getSalesVolumeByMerchant");
+
+				List<ShopSaleVolume> virtualSalesVolumeMap = commonService.getListBySqlId(ShopSaleVolume.class,
+						"getOrdersByMerchant");
+
 				List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
 						"getPraiseByMerchant");
 				for (ShopMerchant merch : list) {
 					merch.setSalesVolume("0");
+					// 真实
 					if (salesVolumeMap.size() > 0) {
 						for (ShopMerchant map : salesVolumeMap) {
 							if (merch.getId().compareTo(map.getId()) == 0) {
@@ -62,7 +73,18 @@ public class MerchantApiImpl implements IMerchantApi {
 						}
 					}
 
-					merch.setPraise("0");
+					// 虚拟
+					if (virtualSalesVolumeMap.size() > 0) {
+						for (ShopSaleVolume map : virtualSalesVolumeMap) {
+							if (merch.getId().compareTo(map.getMerchantId()) == 0) {
+								int vol = Integer.valueOf(merch.getSalesVolume()) + map.getOrderCount();
+								merch.setSalesVolume(String.valueOf(vol));
+								break;
+							}
+						}
+					}
+
+					merch.setPraise("5");
 					if (praiseByMerchantMap.size() > 0) {
 						for (ShopMerchant map : praiseByMerchantMap) {
 							if (merch.getId().compareTo(map.getId()) == 0) {
@@ -100,7 +122,7 @@ public class MerchantApiImpl implements IMerchantApi {
 		if (merchant != null) {
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 			merchant.setLogoPic(imageDomain + merchant.getLogoPic());
-
+			merchant.setPraise("5");
 			try {
 				// 好评
 				List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
@@ -161,7 +183,8 @@ public class MerchantApiImpl implements IMerchantApi {
 		if (merchant != null) {
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 			merchant.setLogoPic(imageDomain + merchant.getLogoPic());
-			
+			merchant.setPraise("5");
+
 			try {
 				// 好评
 				List<ShopMerchant> praiseByMerchantMap = commonService.getListBySqlId(ShopComment.class,
@@ -177,7 +200,7 @@ public class MerchantApiImpl implements IMerchantApi {
 			} catch (Exception ex) {
 				logger.error("获取获取商户点评信息数据异常:" + ex.getMessage());
 			}
-			
+
 			resultMap.put("merch", merchant);
 
 			// 商户背景图
@@ -203,6 +226,28 @@ public class MerchantApiImpl implements IMerchantApi {
 					com.setLogo(imageDomain + com.getLogo());
 					com.setCommodityType(3);
 				}
+			}
+
+			// 虚拟销量
+			try {
+				List<ShopSaleVolume> virtualSalesVolumeMap = commonService.getListBySqlId(ShopSaleVolume.class,
+						"getSaleVolumeByCommodity");
+				for (ShopCommodity com : commodityList) {
+					// 虚拟
+					if (virtualSalesVolumeMap.size() > 0) {
+						for (ShopSaleVolume map : virtualSalesVolumeMap) {
+							if (com.getId().compareTo(map.getCommodityId()) == 0
+									&& new Integer("3").compareTo(map.getCommodityType()) == 0) {
+								int vol = com.getSaleQuantity() + map.getSaleVolume();
+								com.setSaleQuantity(vol);
+								break;
+							}
+						}
+					}
+				}
+
+			} catch (Exception ex) {
+				logger.error("首页获取商户商品列表销量信息异常:" + ex.getMessage());
 			}
 
 			resultMap.put("commoditys", commodityList);

@@ -10,6 +10,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.jdom2.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,10 @@ public class WeixinpayNotifyController {
 	
 	@Resource
 	private IWeixinpayApi weixinpayApi;
+	
+	public WeixinpayNotifyController() {
+		logger.info("初始化WeixinpayNotifyController");
+	}
 
 	@SuppressWarnings("unchecked")
 	@RequestMapping("/notifyResult")
@@ -49,6 +54,11 @@ public class WeixinpayNotifyController {
 			bis.close();
 		}
 		logger.info("读取byte之后的result为： " + result.trim());
+		if (StringUtils.isBlank(result)) {
+			String noticeStr = weixinpayApi.setXML("FAILURE", "");
+			return noticeStr;
+		}
+		
 		Map<String, String> map = null;
 		try {
 			map = XMLUtil.doXMLParse(result.trim());

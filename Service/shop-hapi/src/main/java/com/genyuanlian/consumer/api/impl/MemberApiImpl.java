@@ -107,7 +107,7 @@ public class MemberApiImpl implements IMemberApi {
 				return messageVo;
 			}
 		}
-		//持久化
+		// 持久化
 		ShopMember register = registerPersist(params);
 
 		// 返回值
@@ -121,7 +121,7 @@ public class MemberApiImpl implements IMemberApi {
 
 		return messageVo;
 	}
-	
+
 	@Override
 	public ShopMember registerPersist(MemberRegisterParamsVo params) {
 		ShopMember register = new ShopMember();

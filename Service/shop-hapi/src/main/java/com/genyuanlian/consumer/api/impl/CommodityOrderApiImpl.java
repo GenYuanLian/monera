@@ -163,11 +163,6 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		snapshot.setCommodityJson(json);
 		commonService.save(snapshot);
 
-		// 更新库存
-		commodity.setInventoryQuantity(commodity.getInventoryQuantity() - params.getSaleCount());
-		commodity.setSaleQuantity(commodity.getSaleQuantity() + params.getSaleCount());
-		commonService.update(commodity);
-
 		// 配送信息
 		if (params.getAddressId() != null && params.getAddressId() > 0) {
 			ShopMemberAddress address = commonService.get(params.getAddressId(), ShopMemberAddress.class);
@@ -242,22 +237,22 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			return messageVo;
 		}
 
-		// 根据登陆名称，密码查询用户信息
+		// 获取会员可用提货卡
 		List<ShopPuCard> puCards = commonService.getListBySqlId(ShopPuCard.class, "selectAvailable", "memberId",
 				params.getMemberId());
 
-		// 判断账户余额
+		// 计算提货卡可用余额
 		BigDecimal totalBalance = BigDecimal.ZERO;
 		for (ShopPuCard card : puCards) {
 			totalBalance = totalBalance.add(BigDecimal.valueOf(card.getBalance()));
 		}
 
-		// 会员支付少支付区块链记账费比例
+		// 用户每笔交易手续费，平台承担，少收取用户支付的金额配置
+		BigDecimal totalAmount = BigDecimal.valueOf(params.getTotalAmount());
+		BigDecimal noPayAmount = totalAmount;
 		BigDecimal memberFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_member_fee"));
-		BigDecimal rate = new BigDecimal(1).subtract(memberFee);
-		BigDecimal waitPayAmount = BigDecimal.valueOf(params.getTotalAmount()).multiply(rate);
-		BigDecimal noPayAmount = waitPayAmount;
-		if (totalBalance.compareTo(waitPayAmount) == -1) {
+		BigDecimal waitPayAmount = totalAmount.subtract(memberFee);
+		if (totalBalance.compareTo(totalAmount) == -1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800010.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800010.getErrorMessage());
 			return messageVo;
@@ -272,7 +267,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			return messageVo;
 		}
 		BigDecimal walletBalance = bwsService.walletBalance(wallet.getWalletAddress());
-		if (walletBalance.compareTo(waitPayAmount) == -1) {
+		if (walletBalance.compareTo(totalAmount) == -1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorMessage());
 			return messageVo;
@@ -287,7 +282,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 			BigDecimal balance = BigDecimal.valueOf(card.getBalance());
 			if (noPayAmount.compareTo(balance) >= 0) {
-				card.setStatus(5);
+				card.setStatus(5); //状态：0-未售、1-已锁定、2-售出、3-激活、4-部分使用、5-全部使用、6-已过期、7-已作废
 				card.setBalance(Double.valueOf(0));
 				commonService.update(card);
 

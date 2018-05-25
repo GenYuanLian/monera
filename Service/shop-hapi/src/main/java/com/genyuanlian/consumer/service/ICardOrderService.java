@@ -7,7 +7,7 @@ public interface ICardOrderService {
 	/**
 	 * 修改卡订单状态
 	 * @param orderNo 订单编号
-	 * @param status 1-已支付，2-已取消,3-支付过期
+	 * @param status 1-已支付，
 	 * @return
 	 */
 	public ShopMessageVo<String> modifyCardOrderStatus(String orderNo,Integer status);

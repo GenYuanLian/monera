@@ -1,7 +1,6 @@
 package com.genyuanlian.consumer.api.impl;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -9,13 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 
@@ -47,9 +48,15 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 
 	@Resource
 	private IPayRecordService payRecordService;
-	
+
 	@Resource
 	private IPayRecordApi payRecordApi;
+
+	@Resource(name = "slaveRedisTemplate")
+	private RedisTemplate<String, String> slaveRedisTemplate;
+
+	@Resource(name = "masterRedisTemplate")
+	private RedisTemplate<String, String> masterRedisTemplate;
 
 	@Override
 	public ShopMessageVo<Map<String, Object>> unifiedOrder(WeixinpayParamsVo req) {
@@ -68,14 +75,18 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		}
 		ShopPayRecord payRecord = buildResult.getT();
 
-		String tradeType = "MWEB";
+		String tradeType = "JSAPI";
 		String scene_info = null;
-		Map<String, Object> h5Info = new HashMap<>();
-		h5Info.put("type", "Wap");
-		h5Info.put("wap_url", WeixinpayProperties.WEIXIN_WAP_URL);
-		h5Info.put("wap_name", WeixinpayProperties.WEIXIN_WAP_NAME);
-		Map<String, Object> scene = new HashMap<>();
-		scene.put("h5_info", h5Info);
+		if (req.getOpenId() == null) {
+			tradeType = "MWEB";
+			Map<String, Object> h5Info = new HashMap<>();
+			h5Info.put("type", "Wap");
+			h5Info.put("wap_url", WeixinpayProperties.WEIXIN_WAP_URL);
+			h5Info.put("wap_name", WeixinpayProperties.WEIXIN_WAP_NAME);
+			Map<String, Object> scene = new HashMap<>();
+			scene.put("h5_info", h5Info);
+			scene_info = JSON.toJSONString(scene);
+		}
 
 		Map<String, String> payResult = unifiedOrder(WeixinpayProperties.WEIXIN_NOTIFY_URL, payRecord.getPayNum(),
 				req.getSubject(), req.getTotalAmount(), req.getSpbillCreateIp(), tradeType,
@@ -130,35 +141,36 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		resultMap.put("signType", "MD5");
 		resultMap.put("paySign", paySign);
 		resultMap.put("mwebUrl", mweb_url);
-//		// 获取jsapi的token
-//		String token = "";
-//		// 获取jsapi的ticket
-//		String tiket = "";
-//		try {
-//			token = getToken(appId, WeixinpayProperties.WEIXIN_APP_SECRET);
-//			logger.info("微信支付，当前获取的token为：" + token);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			logger.info("微信支付，当前获取的token异常");
-//		}
-//
-//		try {
-//			tiket = getTicket(token);
-//			logger.info("微信支付，当前获取的tiket为：" + tiket);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			logger.info("微信支付，当前获取的tiket异常");
-//		}
+		// // 获取jsapi的token
+		// String token = "";
+		// // 获取jsapi的ticket
+		// String tiket = "";
+		// try {
+		// token = getToken(appId, WeixinpayProperties.WEIXIN_APP_SECRET);
+		// logger.info("微信支付，当前获取的token为：" + token);
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// logger.info("微信支付，当前获取的token异常");
+		// }
+		//
+		// try {
+		// tiket = getTicket(token);
+		// logger.info("微信支付，当前获取的tiket为：" + tiket);
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// logger.info("微信支付，当前获取的tiket异常");
+		// }
 
 		// 重新获取随机数，以及时间串
-//		String url = WeixinpayProperties.WEIXIN_HOST_URL + WeixinpayProperties.H5PayPage;
+		// String url = WeixinpayProperties.WEIXIN_HOST_URL +
+		// WeixinpayProperties.H5PayPage;
 
 		SortedMap<String, String> singnTiketMap = new TreeMap<String, String>();
 
 		singnTiketMap.put("noncestr", noncestr);
-//		singnTiketMap.put("jsapi_ticket", tiket);
+		// singnTiketMap.put("jsapi_ticket", tiket);
 		singnTiketMap.put("timestamp", timestamp);
-//		singnTiketMap.put("url", url);
+		// singnTiketMap.put("url", url);
 		String signature = "";
 		try {
 			signature = Sha1Util.createSHA1Sign(singnTiketMap);
@@ -171,8 +183,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		resultMap.put("orderId", payRecord.getId());
 
 		// 根据订单ID获取相关的订单信息
-		logger.info("微信支付，获取相关签名信息： noncestr=" + noncestr + ", timestamp="
-				+ timestamp);
+		logger.info("微信支付，获取相关签名信息： noncestr=" + noncestr + ", timestamp=" + timestamp);
 
 		messageVo.setResult(true);
 		messageVo.setT(resultMap);
@@ -240,14 +251,15 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 			}
 			wxStr = strBuffer.toString();
 			logger.info("微信支付问题查找, 统一下单接口. 当前返回的数据转换为json格式:" + wxStr);
-			 wxStr = map.get("prepay_id").toString();
+			wxStr = map.get("prepay_id").toString();
 			if (map.containsKey("prepay_id") && map.get("prepay_id") != null) {
 				result.put("prepay_id", map.get("prepay_id").toString());
 			}
 			if (map.containsKey("mweb_url") && map.get("mweb_url") != null) {
-				String returnUrl = WeixinpayProperties.WEIXIN_RETURN_URL+payRecord.getOrderNo();
-				result.put("mweb_url", map.get("mweb_url").toString()+"&redirect_url="+URLEncoder.encode(returnUrl, "UTF-8"));
-				logger.info("mweb_url="+result.get("mweb_url").toString());
+				String returnUrl = WeixinpayProperties.WEIXIN_RETURN_URL + payRecord.getOrderNo();
+				result.put("mweb_url",
+						map.get("mweb_url").toString() + "&redirect_url=" + URLEncoder.encode(returnUrl, "UTF-8"));
+				logger.info("mweb_url=" + result.get("mweb_url").toString());
 			}
 			result.put("return_code", "SUCCESS");
 			logger.info("不转为json格式的话，直接取prepay_id为：" + wxStr);
@@ -283,10 +295,11 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 
 	@SuppressWarnings("unchecked")
 	private String getToken(String appId, String appSecret) throws Exception {
-//		String requestUrl = WeixinpayProperties.JSAPI_TOKEN + "?grant_type=client_credential&appid=" + appId
-//				+ "&secret=" + appSecret;
-		String requestUrl =null;
-		
+		// String requestUrl = WeixinpayProperties.JSAPI_TOKEN +
+		// "?grant_type=client_credential&appid=" + appId
+		// + "&secret=" + appSecret;
+		String requestUrl = null;
+
 		String res = HttpClientUtils.doGet(requestUrl);
 		logger.info(res);
 		Map<String, Object> resultMap = JSONObject.parseObject(res, HashMap.class);
@@ -300,8 +313,9 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 	@SuppressWarnings("unchecked")
 	private String getTicket(String token) throws Exception {
 
-//		String requestUrl = WeixinpayProperties.JSAPI_TICKET + "?access_token=" + token + "&&type=jsapi";
-		String requestUrl=null;
+		// String requestUrl = WeixinpayProperties.JSAPI_TICKET + "?access_token=" +
+		// token + "&&type=jsapi";
+		String requestUrl = null;
 
 		String res = HttpClientUtils.doGet(requestUrl);
 		System.out.println(res);
@@ -339,7 +353,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 			}
 		}
 
-		String noticeStr =null;
+		String noticeStr = null;
 		if (!isSuccess) {
 			// 支付失败
 			logger.info("微信支付失败");
@@ -353,8 +367,8 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 				logger.info("支付回调逻辑失败");
 				noticeStr = setXML("FAILURE", payRecordCheck.getErrorMessage());
 				result.setT(noticeStr);
-			}else {
-				//支付成功
+			} else {
+				// 支付成功
 				logger.info("支付成功");
 				noticeStr = setXML("SUCCESS", "");
 				result.setT(noticeStr);
@@ -384,8 +398,8 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		}
 		ShopPayRecord payRecord = payRecords.get(0);
 		// 金额验证
-		
-		if (Double.compare(payRecord.getAmount()*100, Double.valueOf(req.get("total_fee"))) != 0) {
+
+		if (Double.compare(payRecord.getAmount() * 100, Double.valueOf(req.get("total_fee"))) != 0) {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800005.getErrorCode().toString());
 			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800005.getErrorMessage());
 			return result;
@@ -399,7 +413,7 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		}
 
 		// 修改支付记录
-		//微信只有openid
+		// 微信只有openid
 		payRecord.setPayAccount(req.get("openid"));
 		payRecord.setStatus(req.get("trade_state").equals("SUCCESS") ? 1 : 2);
 		payRecord.setTradeNo(req.get("transaction_id"));
@@ -407,8 +421,53 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		return payRecordApi.paySuccess(payRecord);
 	}
 
-	private static String setXML(String return_code, String return_msg) {
+	@Override
+	public String setXML(String return_code, String return_msg) {
 		return "<xml><return_code><![CDATA[" + return_code + "]]></return_code><return_msg><![CDATA[" + return_msg
 				+ "]]></return_msg></xml>";
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public ShopMessageVo<Map<String, Object>> getWeixinOpenId(String code) throws Exception {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
+		Map<String, Object> resultMap = new HashMap<>();
+
+		String key = "wxcode_" + code;
+		//先取本地缓存
+		String resp = slaveRedisTemplate.opsForValue().get(key);
+		if (StringUtils.isBlank(resp)) {
+			//若本地没有，调微信接口
+			String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="
+					+ WeixinpayProperties.WEIXIN_APP_ID + "&secret=" + WeixinpayProperties.WEIXIN_APP_SECRET + "&code="
+					+ code + "&grant_type=authorization_code";
+
+			logger.info("请求微信requestUrl=" + requestUrl);
+			resp = HttpClientUtils.doGet(requestUrl);
+			logger.info("微信返回resp="+resp);
+			if (StringUtils.isBlank(resp)) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800012.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800012.getErrorMessage());
+				return messageVo;
+			}
+			//微信调用成功，加入缓存
+			masterRedisTemplate.delete(key);
+			masterRedisTemplate.opsForValue().set(key, resp);
+			masterRedisTemplate.expire(key, 5, TimeUnit.MINUTES);
+		}
+		logger.info("resp=" + resp);
+
+		resultMap = (Map) JSONObject.parseObject(resp, HashMap.class);
+
+		if (resultMap.get("openid") == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800012.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800012.getErrorMessage());
+			return messageVo;
+		}
+
+		messageVo.setT(resultMap);
+		messageVo.setResult(true);
+
+		return messageVo;
 	}
 }

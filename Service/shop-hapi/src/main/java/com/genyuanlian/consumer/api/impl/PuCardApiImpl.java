@@ -1,10 +1,5 @@
 package com.genyuanlian.consumer.api.impl;
 
-<<<<<<< .mine
-
-=======
->>>>>>> .r750
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,11 +20,13 @@ import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopComment;
+import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
+import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
 import com.genyuanlian.consumer.shop.vo.CommodityIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.CommodityVo;
 import com.genyuanlian.consumer.shop.vo.MerchantCommodityResponseVo;
@@ -129,6 +126,28 @@ public class PuCardApiImpl implements IPuCardApi {
 				list.add(vo);
 			}
 
+		}
+
+		// 虚拟销量
+		try {
+			List<ShopSaleVolume> virtualSalesVolumeMap = commonService.getListBySqlId(ShopSaleVolume.class,
+					"getSaleVolumeByCommodity");
+			for (ShopPuCardType vo : puCardTypes) {
+				// 虚拟
+				if (virtualSalesVolumeMap.size() > 0) {
+					for (ShopSaleVolume map : virtualSalesVolumeMap) {
+						if (vo.getId().compareTo(map.getCommodityId()) == 0
+								&& new Integer("1").compareTo(map.getCommodityType()) == 0) {
+							int vol = vo.getSalesVolume() + map.getSaleVolume();
+							vo.setSalesVolume(vol);
+							break;
+						}
+					}
+				}
+			}
+
+		} catch (Exception ex) {
+			logger.error("首页获取商户提货卡列表销量信息异常:" + ex.getMessage());
 		}
 
 		resultMap.put("puCardTypes", list);

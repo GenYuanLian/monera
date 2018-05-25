@@ -58,6 +58,7 @@
     <filter-name>encodingFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
+  <!-- 
   <servlet>
     <servlet-name>dubbo</servlet-name>
     <servlet-class>com.alibaba.dubbo.remoting.http.servlet.DispatcherServlet</servlet-class>
@@ -67,6 +68,7 @@
     <servlet-name>dubbo</servlet-name>
     <url-pattern>/api/*</url-pattern>
   </servlet-mapping>
+   -->
   <session-config>
     <session-timeout>400</session-timeout>
   </session-config>

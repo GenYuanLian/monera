@@ -6,6 +6,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
@@ -23,6 +26,8 @@ import com.hnair.consumer.utils.ResultSender;
 @Component("hapiweixinpayH5processor")
 public class WeixinpayH5Processor extends BaseApiProcessor {
 
+	Logger logger=LoggerFactory.getLogger(WeixinpayH5Processor.class);
+	
 	@Resource
 	private ICardOrderApi cardOrderApi;
 	@Resource
@@ -32,6 +37,9 @@ public class WeixinpayH5Processor extends BaseApiProcessor {
 	protected void process(HttpServletRequest request, HttpServletResponse response, ResultSender sender)
 			throws Exception {
 		String orderNo = request.getParameter("orderNo");
+		String weixinCode=request.getParameter("weixinCode");
+		
+		logger.info("weixinCode="+weixinCode);
 		String spbillCreateIp = IpUtils.getIpAddr(request);
 
 		if (!checkParams(orderNo)) {
@@ -54,6 +62,15 @@ public class WeixinpayH5Processor extends BaseApiProcessor {
 		req.setSpbillCreateIp(spbillCreateIp);
 		req.setSubject(order.getCommodityName());
 		req.setTotalAmount(order.getAmount());
+		if (StringUtils.isNotBlank(weixinCode)) {
+			//公众号支付,先获取openId
+			ShopMessageVo<Map<String, Object>> openIdMsg = weixinpayApi.getWeixinOpenId(weixinCode);
+			if (!openIdMsg.isResult()) {
+				sender.fail(Integer.valueOf(openIdMsg.getErrorCode()), openIdMsg.getErrorMessage(), response);
+				return;
+			}
+			req.setOpenId(openIdMsg.getT().get("openid").toString());
+		}
 		
 		ShopMessageVo<Map<String,Object>> messageVo = weixinpayApi.unifiedOrder(req);
 		if (!messageVo.isResult()) {
