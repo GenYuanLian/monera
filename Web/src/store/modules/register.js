@@ -18,7 +18,7 @@ const getters = {
 
 const actions = {
   register({commit, state}, data) {
-    setStore("memberId", data.memberId);
+    setStore("MemberId", data.memberId);
     commit(REGISTER, data);
   }
 };

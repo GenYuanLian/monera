@@ -117,6 +117,9 @@ export default {
   components: {
     Header, InlineXNumber
   },
+  computed:{
+    ...mapGetters(["getLoginUser", "getUserInfo"])
+  },
   methods: {
     ...mapActions({
       saveAddressBackUrl: "saveAddressBackUrl"
@@ -211,9 +214,13 @@ export default {
     }
   },
   mounted() {
+    this.userId = this.getLoginUser?this.getLoginUser.id:"";
     this.productType = this.$route.query.proType||0;
     this.productId = this.$route.query.proId||"";
     this.buyNum = this.$route.query.num||1;
+    if(this.userId=="") {
+      this.$router.push("login");
+    }
     if(this.productId!="") {
       this.getProductDetail();
     }

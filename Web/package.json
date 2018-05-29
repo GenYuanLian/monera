@@ -14,7 +14,7 @@
     "test": "npm run unit",
     "lint": "eslint --ext .js,.vue src test/unit/specs",
     "build": "node build/build.js",
-    "build-test": "node build/build-test.js",
+    "build:test": "node build/build.test.js",
     "debug": "node --inspect-brk --debug-brk node_modules/.bin/webpack --config build/dev-server.js"
   },
   "dependencies": {

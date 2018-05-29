@@ -41,9 +41,9 @@ export default {
       //TODO 订单列表
       if(!this.isLogin) {
         this.$router.push('login');
-        return;
+      } else {
+        this.$router.push("orders");
       }
-      this.$router.push("orders");
     },
     mineClick: function() {
       //TODO 我的

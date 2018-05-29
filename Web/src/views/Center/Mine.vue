@@ -22,7 +22,7 @@
               <img v-if="headImg!=''" :src="headImg" alt="">
               <img v-else src="../../assets/images/Bg/head-default.png" alt="">
             </span>
-            <span class="user-noinfo" v-if="!isLogin">未登录</span>
+            <span class="user-noinfo" v-if="!isLogin">未登录,点击登录</span>
             <span class="user-info" v-if="isLogin">
               <p v-text="userName"></p>
               <p v-text="userPhone"></p>
@@ -153,6 +153,7 @@ export default {
           showMsg(res.status.message);
         }
       }).catch((err) => {
+        this.isLogin = false;
         console.log(err);
       });
     }

@@ -320,7 +320,7 @@ router.beforeEach((to, from, next) => {
       NProgress.start();
       next();
     } else {
-      next({path: "/login", query: { redirect: to.name }});
+      next({path: "/login", query: { redirect: to.fullPath }});
     }
   } else {
     NProgress.start();

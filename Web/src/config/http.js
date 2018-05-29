@@ -75,17 +75,17 @@ axios.interceptors.request.use((config) => {
 axios.interceptors.response.use((res) => {
   // let baseData = res.data.data?JSON.parse(base64.decode(res.data.data)):"";
   let url = res.config.url;
-  if(getQueryString(url)["action"]=="getWeixinCode") {
-    return res;
-  }
   if (res.data.status.code === 0 ||(res.data.status.code > 0&&res.data.status.code !== 10003)) {
     return res;
   }
   if (res.data.status.code === 10003) {
     //登录过期
     store.commit(types.LOGOUT);
+    showMsg(res.data.status.message);
   }
-  showMsg(res.data.status.message);
+  if (res.data.status.code < 0) {
+    showMsg(res.data.status.message);
+  }
   return Promise.reject(res);
 }, (error) => {
   // 提示

@@ -183,6 +183,7 @@ html,body{
     overflow-y: auto;
     background-color: #f3f4f6;
     padding-bottom:90px;
+    -webkit-overflow-scrolling: touch;
     .mer-shop{
       width:100%;
       height:285px;

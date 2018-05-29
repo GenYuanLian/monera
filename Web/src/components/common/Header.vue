@@ -75,7 +75,8 @@ export default {
     backTo: function() {
       // 返回功能
       if(this.$route.query.redirect) {
-        this.$router.push(this.$route.query.redirect);
+        this.$router.back();
+        // this.$router.push({path:this.$route.query.redirect});
         return;
       }
       if (this.linkTo) {
