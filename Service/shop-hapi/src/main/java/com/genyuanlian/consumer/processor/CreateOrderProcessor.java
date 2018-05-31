@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
@@ -52,6 +53,9 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 
 		// 收货地址
 		String addressId = request.getParameter("addressId");
+		
+		//钱包地址
+		String walletAddress=request.getParameter("walletAddress");
 
 		if (!checkParams(commodityType, commodityId, saleCount, amount) || Integer.valueOf(saleCount) <= 0) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
@@ -75,6 +79,9 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 			params.setRemark(remark);
 			if (ProUtility.isNotNull(addressId)) {
 				params.setAddressId(Long.parseLong(addressId));
+			}
+			if (StringUtils.isNotBlank(walletAddress)) {
+				params.setWalletAddress(walletAddress);
 			}
 			messageVo = commodityOrderApi.createOrder(params);
 		}

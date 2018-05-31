@@ -17,21 +17,34 @@
                 <p class="pro-paied"><span class="paied-card">{{order.commodityName}}</span><span class="paied-num fr">x{{order.saleCount}}</span></p>
               </div>
             </div>
-            <div class="or-btn">
+            <div class="or-btn" v-if="order.commodityType==1">
               <span v-if="order.status==0" class="or-tip" @timeOut="timeOut(order.surplusPayTime, order.timer)">{{order.timer}}</span>
               <input v-if="order.status==0" type="button" value="去支付" @click="goPay(order.orderNo)">
               <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
-              <input v-if="order.commodityType!=1&&order.status==3" type="button" value="提醒发货">
+              <input v-if="order.status==3||order.status==6 || order.status==8"  type="button" value="再来一单" @click="buyAgainClick(order.commodityId, order.commodityType, order.merchantId, order.merchType)">
+              <input v-if="order.status==3||order.status==6" class="evalue-btn"  type="button" value="去评价" @click="evaluateClick(order.orderNo)">
+              <input v-if="order.status==1||order.status==2" type="button" value="重新下单" @click="reorderClick(order.merchantId,order.merchType)">
+              <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
+              <!-- <input v-if="order.commodityType!=1&&order.status==3" type="button" value="申请退单"> -->
+            </div>
+            <div class="or-btn" v-else>
+              <span v-if="order.status==0" class="or-tip" @timeOut="timeOut(order.surplusPayTime, order.timer)">{{order.timer}}</span>
+              <input v-if="order.status==0" type="button" value="去支付" @click="goPay(order.orderNo)">
+              <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
+              <input v-if="order.status==3" type="button" value="提醒发货">
               <input v-if="order.status==6 || order.status==8"  type="button" value="再来一单" @click="buyAgainClick(order.commodityId, order.commodityType, order.merchantId, order.merchType)">
-              <input v-if="order.status==6" class="evalue-btn"  type="button" value="去评价">
+              <input v-if="order.status==6" class="evalue-btn"  type="button" value="去评价" @click="evaluateClick(order.orderNo)">
               <input v-if="order.status==2" type="button" value="重新下单" @click="reorderClick(order.merchantId,order.merchType)">
               <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
-              <input v-if="order.commodityType!=1&&(order.status==3 || order.status==3)" type="button" value="申请退单">
-              <!-- <input v-if="order.status==-1" class="evalue-btn"  type="button" value="确认收货"> -->
+              <!-- <input v-if="order.commodityType!=1&&order.status==3" type="button" value="申请退单"> -->
+              <input v-if="order.status==5" class="btn-primary"  type="button" value="确认收货" @click="confirmReceipt(order.orderNo)">
             </div>
           </div>
         </div>
       </Scroller>
+    </section>
+    <section class="content" v-show="ordersList.length==0">
+      <div class="no-card">还没有订单哦，快去购买吧~</div>
     </section>
     <NavBar :isShow="true"></NavBar>
   </div>
@@ -215,6 +228,24 @@ export default {
         console.log(err);
       });
     },
+    confirmReceipt:function(orderNo) {
+      //TODO 确认收货
+      let param = {
+        orderNo: orderNo
+      };
+      this.$httpPost(apiUrl.buyerConfirmOrder, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            this.ordersList = [];
+            this.getOrderList();
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
     buyAgainClick: function(proId, proType, id, type) {
       //TODO 再来一单
       if(proType==1) {
@@ -226,6 +257,10 @@ export default {
     reorderClick: function(id, type) {
       //TODO 重新下单
       this.$router.push({name:"merchant_info", query: {id:id, type:type}});
+    },
+    evaluateClick: function(orderNo) {
+      //TODO 去评价
+      this.$router.push({name:'order_evaluate', query:{orderNo:orderNo}});
     }
   },
   mounted() {
@@ -257,6 +292,14 @@ html,body{
     -webkit-overflow-scrolling: touch;
     background-color: #f3f4f6;
     padding-bottom:180px;
+    .no-card{
+      height: 80px;
+      line-height: 80px;
+      font-size: 20px;
+      color: #cecece;
+      text-align: center;
+      letter-spacing: 2px;
+    }
     .order-row-box{
       width: 100%;
       height: 100%;
@@ -328,11 +371,19 @@ html,body{
             color: #fff;
             margin: 20px 20px 0 0;
             border-radius: 10px;
-            background-color: #ffa936;
+            color: #ffa936;
+            border:1px solid #ffa936;/*no*/
             float: right;
           }
           .evalue-btn{
+            color: #317db9;
+            border:1px solid #317db9;/*no*/
+          }
+
+          .btn-primary{
+            color:#fff;
             background-color: #317db9;
+            border:none;
           }
         }
       }

@@ -39,7 +39,7 @@
       <input v-if="cardOrderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancelOrder">
       <input v-if="cardOrderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="payOrder">
       <input v-if="cardOrderMsg.status==3" class="cancle-btn" type="button" value="去评价" @click="evaluateOrder">
-      <input v-if="cardOrderMsg.status==3" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
+      <input v-if="cardOrderMsg.status==3||cardOrderMsg.status==8" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
       <input v-if="cardOrderMsg.status==1 || cardOrderMsg.status==2" class="one-btn" type="button" value="删除订单" @click="deleteOrder">
     </footer>
   </div>

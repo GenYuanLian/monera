@@ -47,8 +47,6 @@ public class GetPuCardTradeRecordProcessor extends BaseApiProcessor {
 		
 		List<ShopPuCardTradeRecord> list = commonService.getList(ShopPuCardTradeRecord.class, "puCardId",puCardId);
 		
-//		HtmlPage page=
-		
 		sender.put("puCard", card);
 		sender.put("records", list);
 		sender.success(response);

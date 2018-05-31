@@ -36,6 +36,11 @@
           </div>
         </div>
         <div class="mine-block">
+          <div class="block-row" @click="powerClick">
+            <span class="power"><i class="ico-power"></i></span>
+            <span class="nav-title">算力服务</span>
+            <span class="row-right"><i class="ico-more"></i></span>
+          </div>
           <div class="block-row" @click="addressClick">
             <span class="address"><i class="ico-address"></i></span>
             <span class="nav-title">收货地址</span>
@@ -111,18 +116,32 @@ export default {
       //TODO 提货卡
       if(this.isLogin) {
         this.$router.push("card");
+      } else {
+        showMsg("请先登录");
+      }
+    },
+    powerClick: function() {
+      //TODO 算力服务
+      if(this.isLogin) {
+        this.$router.push("computing_server");
+      } else {
+        showMsg("请先登录");
       }
     },
     addressClick: function() {
       //TODO 收获地址
       if(this.isLogin) {
         this.$router.push("address");
+      } else {
+        showMsg("请先登录");
       }
     },
     collectionClick: function() {
       //TODO 我的收藏
       if(this.isLogin) {
         this.$router.push("collection");
+      } else {
+        showMsg("请先登录");
       }
     },
     serviceClick: function() {
@@ -416,7 +435,7 @@ html,body{
         &:last-child{
           border-bottom:none;
         }
-        .address,.collection,.service,.score{
+        .power,.address,.collection,.service,.score{
           display: inline-block;
           width:60px;
           height:60px;

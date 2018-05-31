@@ -1,17 +1,13 @@
 <template>
   <div class="gyl-news">
-    <div v-title>消息</div>
-    <Header title="消息" :border="true"></Header>
+    <div v-title>通知中心</div>
+    <Header title="通知中心" :border="true"></Header>
     <section class="content" v-show="newList&&newList.length>0">
       <Scroller lock-x height="100%" @on-pullup-loading="onPullup" ref="scroller" v-model="status" :use-pullup="usePullup" :pullup-config="pullupConfig">
         <div>
-          <div class="new-row" v-for="(item,i) in newList" v-bind:key="i">
-            <div class="new-date">{{item.createTime|format("YYYY-MM-DD HH:mm")}}</div>
-            <div class="new-info">
-              <div class="title">{{item.messageTitle}}</div>
-              <div class="info">{{item.messageContent}}</div>
-              <div v-if="item.messageContent.length>60" class="see">查看详情<span><i class="ico-arrow-r"></i></span></div>
-            </div>
+          <div class="new-row" :class="i==newList.length-1 ? 'no-bottom' : ''" v-for="(item,i) in newList" v-bind:key="i">
+            <div class="title"><span>{{item.messageTitle}}</span><span class="new-date">{{item.createTime|format("MM-DD HH:mm")}}</span></div>
+            <div class="info">{{item.messageContent}}</div>
           </div>
         </div>
       </Scroller>
@@ -108,43 +104,26 @@ export default {
     -webkit-overflow-scrolling: touch;
     padding-bottom:110px;
     .new-row{
-      .new-date{
-        height: 70px;
-        line-height: 70px;
-        font-size: 24px;
-        color: #AAAAAA;
-        text-align: center;
+      padding:16px 30px 32px;
+      background-color: #fff;
+      border-bottom: 1px solid #efefef;/*no*/
+      &.no-bottom{
+        border-bottom: 0;
       }
-      .new-info{
-        background-color: #fff;
-        padding:30px;
-        .title{
-          font-size: 28px;
-          color: #222222;
-        }
-        .info{
-          line-height: 34px;
-          margin-top:20px;
-          font-size: 24px;
-          color: #AAAAAA;
-          max-height:68px;
-          overflow: hidden;
-        }
-        .see{
-          height: 80px;
-          line-height: 80px;
-          font-size: 24px;
-          color: #AAAAAA;
-          border-top: 1px solid #efefef;/*no*/
-          span{
-            float:right;
-            margin-right:10px;
-            i{
-              width:14px;
-              height:24px;
-            }
-          }
-        }
+      .title{
+        font-size: 26px;
+        line-height: 75px;
+        color: #333333;
+      }
+      .new-date{
+        font-size: 26px;
+        color: #999999;
+        float: right;
+      }
+      .info{
+        line-height: 36px;
+        font-size: 26px;
+        color: #666666;
       }
     }
     .xs-plugin-pullup-container{

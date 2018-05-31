@@ -8,17 +8,9 @@
         <p class="pro-name" v-text="commodity.title"></p>
         <p class="pro-sale">BSTK {{commodity.price}}<span class="pro-sale-num">月售{{commodity.saleQuantity}}份</span></p>
       </div>
-      <div class="pro-intro">
-        <p>商品简介</p>
-        <div class="intro-box" v-html="product.description"></div>
-      </div>
-      <div class="pro-features">
-        <p>产品特点</p>
-        <div class="features-box" v-html="product.feature"></div>
-      </div>
-      <div class="pro-standard">
-        <p>产品规格</p>
-        <div class="standard-box" v-html="product.specification"></div>
+      <div class="pro-intro" v-for="(item, i) in introList" :key="i">
+        <p>{{item.key}}</p>
+        <div class="intro-box" v-html="item.values"></div>
       </div>
       <div class="pro-evaluate" v-if="evalList.length>0">
         <p>产品评价</p>
@@ -67,10 +59,10 @@ export default {
       productId: 0,
       productType: 0,
       commodity: {},
-      product: {},
       buyNum: 1,
-      minNum: 1,
-      maxNum: 0,
+      minNum: 1,  // 购买最小数量
+      maxNum: 0,  // 购买最大数量
+      introList:[], // 产品介绍list
       evalList:[] // 产品评价列表
     };
   },
@@ -98,9 +90,9 @@ export default {
       this.$httpPost(apiUrl.getCommodityInfo, param).then((res) => {
         if(res.status.code==0&&res.data) {
           this.commodity = res.data.commodity;
-          this.product = res.data.product;
           this.maxNum = res.data.commodity.inventoryQuantity;
           this.headTitle = res.data.commodity.title;
+          this.introList = res.data.list;
           if(res.data.pics) {
             res.data.pics.forEach(item => {
               this.proImgs.push({url: 'javascript:', img: item.url, title: item.title});
@@ -122,7 +114,7 @@ export default {
       this.$router.push({name:"order_place", query: {proId: this.productId, proType: this.commodity.commodityType, num: this.buyNum}});
     },
     getProductEvaluate: function(flag) {
-      //TODO 查询商家怕评价列表
+      //TODO 查询商家评价列表
       let param = {
         commodityId: this.productId,
         commodityType: this.productType,
@@ -321,11 +313,21 @@ html,body{
       .vux-number-selector-plus svg {
         fill: #fff;
       }
-      .vux-number-selector-sub svg, .vux-number-round .vux-number-selector.vux-number-disabled svg  {
-        fill: #999;
+      .vux-number-selector-sub{
+        border: 1px solid #999;/*no*/
+        color:#999;
+        background-color: #999;
       }
-      .vux-number-round .vux-number-selector.vux-number-disabled, .vux-number-round .vux-number-selector-sub{
-        border-color: #999999;
+      .vux-number-selector svg{
+        fill:#fff;
+      }
+      .vux-number-selector-sub.vux-number-disabled,.vux-number-selector-plus.vux-number-disabled{
+        border: 1px solid #999;/*no*/
+        color:#999;
+        background-color:#fff;
+      }
+      .vux-number-disabled svg{
+        fill:#999;
       }
     }
   }

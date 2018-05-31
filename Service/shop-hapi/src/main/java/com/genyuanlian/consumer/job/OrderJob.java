@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -19,19 +21,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
 import com.genyuanlian.consumer.shop.model.ShopBstkRecord;
-import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
-import com.genyuanlian.consumer.shop.model.ShopOrder;
+import com.genyuanlian.consumer.shop.model.ShopOrderCalcForce;
+import com.genyuanlian.consumer.shop.model.ShopOrderCalcForceTask;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
-import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
-import com.genyuanlian.consumer.shop.vo.BWSWalletResponse;
-import com.genyuanlian.consumer.shop.vo.BWSWalletTransferResponseVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
-import com.hnair.consumer.utils.HttpClientUtils;
+import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.QCloudSMSUtils;
 import com.hnair.consumer.utils.SnoGerUtil;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
@@ -96,75 +95,70 @@ public class OrderJob {
 		if ("1".equals(jobLock)) {
 			return;
 		}
-/*		List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class, "status", 2);
-		if (tasks != null && tasks.size() > 0) {
-			for (ShopBstkRecord record : tasks) {
-				ShopBstkRecord upRecord = new ShopBstkRecord();
-				upRecord.setId(record.getId());
-				// 执行任务
-				try {
-
-					*//**
-					 * 调用接口
-					 *//*
-					String response = HttpClientUtils.bwsPost(record.getCallUrl(),
-							JSONObject.parseObject(record.getCallReq(), JSONObject.class));
-					upRecord.setCallResp(response);
-					BWSWalletResponse result = JSONObject.parseObject(response, BWSWalletResponse.class);
-
-					*//**
-					 * 创建钱包
-					 *//*
-					if (record.getCallType() == 1) {
-
-						BWSWalletCreateResponseVo resultVo = JSONObject.parseObject(result.getData(),
-								BWSWalletCreateResponseVo.class);
-
-						// 调用接口更新
-						// 插入 wallet
-						ShopBstkWallet upWallet = new ShopBstkWallet();
-						upWallet.setOwnerId(record.getOwnerId());
-						upRecord.setOwnerType(record.getOwnerType());
-						upWallet.setWalletAddress(resultVo.getWallet());
-						upWallet.setPublicKeyAddr(resultVo.getMainAddr());
-						upWallet.setCreateTime(DateUtil.getCurrentDateTime());
-						commonService.save(upWallet);
-
-					}
-					*//**
-					 * 充值 消费
-					 *//*
-					else if (record.getCallType() == 2 || record.getCallType() == 3) {
-						BWSWalletTransferResponseVo voResult = JSONObject.parseObject(result.getData(),
-								BWSWalletTransferResponseVo.class);
-
-						// 调用接口更新
-						if(record.getBusinessId()!=null&&record.getBusinessId()>0)
-						{
-							ShopOrder upOrder = new ShopOrder();
-							upOrder.setId(record.getBusinessId());
-							upOrder.setTransactionNo(voResult.getTxid());
-							commonService.update(upOrder);
-						}
-					}
-
-					upRecord.setStatus(1);
-					upRecord.setRemark("自动任务调用");
-					upRecord.setCreateTime(DateUtil.getCurrentDateTime());
-					commonService.update(upRecord);
-
-				} catch (Exception ex) {
-					logger.error("自动任务调用bws接口失败", ex);
-					upRecord.setRetryCount(record.getRetryCount() + 1);
-					upRecord.setStatus(2);
-					upRecord.setRemark("自动任务调用");
-					upRecord.setCreateTime(DateUtil.getCurrentDateTime());
-					commonService.update(upRecord);
-
-				}
-
-			}
-		}*/
+		/*
+		 * List<ShopBstkRecord> tasks =
+		 * commonService.getList(ShopBstkRecord.class, "status", 2); if (tasks
+		 * != null && tasks.size() > 0) { for (ShopBstkRecord record : tasks) {
+		 * ShopBstkRecord upRecord = new ShopBstkRecord();
+		 * upRecord.setId(record.getId()); // 执行任务 try {
+		 * 
+		 *//**
+			 * 调用接口
+			 */
+		/*
+		 * String response = HttpClientUtils.bwsPost(record.getCallUrl(),
+		 * JSONObject.parseObject(record.getCallReq(), JSONObject.class));
+		 * upRecord.setCallResp(response); BWSWalletResponse result =
+		 * JSONObject.parseObject(response, BWSWalletResponse.class);
+		 * 
+		 *//**
+			 * 创建钱包
+			 */
+		/*
+		 * if (record.getCallType() == 1) {
+		 * 
+		 * BWSWalletCreateResponseVo resultVo =
+		 * JSONObject.parseObject(result.getData(),
+		 * BWSWalletCreateResponseVo.class);
+		 * 
+		 * // 调用接口更新 // 插入 wallet ShopBstkWallet upWallet = new
+		 * ShopBstkWallet(); upWallet.setOwnerId(record.getOwnerId());
+		 * upRecord.setOwnerType(record.getOwnerType());
+		 * upWallet.setWalletAddress(resultVo.getWallet());
+		 * upWallet.setPublicKeyAddr(resultVo.getMainAddr());
+		 * upWallet.setCreateTime(DateUtil.getCurrentDateTime());
+		 * commonService.save(upWallet);
+		 * 
+		 * }
+		 *//**
+			 * 充值 消费
+			 *//*
+			 * else if (record.getCallType() == 2 || record.getCallType() == 3)
+			 * { BWSWalletTransferResponseVo voResult =
+			 * JSONObject.parseObject(result.getData(),
+			 * BWSWalletTransferResponseVo.class);
+			 * 
+			 * // 调用接口更新
+			 * if(record.getBusinessId()!=null&&record.getBusinessId()>0) {
+			 * ShopOrder upOrder = new ShopOrder();
+			 * upOrder.setId(record.getBusinessId());
+			 * upOrder.setTransactionNo(voResult.getTxid());
+			 * commonService.update(upOrder); } }
+			 * 
+			 * upRecord.setStatus(1); upRecord.setRemark("自动任务调用");
+			 * upRecord.setCreateTime(DateUtil.getCurrentDateTime());
+			 * commonService.update(upRecord);
+			 * 
+			 * } catch (Exception ex) { logger.error("自动任务调用bws接口失败", ex);
+			 * upRecord.setRetryCount(record.getRetryCount() + 1);
+			 * upRecord.setStatus(2); upRecord.setRemark("自动任务调用");
+			 * upRecord.setCreateTime(DateUtil.getCurrentDateTime());
+			 * commonService.update(upRecord);
+			 * 
+			 * }
+			 * 
+			 * } }
+			 */
 	}
 
 	/**
@@ -288,6 +282,97 @@ public class OrderJob {
 			logger.info("产品虚拟销售量定时任务-结束");
 		} catch (Exception ex) {
 			logger.error("产品虚拟销售量定时任务失败", ex);
+		}
+	}
+
+	/**
+	 * 执行算力服务收益
+	 */
+	@Scheduled(cron = "0 0/10 * * * ? ")
+	public void calcForceTask() {
+		if ("1".equals(jobLock)) {
+			return;
+		}
+
+		try {
+			String systemPublish = ConfigPropertieUtils.getString("system.publish");
+			int diff = Integer.parseInt(ConfigPropertieUtils.getString("calc.force.task.date.diff"));
+			Date now = new Date();
+			Date dateDiff = now;
+			if (diff != 0) {
+				dateDiff = DateUtil.addDate(now, diff);
+			}
+
+			// 下一个收益日
+			Date nextDate = DateUtil.addDate(dateDiff, 1);
+
+			String taskDate = DateUtil.formatDateByFormat(dateDiff, "yyyy-MM-dd");
+			String taskNextDate = DateUtil.formatDateByFormat(nextDate, "yyyy-MM-dd");
+
+			// 状态:0-待执行，1-执行成功，2-执行失败，3-冻结
+			List<ShopOrderCalcForceTask> tasks = commonService.getList(ShopOrderCalcForceTask.class, "planDate",
+					taskDate, "status", 0);
+
+			// 下一个收益日任务集合
+			List<ShopOrderCalcForceTask> nextTasks = commonService.getList(ShopOrderCalcForceTask.class, "planDate",
+					taskNextDate);
+			Map<Long, ShopOrderCalcForceTask> nextTasksMap = new HashMap<Long, ShopOrderCalcForceTask>();
+			for (ShopOrderCalcForceTask t : nextTasks) {
+				nextTasksMap.put(t.getOrderCalcForceId(), t);
+			}
+
+			for (ShopOrderCalcForceTask task : tasks) {
+				// 调用bstk接口
+				BigDecimal income = BigDecimal.ZERO;
+				if (systemPublish == "dev" || systemPublish == "test") {
+					income = new BigDecimal(0.1);
+				} else {
+					income = BigDecimal.valueOf(task.getBstkAmount());
+				}
+
+				String transactionNo = bwsService.walletRecharge(task.getId(), task.getMemberId(), 1,
+						task.getPublicKeyAddr(), income);
+				// 更新状态：0-待执行，1-执行成功，2-执行失败，3-冻结
+				if (ProUtility.isNotNull(transactionNo)) {
+					// 获取算力服务
+					ShopOrderCalcForce service = commonService.get(task.getOrderCalcForceId(),
+							ShopOrderCalcForce.class);
+
+					task.setExecutionTime(new Date());
+					task.setStatus(1);
+					task.setTransactionNo(transactionNo);
+					commonService.update(task);
+
+					// 更新算力服务
+					ShopOrderCalcForce upService = new ShopOrderCalcForce();
+					upService.setId(task.getOrderCalcForceId());
+					upService.setTotalIncomeBstk(
+							BigDecimal.valueOf(service.getTotalIncomeBstk()).add(income).doubleValue());
+
+					// 判断已完成状态:0-待收益，1-收益中，2-已完成，3-冻结
+					if (service.getValidityTo().equals(task.getPlanDate())) {
+						// 已完成
+						upService.setStatus(2);
+						upService.setEstimateIncomeBstk(new Double(0));
+					} else {
+						// 收益中
+						if (nextTasksMap.containsKey(task.getOrderCalcForceId())) {
+							upService.setEstimateIncomeBstk(
+									nextTasksMap.get(task.getOrderCalcForceId()).getBstkAmount());
+						}
+					}
+
+					commonService.update(upService);
+
+				} else {
+					task.setExecutionTime(new Date());
+					task.setStatus(2);
+					commonService.update(task);
+
+				}
+			}
+		} catch (Exception ex) {
+			logger.error("查询钱包余额告警失败", ex);
 		}
 	}
 }

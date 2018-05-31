@@ -3,5 +3,6 @@ const devEnv = require('./dev.env')
 
 module.exports = merge(devEnv, {
   NODE_ENV: '"testing"',
-  API_SERVER:'http://58.87.112.65:8081'
+  API_SERVER:'http://shoptestapi.genyuanlian.com'
 })
+//http://58.87.112.65:8081

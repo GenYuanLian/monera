@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.service.ICardOrderService;
@@ -47,6 +48,8 @@ public class CardOrderServiceImpl implements ICardOrderService {
 		if (orderDetails == null || orderDetails.size() == 0) {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorCode().toString());
 			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorMessage());
+			//手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return result;
 		}
 
@@ -75,6 +78,7 @@ public class CardOrderServiceImpl implements ICardOrderService {
 			if (cards == null || cards.size() == 0) {
 				result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200003.getErrorCode().toString());
 				result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200003.getErrorMessage());
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return result;
 			}
 

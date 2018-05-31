@@ -2,14 +2,14 @@ package com.genyuanlian.consumer.api.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -43,19 +43,35 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 	@Resource
 	private ISmsInfoService smsInfoService;
 
-	@SuppressWarnings("rawtypes")
 	@Resource(name = "masterRedisTemplate")
-	private RedisTemplate masterRedisTemplate;
+	private RedisTemplate<String, String> masterRedisTemplate;
 
-	@SuppressWarnings("rawtypes")
 	@Resource(name = "slaveRedisTemplate")
-	private RedisTemplate slaveRedisTemplate;
+	private RedisTemplate<String, String> slaveRedisTemplate;
 
 	@Override
 	public ShopMessageVo<String> sendSms(SendSmsParamsVo params) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
 		logger.info("短信发送调用到这里了=================,手机号:" + params.getMobile() + "短信类型:" + params.getSmstype());
-
+		//财务确认付款
+		if ("confirmPayment".equals(params.getSmstype())) {
+			//允许发送此类验证码的手机号集合
+			String mobiles = ConfigPropertieUtils.getString("confirm_payment_mobiles");
+			if (StringUtils.isBlank(mobiles)) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorMessage());
+				return messageVo;
+			}
+			
+			String[] split = mobiles.split(",");
+			//验证当前手机号是否有发送此类验证码的权限
+			if (!ArrayUtils.contains(split, params.getMobile())) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorMessage());
+				return messageVo;
+			}
+		}
+		
 		// 缓存短信发送的次数
 		String cacheKeySmsHourCount = "sendSms" + params.getMobile() + "key";
 
@@ -63,7 +79,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		Object logCount = masterRedisTemplate.opsForValue().get(cacheKeySmsHourCount);
 		int maxCount = Integer.parseInt(ConfigPropertieUtils.getString("member.sendsms.count"));
 		if (logCount != null && ProUtility.isNotNull(logCount.toString())
-				&& Integer.parseInt(logCount.toString()) >= maxCount) {
+				&& Integer.parseInt(logCount.toString()) >= maxCount && !"confirmPayment".equals(params.getSmstype())) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100004.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100004.getErrorMessage());
 			return messageVo;
@@ -107,6 +123,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		case "register":
 		case "findPwd":
 		case "login":
+		case "confirmPayment":
 			pars.add(verificationCode);
 			break;
 		}
@@ -117,10 +134,10 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		String smsNumber = UUID.randomUUID().toString();// 发送短信编码
 		ShopSmsInfo smsInfo = new ShopSmsInfo();// 存储短信数据库
 		smsInfo.setContent(content);
-		if (!"register".equals(params.getSmstype())) {
-			smsInfo.setMemberId(members.get(0).getId());
-		} else {
+		if ("register".equals(params.getSmstype()) || "confirmPayment".equals(params.getSmstype())) {
 			smsInfo.setMemberId(Long.valueOf("0"));
+		} else {
+			smsInfo.setMemberId(members.get(0).getId());
 		}
 		smsInfo.setMobile(params.getMobile());
 		smsInfo.setSmstype(params.getSmstype());
@@ -168,6 +185,25 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100009.getErrorMessage());
 			return messageVo;
 		}
+	}
+
+	@Override
+	public ShopMessageVo<Boolean> checkVerificationCode(String smsNumber, String mobile, String verificationCode) {
+		ShopMessageVo<Boolean> messageVo=new ShopMessageVo<>();
+		
+		// 判断短信验证码是否正确
+				String cacheKeySmsNumber = smsNumber + mobile;
+				String code = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
+				if (StringUtils.isNotBlank(code) && code.equals(verificationCode)) {
+					masterRedisTemplate.delete(cacheKeySmsNumber);
+					messageVo.setResult(true);
+					messageVo.setT(true);
+				} else {
+					messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
+					messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
+				}
+		
+		return messageVo;
 	}
 
 }

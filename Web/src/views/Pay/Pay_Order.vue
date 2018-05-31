@@ -10,7 +10,7 @@
           <span class="num-r">{{orderNo}}</span>
         </div>
         <div class="address">
-          <span class="lab-title">收货地址</span>
+          <span class="lab-title">订单详情</span>
           <span class="add-r" @click="addressClick">
             <span>{{delivery.receiver}} {{delivery.mobile}} 地址信息</span>
             <span class="other"><i class="ico-arr-down" :class="showDetail?'arr-up':''"></i></span>
@@ -25,6 +25,16 @@
           <span class="lab-title">订单金额</span>
           <span class="money">{{order.commodityType==1?'&yen;':'BSTK'}}{{order.amount}}</span>
         </div>
+        <div class="pay-bank" v-if="payExplain||payExplain!=''">
+          <div class="pay-tip"><i class="ico-pay-info"></i>支付提示</div>
+          <div class="pay-content" v-html="payExplain"></div>
+          <!-- <div class="pay-balance">你需要线下向如下任一账户支付余款： &yen;<span>1000000</span></div>
+          <div class="pay-banks">
+            <p>工商银行账户：8888 8888 8888 8888</p>
+            <p>工商银行账户：8888 8888 8888 8888</p>
+          </div>
+          <div class="pay-info">汇款时请备注你在本系统注册的手机号码</div> -->
+        </div>
       </div>
       <div class="paytype" v-if="order.commodityType==1">
         <div class="pay-title">选择支付方式</div>
@@ -33,7 +43,7 @@
           <span class="lab-title">微信支付</span>
           <span class="pay-radio" @click="payCheck(1)"><i class="ico-radio" :class="payType==1?'checked':''"></i></span>
         </div>
-        <div class="alipay" v-show="showMore">
+        <div class="alipay">
           <span class="ico-ali"><i class="ico-alipay"></i></span>
           <span class="lab-title">支付宝</span>
           <span class="pay-radio" @click="payCheck(2)"><i class="ico-radio" :class="payType==2?'checked':''"></i></span>
@@ -88,6 +98,7 @@ export default {
         address:""
       },
       address:"",
+      payExplain:"", //支付说明
       isWxPay:false,
       payResult:false, // 支付结果弹窗
       mask:0
@@ -118,6 +129,7 @@ export default {
         if(res.status.code==0&&res.data) {
           this.order = res.data.cardOrder||{};
           this.delivery = res.data.delivery||this.delivery;
+          this.payExplain = res.data.payExplain||"";
           this.productType = this.order.commodityType||0;
         } else {
           showMsg(res.status.message);
@@ -353,6 +365,58 @@ html,body{
           font-size:26px;
         }
       }
+      .pay-bank{
+        margin-left:30px;
+        padding:30px 30px 30px 0;
+        border-top: 1px solid #e8e8e8;/*no*/
+        .pay-tip{
+          height:50px;
+          line-height: 50px;
+          font-size:26px;
+          color:#ffa936;
+          i{
+            width:30px;
+            height:30px;
+            margin-bottom:-4px;
+            margin-right:20px;
+          }
+        }
+        .pay-content{
+          font-size:26px;
+          p{
+            height:40px;
+            line-height: 40px;
+          }
+        }
+        .pay-balance{
+          height:50px;
+          line-height: 50px;
+          font-size:26px;
+          color:#333333;
+          font-weight: bold;
+        }
+        .pay-banks{
+          margin-top:10px;
+          border:1px solid #e8e8e8;/*no*/
+          border-radius: 10px;
+          padding:10px 100px;
+          p{
+            margin-top:5px;
+            height:40px;
+            line-height:40px;
+            text-align: left;
+            font-size:26px;
+            color:#999;
+          }
+        }
+        .pay-info{
+          height:50px;
+          line-height: 50px;
+          font-size:26px;
+          color:#ffa936;
+          margin-top:10px;
+        }
+      }
     }
     .paytype{
       background-color: #fff;
@@ -416,7 +480,7 @@ html,body{
         }
       }
       .pay-more{
-        display: inline-block;
+        display: none;
         width:100%;
         height:60px;
         padding:20px 0;

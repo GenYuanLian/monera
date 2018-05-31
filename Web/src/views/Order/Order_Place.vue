@@ -3,7 +3,7 @@
     <div v-title>确认订单</div>
     <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content">
-      <div class="order-address" @click="openAddress">
+      <div v-if="merchant.addressRequire==1" class="order-address" @click="openAddress">
         <div class="person-infor">
           <div class="no-address" v-if="!deliver">添加收货地址</div>
           <div v-if="deliver">
@@ -12,7 +12,7 @@
           </div>
         </div>
       </div>
-      <div v-if="productType==1" class="order-send">
+      <div v-if="productType==1||merchant.addressRequire==0" class="order-send">
         <div class="order-row no-border-bot">
           <div class="row-key">配送</div>
           <div class="row-val">无需配送</div>
@@ -54,7 +54,7 @@
               <p class="pro-title" v-text="item.commodityName"></p>
               <p class="pro-price">
                 <span>{{item.commodityType==1?'&yen;':'BSTK'}}{{item.commodityPrice}}</span>
-                <span class="pro-num"><inline-x-number width="50px" button-style="round" :min="minNum" v-model="item.buyNum"></inline-x-number></span>
+                <span class="pro-num"><inline-x-number :width="'50px'" button-style="round" :min="minNum" :max="item.inventoryQuantity" v-model="item.buyNum"></inline-x-number></span>
               </p>
             </div>
           </div>
@@ -63,9 +63,13 @@
           <div class="row-key">配送费</div>
           <div class="row-val" v-text="express.distFee"></div>
         </div>
+        <div class="order-row" v-if="merchant.walletAddressRequire==1">
+          <div class="row-key">钱包地址</div>
+          <div class="row-val"><input type="text" v-model="walletAddr" placeholder="算力收益钱包地址"></div>
+        </div>
         <div class="order-row no-border-bot">
           <div class="row-key">订单备注</div>
-          <div class="row-val"><input type="text" v-model="remark"></div>
+          <div class="row-val"><input type="text" v-model="remark" placeholder="输入订单备注信息"></div>
         </div>
       </div>
     </section>
@@ -97,12 +101,13 @@ export default {
       productType: 0,
       productList: [],
       merchant: {},
-      buyNum: 1,
+      buyNum: 0,
       amount: 0,
       money: 0,
       totalMoney: 0,
       orderNo:"",
       remark: "",
+      walletAddr:"",
       addressId:"",
       deliver: null,
       express:{
@@ -151,7 +156,7 @@ export default {
     computePrice: function() {
       //TODO 计算总价
       this.productList.forEach((item) => {
-        this.$set(item, "buyNum", this.buyNum);
+        this.$set(item, "buyNum", +this.buyNum);
         this.amount = item.commodityPrice;
         this.totalMoney += parseFloat(item.commodityPrice*Number(item.buyNum));
       });
@@ -172,6 +177,9 @@ export default {
           this.merchant = res.data.result;
           this.productList = res.data.result.commodityList;
           this.computePrice();
+          if(this.merchant.addressRequire==1) {
+            this.loadAddress();
+          }
         } else {
           showMsg(res.status.message);
         }
@@ -184,12 +192,16 @@ export default {
       this.productList.forEach((item) => {
         this.buyNum = item.buyNum;
       });
-      if(this.addressId=="") {
+      if(this.merchant.addressRequire==1&&this.addressId=="") {
         showMsg("请添加收获地址信息");
         return;
       }
       if(this.buyNum<1) {
         showMsg("请选择数量");
+        return;
+      }
+      if(this.merchant.walletAddressRequire==1&&this.loadAddress=="") {
+        showMsg("请输入钱包地址");
         return;
       }
       let param = {
@@ -198,7 +210,8 @@ export default {
         saleCount: this.buyNum,
         amount: this.totalMoney,
         remark: this.remark,
-        addressId: this.addressId
+        addressId: this.addressId,
+        walletAddress: this.walletAddr
       };
       this.$httpPost(apiUrl.createOrder, param).then((res) => {
         if(res.status.code==0&&res.data) {
@@ -211,6 +224,21 @@ export default {
       }).catch((err) => {
         console.log(err);
       });
+    },
+    loadAddress: function() {
+      //TODO 初始化加载地址
+      if(window.localStorage.getItem("address")) {
+        let address = JSON.parse(localStorage.getItem("address"));
+        if(address) {
+          this.deliver = {};
+          this.addressId = address?address.id:"";
+          this.deliver.addrName = address?address.mobile:"";
+          this.deliver.addrPhone = address?address.receiver:"";
+          this.deliver.address = address?address.areaName+address.address:"";
+        }
+      }else {
+        this.getAddressList();
+      }
     }
   },
   mounted() {
@@ -220,21 +248,10 @@ export default {
     this.buyNum = this.$route.query.num||1;
     if(this.userId=="") {
       this.$router.push("login");
+      return;
     }
     if(this.productId!="") {
       this.getProductDetail();
-    }
-    if(window.localStorage.getItem("address")) {
-      let address = JSON.parse(localStorage.getItem("address"));
-      if(address) {
-        this.deliver = {};
-        this.addressId = address?address.id:"";
-        this.deliver.addrName = address?address.mobile:"";
-        this.deliver.addrPhone = address?address.receiver:"";
-        this.deliver.address = address?address.areaName+address.address:"";
-      }
-    }else {
-      this.getAddressList();
     }
   },
   watch: {
@@ -410,14 +427,14 @@ html,body{
       }
       .row-key{
         float: left;
-        width: 40%;
+        width: 140px;
         height: 90px;
         line-height: 90px;
         color: #555;
       }
       .row-val{
         float: left;
-        width: calc(~"60% - 30px");
+        width: calc(~"100% - 170px");
         padding: 15px 30px 15px 0;
         line-height: 62px;
         text-align: right;
@@ -426,7 +443,7 @@ html,body{
         input{
           display: block;
           float: right;
-          width: 375px;
+          width: 100%;
           height: 62px;
           font-size: 24px;
           line-height: 62px;

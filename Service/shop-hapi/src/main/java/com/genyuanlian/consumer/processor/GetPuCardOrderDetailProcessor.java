@@ -9,11 +9,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Component;
 
-import com.alibaba.fastjson.JSON;
+import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
 import com.genyuanlian.consumer.shop.model.ShopOrderDelivery;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
+import com.genyuanlian.consumer.shop.model.ShopProductCalcForce;
 import com.hnair.consumer.constant.ErrorCodeEnum;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.processor.BaseApiProcessor;
@@ -87,7 +88,13 @@ public class GetPuCardOrderDetailProcessor extends BaseApiProcessor {
 
 		sender.put("cardOrder", orderDetail);
 		sender.put("delivery", delivery);
-
+		
+		if (orderDetail.getCalcForceOrder()==1) {
+			ShopCommodity commodity = commonService.get(orderDetail.getCommodityId(), ShopCommodity.class);
+			ShopProductCalcForce product=commonService.get(commodity.getProductId(),ShopProductCalcForce.class);
+			sender.put("payExplain", product.getPayExplain());
+		}
+		
 		sender.success(response);
 	}
 

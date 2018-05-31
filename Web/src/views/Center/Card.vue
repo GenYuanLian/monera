@@ -5,7 +5,7 @@
     <section class="content">
       <div class="card-info">
         <div class="card-left fl">
-          <p>提货卡：{{cardCount}}张</p>
+          <p>有效提货卡：{{cardCount}}张</p>
           <p>余额合计：{{sumBalance}}BSTK</p>
         </div>
         <div v-show="false" class="card-right fr" @click="jumpCardActive">提货卡激活</div>
@@ -14,13 +14,18 @@
       <Scroller class="card-scroll" height="-175" ref="scrollerCard" v-model="status" :pullup-config="pullUpConfig" @on-pullup-loading="pullUpHandle" lock-x :scrollbar-y=false :use-pullup="true">
         <div class="card-box">
           <div class="card-row" v-for="(card, index) in cardList" :key="index" @click="jumpCardDetail(card.id)">
-            <p class="card-amount">{{card.bstkValue}}BSTK</p>
+            <div class="card-amount">
+              <img v-if="card.picUrl&&card.picUrl!=''" :src="card.picUrl" alt="">
+              <img v-else src="../../assets/images/Bg/card-bg.png" alt="">
+              <p>{{card.bstkValue}}BSTK</p>
+            </div>
             <div class="card-row-right">
               <p class="card-number">卡号&nbsp;&nbsp;&nbsp;{{card.code}}</p>
               <p class="card-leave">余额&nbsp;&nbsp;&nbsp;{{card.balance}}</p>
               <p class="card-time-line">{{new Date(card.createTime)|dateFormat('YYYY-MM-DD HH:mm')}} 至 {{new Date(card.validDate)|dateFormat('YYYY-MM-DD HH:mm')}}</p>
             </div>
           </div>
+          <div class="no-card" v-if="cardList.length==0">暂无可用提货卡，快去加购吧~</div>
         </div>
       </Scroller>
     </section>
@@ -181,6 +186,14 @@ html,body{
         }
       }
     }
+    .no-card{
+      height: 80px;
+      line-height: 80px;
+      font-size: 20px;
+      color: #cecece;
+      text-align: center;
+      letter-spacing: 2px;
+    }
     .card-box{
       // height: calc(~"100% - 280px");
       overflow-y: auto;
@@ -194,17 +207,28 @@ html,body{
         background-size: 100% 100%;
         border-radius: 10px;
         .card-amount{
-          width: 180px;
+          width: 176px;
           height: 130px;
+          border: 1px solid #efefef;/*no*/
           border-radius: 10px;
           font-size: 24px;
           text-align: center;
           line-height: 130px;
           color: #fff;
-          background: url('../../assets/images/Bg/card-bg.png') center no-repeat;
-          background-size: 100% 100%;
           margin-right: 20px;
           float: left;
+          img{
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            float:left;
+          }
+          p{
+            position: absolute;
+            width: 178px;
+            height: 130px;
+            line-height: 130px;
+          }
         }
         .card-row-right{
           float: right;

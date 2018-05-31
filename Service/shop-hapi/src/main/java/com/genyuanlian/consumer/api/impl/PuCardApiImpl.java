@@ -253,7 +253,7 @@ public class PuCardApiImpl implements IPuCardApi {
 		result.put("sumBalance", statistics.get("sumBalance"));
 
 		List<ShopPuCard> list = commonService.getListBySqlId(ShopPuCard.class, "pageData", "memberId", memberId,
-				"existStatus", existStatus, "pageIndex", pageIndex, "pageSize", pageSize + 1);
+				"existStatus", existStatus, "pageIndex", pageIndex * pageSize, "pageSize", pageSize + 1);
 
 		if (list == null || list.size() == 0) {
 			result.put("hasNext", 0);

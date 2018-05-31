@@ -29,8 +29,12 @@
           <span>送货费  0</span>
           <span class="paied-price">实付：{{orderMsg.amount}}BSTK</span>
         </div>
+        <div class="pay-bank" v-if="payExplain||payExplain!=''">
+          <div class="pay-tip"><i class="ico-pay-info"></i>支付提示</div>
+          <div class="pay-content" v-html="payExplain"></div>
+        </div>
       </div>
-      <div class="order-address">
+      <div class="order-address" v-if="addressMsg">
         <h6>配送信息</h6>
         <div class="order-row" v-if="false">
           <div class="row-key">发送时间</div>
@@ -47,6 +51,13 @@
         <div class="order-row no-border-bot">
           <div class="row-key">配送方式</div>
           <div class="row-val">商家配送</div>
+        </div>
+      </div>
+      <div class="order-address" v-else>
+        <h6>配送信息</h6>
+        <div class="order-row no-border-bot">
+          <div class="row-key">配送方式</div>
+          <div class="row-val">无需配送</div>
         </div>
       </div>
       <div class="order-message">
@@ -69,13 +80,15 @@
         </div>
       </div>
     </section>
-    <footer class="foot" v-if="orderMsg.status==0 || orderMsg.status==1 || orderMsg.status==2 || orderMsg.status==3 || orderMsg.status==6 ">
+    <footer class="foot" v-if="orderMsg.status!=4 || orderMsg.status!=7 || orderMsg.status!=8">
       <input v-if="orderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancleOrder">
       <input v-if="orderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="payOrder">
-      <input v-if="orderMsg.status==6" class="cancle-btn" type="button" value="去评价" @click="evaluateOrder">
-      <input v-if="orderMsg.status==3 || orderMsg.status==6" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
-      <input v-if="orderMsg.status==3" class="cancle-btn" type="button" value="申请退款" @click="refundOrder">
+      <input v-if="orderMsg.status==3" class="one-btn" type="button" value="再来一单" @click="buyAgain">
+      <!-- <input v-if="orderMsg.status==3" class="cancle-btn" type="button" value="申请退款" @click="refundOrder"> -->
       <input v-if="orderMsg.status==1 || orderMsg.status==2" class="one-btn" type="button" value="删除订单" @click="deleteOrder">
+      <input v-if="orderMsg.status==5" class="one-btn" type="button" value="确认收货" @click="confirmReceipt">
+      <input v-if="orderMsg.status==6" class="cancle-btn" type="button" value="去评价" @click="evaluateOrder">
+      <input v-if="orderMsg.status==6" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
     </footer>
   </div>
 </template>
@@ -96,7 +109,14 @@ export default {
       orderNo:"",
       timerProduct:null,
       payTimeOut:'去支付',
-      addressMsg:{},
+      addressMsg:{
+        arriveTime:"",
+        receiver:"",
+        mobile:"",
+        areaName:"",
+        address:""
+      },
+      payExplain:"",
       orderMsg:{} // 订单信息
     };
   },
@@ -139,6 +159,7 @@ export default {
           let data = res.data;
           this.orderMsg = data.cardOrder;
           this.addressMsg = data.delivery;
+          this.payExplain = data.payExplain||"";
           this.orderStatusHandle();
           if(this.orderMsg.status == 0) {
             // 待支付
@@ -245,11 +266,27 @@ export default {
       let param = {
         orderNo: this.orderNo
       };
-      let _this = this;
       this.$httpPost(apiUrl.deleteOrder, param).then((res) => {
         if(res.status.code==0&&res.data) {
           showMsg(res.status.message, () => {
-            _this.$router.replace('orders');
+            this.$router.replace('orders');
+          });
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    confirmReceipt:function(orderNo) {
+      //TODO 确认收货
+      let param = {
+        orderNo: this.orderNo
+      };
+      this.$httpPost(apiUrl.buyerConfirmOrder, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message, () => {
+            this.$router.replace('orders');
           });
         } else {
           showMsg(res.status.message);
@@ -386,6 +423,57 @@ html,body{
           font-size: 34px;
           color: #ffa936;
           margin-right: 30px;
+        }
+      }
+      .pay-bank{
+        padding:30px 0;
+        border-top:1px solid #e8e8e8;/*no*/
+        .pay-tip{
+          height:50px;
+          line-height: 50px;
+          font-size:26px;
+          color:#ffa936;
+          i{
+            width:30px;
+            height:30px;
+            margin-bottom:-4px;
+            margin-right:20px;
+          }
+        }
+        .pay-content{
+          font-size:26px;
+          p{
+            height:40px;
+            line-height: 40px;
+          }
+        }
+        .pay-balance{
+          height:50px;
+          line-height: 50px;
+          font-size:26px;
+          color:#333333;
+          font-weight: bold;
+        }
+        .pay-banks{
+          margin-top:10px;
+          border:1px solid #e8e8e8;/*no*/
+          border-radius: 10px;
+          padding:10px 100px;
+          p{
+            margin-top:5px;
+            height:40px;
+            line-height:40px;
+            text-align: left;
+            font-size:26px;
+            color:#999;
+          }
+        }
+        .pay-info{
+          height:50px;
+          line-height: 50px;
+          font-size:26px;
+          color:#ffa936;
+          margin-top:10px;
         }
       }
     }

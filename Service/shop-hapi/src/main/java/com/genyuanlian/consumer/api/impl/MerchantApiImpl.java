@@ -3,6 +3,7 @@ package com.genyuanlian.consumer.api.impl;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import com.genyuanlian.consumer.shop.model.ShopCommodityPic;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
+import com.genyuanlian.consumer.shop.model.ShopProductCalcForce;
 import com.genyuanlian.consumer.shop.model.ShopProductChainComputer;
 import com.genyuanlian.consumer.shop.model.ShopProductCommon;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
@@ -28,6 +30,7 @@ import com.genyuanlian.consumer.shop.vo.CommodityVo;
 import com.genyuanlian.consumer.shop.vo.IdParamsVo;
 import com.genyuanlian.consumer.shop.vo.MerchantCommodityResponseVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
+import com.genyuanlian.consumer.vo.KeyValuesVo;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
@@ -279,15 +282,30 @@ public class MerchantApiImpl implements IMerchantApi {
 					.multiply(BigDecimal.valueOf(commodity.getDiscount())).doubleValue();
 			commodity.setPrice(price);
 			resultMap.put("commodity", commodity);
+			List<KeyValuesVo> list=new ArrayList<>();
 			if (commodity.getCommodityType() == 1) //// 商品类型：1-区块链计算机,2-通用商品
 			{
 				ShopProductChainComputer product = commonService.get(commodity.getProductId(),
 						ShopProductChainComputer.class);
 				resultMap.put("product", product);
+				list.add(new KeyValuesVo("商品简介", product.getDescription()));
+				list.add(new KeyValuesVo("产品特点", product.getFeature()));
+				list.add(new KeyValuesVo("产品规格", product.getSpecification()));
 			} else if (commodity.getCommodityType() == 2) {
 				ShopProductCommon product = commonService.get(commodity.getProductId(), ShopProductCommon.class);
 				resultMap.put("product", product);
+				list.add(new KeyValuesVo("商品简介", product.getDescription()));
+				list.add(new KeyValuesVo("产品特点", product.getFeature()));
+				list.add(new KeyValuesVo("产品规格", product.getSpecification()));
+			} else if (commodity.getCommodityType()==3) {
+				ShopProductCalcForce product=commonService.get(commodity.getProductId(),ShopProductCalcForce.class);
+				resultMap.put("product", product);
+				list.add(new KeyValuesVo("商品简介",product.getDescription()));
+				list.add(new KeyValuesVo("基本信息",product.getBaseInfo()));
+				list.add(new KeyValuesVo("服务说明",product.getPackageDesc()));
+				list.add(new KeyValuesVo("支付说明",product.getPayExplain()));
 			}
+			resultMap.put("list", list);
 
 			commodity.setCommodityType(3);
 
@@ -319,6 +337,17 @@ public class MerchantApiImpl implements IMerchantApi {
 		logger.info("获取商户商品简要信息调用到这里了=================");
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 		ShopCommodity commodity = commonService.get(params.getCommodityId(), ShopCommodity.class);
+		if (commodity==null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
+		if (commodity.getCommodityType()==3) {
+			resp.setWalletAddressRequire(1);
+		}else {
+			resp.setAddressRequire(1);
+		}
+		
 		ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
 		if (merchant != null) {
 			resp.setMerchantId(merchant.getId());
@@ -327,12 +356,12 @@ public class MerchantApiImpl implements IMerchantApi {
 			resp.setMerchantLogo(imageDomain + merchant.getLogoPic());
 		}
 
-		if (commodity != null) {
 			CommodityVo vo = new CommodityVo();
 			vo.setCommodityId(commodity.getId());
 			vo.setCommodityType(3);
 			vo.setCommodityName(commodity.getTitle());
 			vo.setCommodityLogo(imageDomain + commodity.getLogo());
+			vo.setInventoryQuantity(commodity.getInventoryQuantity());
 			Double price = BigDecimal.valueOf(commodity.getPrice())
 					.multiply(BigDecimal.valueOf(commodity.getDiscount())).doubleValue();
 			vo.setCommodityPrice(price);
@@ -345,11 +374,6 @@ public class MerchantApiImpl implements IMerchantApi {
 			messageVo.setT(resp);
 			messageVo.setMessage("数据获取成功");
 			return messageVo;
-		} else {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
-			return messageVo;
-		}
 	}
 
 }

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.model.ShopBstkRecord;
@@ -205,22 +206,19 @@ public class BWSServiceImpl implements IBWSService {
 
 	public static void main(String[] args) {
 		try {
-			// String response =
-			// HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/create",null);
-			// BWSWalletResponse result =
-			// JSON.parseObject(response,BWSWalletResponse.class);
-			//
-			// BWSWalletCreateResponseVo voResult =
-			// JSON.parseObject(result.getData(),BWSWalletCreateResponseVo.class);
-			// System.out.print( voResult);
+			String response = HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/create", null);
+			System.out.print(response);
+			BWSWalletResponse result = JSON.parseObject(response, BWSWalletResponse.class);
+			BWSWalletCreateResponseVo voResult = JSON.parseObject(result.getData(), BWSWalletCreateResponseVo.class);
+			System.out.print(voResult);
 
-			 JSONObject params=new JSONObject();
-			 params.put("wallet","{\"coin\":\"btc\",\"network\":\"livenet\",\"xPrivKey\":\"xprv9s21ZrQH143K2XzEhAapHG9SBRM4gpjwNANqJ3bRTVq3L6i9PB4J4oNvnBFAQ5DndjiDrXhfvccSwJqqTRN2QBrsWxBw3pXqRXCoi96vjJA\",\"xPubKey\":\"xpub6CcjgCQ8L5jYkcx4y1e3f1whRxvx1wdPHN45kTfR9tJeFfAkordoqyBKyFF9soKuuX6fLuzJkRajw7yP7VUdg9Vr3VVacxgPSkyqVY5ipKQ\",\"requestPrivKey\":\"7dbd8f878a18028475a841cd5fea25b27ba153a476b4e6da395148e426b2ffa5\",\"requestPubKey\":\"03324a8ccff4cdb4eb208e584fbb331a722e56e82036509d95e7fcbfaa14ae9a48\",\"copayerId\":\"c9b852df7c533039814fb4df93f0a15091abce06f4dc797bd58112483fd3ac75\",\"publicKeyRing\":[{\"xPubKey\":\"xpub6CcjgCQ8L5jYkcx4y1e3f1whRxvx1wdPHN45kTfR9tJeFfAkordoqyBKyFF9soKuuX6fLuzJkRajw7yP7VUdg9Vr3VVacxgPSkyqVY5ipKQ\",\"requestPubKey\":\"03324a8ccff4cdb4eb208e584fbb331a722e56e82036509d95e7fcbfaa14ae9a48\"}],\"walletId\":\"903089b5-76ad-4c97-9096-b3078b199a8a\",\"walletName\":\"BSTK Wallet\",\"m\":1,\"n\":1,\"walletPrivKey\":\"282030920c602ea368e53b0140ae27ef888d1eb3960e58f5ed5cae7d149bbe83\",\"personalEncryptingKey\":\"yqZVqMVjXO1oy45GaptzjA==\",\"sharedEncryptingKey\":\"EU06xNl9u8kJL46Zsappwg==\",\"mnemonic\":\"�� �� �� �� �� �� �� �� �� �� �� ʶ\",\"entropySource\":\"b18872e8399bc8fad831585a3efeef158a10b2df4b49a9cab0afda5bbd47b8d4\",\"mnemonicHasPassphrase\":false,\"derivationStrategy\":\"BIP44\",\"account\":0,\"compliantDerivation\":true,\"addressType\":\"P2PKH\"}");
-			 String response =
-			 HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/balance",params);
-			 BWSWalletResponse result =
-			 JSONObject.parseObject(response,BWSWalletResponse.class);
-			 System.out.println(result.getData());
+//			 JSONObject params=new JSONObject();
+//			 params.put("wallet","{\"coin\":\"btc\",\"network\":\"livenet\",\"xPrivKey\":\"xprv9s21ZrQH143K2XzEhAapHG9SBRM4gpjwNANqJ3bRTVq3L6i9PB4J4oNvnBFAQ5DndjiDrXhfvccSwJqqTRN2QBrsWxBw3pXqRXCoi96vjJA\",\"xPubKey\":\"xpub6CcjgCQ8L5jYkcx4y1e3f1whRxvx1wdPHN45kTfR9tJeFfAkordoqyBKyFF9soKuuX6fLuzJkRajw7yP7VUdg9Vr3VVacxgPSkyqVY5ipKQ\",\"requestPrivKey\":\"7dbd8f878a18028475a841cd5fea25b27ba153a476b4e6da395148e426b2ffa5\",\"requestPubKey\":\"03324a8ccff4cdb4eb208e584fbb331a722e56e82036509d95e7fcbfaa14ae9a48\",\"copayerId\":\"c9b852df7c533039814fb4df93f0a15091abce06f4dc797bd58112483fd3ac75\",\"publicKeyRing\":[{\"xPubKey\":\"xpub6CcjgCQ8L5jYkcx4y1e3f1whRxvx1wdPHN45kTfR9tJeFfAkordoqyBKyFF9soKuuX6fLuzJkRajw7yP7VUdg9Vr3VVacxgPSkyqVY5ipKQ\",\"requestPubKey\":\"03324a8ccff4cdb4eb208e584fbb331a722e56e82036509d95e7fcbfaa14ae9a48\"}],\"walletId\":\"903089b5-76ad-4c97-9096-b3078b199a8a\",\"walletName\":\"BSTK Wallet\",\"m\":1,\"n\":1,\"walletPrivKey\":\"282030920c602ea368e53b0140ae27ef888d1eb3960e58f5ed5cae7d149bbe83\",\"personalEncryptingKey\":\"yqZVqMVjXO1oy45GaptzjA==\",\"sharedEncryptingKey\":\"EU06xNl9u8kJL46Zsappwg==\",\"mnemonic\":\"�� �� �� �� �� �� �� �� �� �� �� ʶ\",\"entropySource\":\"b18872e8399bc8fad831585a3efeef158a10b2df4b49a9cab0afda5bbd47b8d4\",\"mnemonicHasPassphrase\":false,\"derivationStrategy\":\"BIP44\",\"account\":0,\"compliantDerivation\":true,\"addressType\":\"P2PKH\"}");
+//			 String response =
+//			 HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/balance",params);
+//			 BWSWalletResponse result =
+//			 JSONObject.parseObject(response,BWSWalletResponse.class);
+//			 System.out.println(result.getData());
 
 			/**
 			 * 模拟提交，返回值

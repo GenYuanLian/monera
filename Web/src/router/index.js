@@ -27,6 +27,8 @@ const CardHistory = resolve => require(["@/views/Center/Card_History"], resolve)
 const CardActive = resolve => require(["@/views/Center/Card_Active"], resolve);
 const CardDetail = resolve => require(["@/views/Center/Card_Detail"], resolve);
 const Collection = resolve => require(["@/views/Center/Collection"], resolve);
+const ComputingServer = resolve => require(["@/views/Center/Computing_Server"], resolve);
+const ComSerDetail = resolve => require(["@/views/Center/ComSer_Detail"], resolve);
 const PersonalInfor = resolve => require(["@/views/User/Personal_Infor"], resolve);
 const NickName = resolve => require(["@/views/User/Nick_Name"], resolve);
 const UserName = resolve => require(["@/views/User/User_Name"], resolve);
@@ -51,6 +53,7 @@ const MerchantInfo = resolve => require(["@/views/Merchant/Merchant_Info"], reso
 const MerchantDetail = resolve => require(["@/views/Merchant/Merchant_Detail"], resolve);
 const MerchantEval = resolve => require(["@/views/Merchant/Merchant_Evaluate"], resolve);
 const ActiveCard = resolve => require(["@/views/Other/Active_Card"], resolve);
+const Download = resolve => require(["@/views/Other/Download"], resolve);
 Vue.use(VueRouter);
 const routes = [{
   path:"*",
@@ -148,6 +151,16 @@ const routes = [{
   path: "/collection",
   name: "collection",
   component: Collection
+},
+{
+  path: "/computing_server",
+  name: "computing_server",
+  component: ComputingServer
+},
+{
+  path: "/comSer_detail",
+  name: "comSer_detail",
+  component: ComSerDetail
 },
 {
   path: "/card_active",
@@ -294,6 +307,11 @@ const routes = [{
   path: "/active_card",
   name: "active_card",
   component: ActiveCard
+},
+{
+  path: "/download",
+  name: "download",
+  component: Download
 }
 ];
 // 页面刷新时，重新赋值token

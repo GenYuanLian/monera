@@ -13,6 +13,7 @@
               <p class="card-time-line">{{new Date(card.createTime)|dateFormat('YYYY-MM-DD HH:mm')}} 至 {{new Date(card.validDate)|dateFormat('YYYY-MM-DD HH:mm')}}</p>
             </div>
           </div>
+          <div class="no-card" v-if="cardList.length==0">暂无历史提货卡</div>
         </div>
       </Scroller>
     </section>
@@ -44,7 +45,7 @@ export default {
       },
       usePullup: true,
       pageIndex:0,
-      pageSize:5,
+      pageSize:10,
       status: {
         pullupStatus: 'disabled'
       },
@@ -194,6 +195,14 @@ html,body{
           }
         }
       }
+    }
+    .no-card{
+      height: 80px;
+      line-height: 80px;
+      font-size: 20px;
+      color: #cecece;
+      text-align: center;
+      letter-spacing: 2px;
     }
     .xs-plugin-pullup-container{
       line-height: 60px;

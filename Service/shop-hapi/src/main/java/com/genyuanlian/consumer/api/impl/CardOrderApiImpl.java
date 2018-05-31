@@ -200,9 +200,8 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		// 要取消的订单中提货卡订单详情id集合
-		List<Long> puCardOrderDetailIds = orderDetails.stream()
-				.filter(i -> i.getCommodityType() == 1 && i.getStatus() == 0).map(i -> i.getId()).distinct()
-				.collect(Collectors.toList());
+		List<Long> puCardOrderDetailIds = orderDetails.stream().filter(i -> i.getCommodityType() == 1)
+				.map(i -> i.getId()).distinct().collect(Collectors.toList());
 		// 提货卡订单需要修改对应的提货卡信息
 		if (puCardOrderDetailIds != null && puCardOrderDetailIds.size() > 0) {
 			// 根据订单详情ids查询，订单产品快照集合
@@ -261,8 +260,8 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		logger.info("买家确认收货调用到这里了=================,用户ID:" + params.getMemberId() + "订单编号:" + params.getOrderNo());
 
 		// 查询订单明细集合
-		List<ShopOrderDetail> orderDetails = commonService.get(ShopOrderDetail.class, "orderNo", params.getOrderNo(),
-				"memberId", params.getMemberId());
+		List<ShopOrderDetail> orderDetails = commonService.getList(ShopOrderDetail.class, "orderNo",
+				params.getOrderNo(), "memberId", params.getMemberId());
 		if (orderDetails == null || orderDetails.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorMessage());
@@ -279,7 +278,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		// 检查商户,购物车后需要迭代
-		ShopMerchant merchant = commonService.get(ShopMerchant.class, orderDetails.get(0).getMerchantId());
+		ShopMerchant merchant = commonService.get(orderDetails.get(0).getMerchantId(), ShopMerchant.class);
 		if (merchant == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200007.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200007.getErrorMessage());
@@ -294,7 +293,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 			return messageVo;
 		}
 
-		// 检查订单状态
+		// 检查订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
 		for (ShopOrderDetail detail : orderDetails) {
 			if (detail.getStatus() != 3 && detail.getStatus() != 5) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800011.getErrorCode().toString());
@@ -305,7 +304,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 
 		// 修改订单详情
 		for (ShopOrderDetail orderDetail : orderDetails) {
-			orderDetail.setStatus(8); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
+			orderDetail.setStatus(6); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
 			commonService.update(orderDetail);
 		}
 
@@ -346,7 +345,7 @@ public class CardOrderApiImpl implements ICardOrderApi {
 		}
 
 		List<ShopOrderDetail> list = commonService.getListBySqlId(ShopOrderDetail.class, "pageData", "memberId",
-				memberId, "deleteFlag", 0, "pageIndex", pageIndex, "pageSize", pageSize + 1);
+				memberId, "deleteFlag", 0, "pageIndex", pageIndex * pageSize, "pageSize", pageSize + 1);
 
 		// 商户集合
 		List<ShopMerchant> merchants = new ArrayList<>();

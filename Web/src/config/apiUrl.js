@@ -47,6 +47,9 @@ export default {
   orderComment: '/shop/api.go?action=orderComment',
   getMerchCommens:'/shop/api.go?action=getMerchCommens',
   getCommodityCommens:'/shop/api.go?action=getCommodityCommens',
+  getCalcForceServices:'/shop/api.go?action=getCalcForceServices',
+  getCalcForceIncomes:'/shop/api.go?action=getCalcForceIncomes',
+  confirmPayment:'/shop/api.go?action=confirmPayment',
   weixinpayH5: '/shop/api.go?action=weixinpayH5',
   getWeixinCode:'/shop/api.go?action=getWeixinCode'
 };
