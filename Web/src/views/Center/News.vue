@@ -6,24 +6,28 @@
       <Scroller lock-x height="100%" @on-pullup-loading="onPullup" ref="scroller" v-model="status" :use-pullup="usePullup" :pullup-config="pullupConfig">
         <div>
           <div class="new-row" :class="i==newList.length-1 ? 'no-bottom' : ''" v-for="(item,i) in newList" v-bind:key="i">
-            <div class="title"><span>{{item.messageTitle}}</span><span class="new-date">{{item.createTime|format("MM-DD HH:mm")}}</span></div>
-            <div class="info">{{item.messageContent}}</div>
+            <div class="title"><span>{{item.title}}</span><span class="new-date">{{new Date(item.createTime)|dateFormat("YYYY-MM-DD HH:mm")}}</span></div>
+            <div class="info">{{item.content}}</div>
           </div>
         </div>
       </Scroller>
+    </section>
+    <section class="content">
+      <div class="no-data">暂无相关消息通知</div>
     </section>
   </div>
 </template>
 <script>
 import { mapActions, mapGetters } from "vuex";
 import Header from "@/components/common/Header";
-import { Scroller } from 'vux';
+import { dateFormat, Scroller } from 'vux';
 import { showMsg, loading, readFile, valid } from "@/utils/common.js";
 import apiUrl from "@/config/apiUrl.js";
 export default {
   data() {
     return {
       newList: [],
+      hasNext: false,
       pageSize: 10,
       pageIndex: 1,
       scrollTop: 0,
@@ -40,34 +44,48 @@ export default {
       usePullup: true,
       status: {
         pullupStatus: 'disabled'
-      }
+      },
+      userId:""
     };
   },
   components: {
     Header, Scroller
   },
+  filters: {
+    dateFormat
+  },
+  computed:{
+    ...mapGetters(["getLoginUser", "getUserInfo"])
+  },
   methods: {
     initNews: function() {
       //TODO 查询消息列表
       let param = {
+        ownerId: this.userId,
+        ownerType:1,
         pageSize:this.pageSize,
-        currentPage:this.pageIndex
+        pageIndex:this.pageIndex
       };
-      this.$httpPost(apiUrl.queryMessage, param).then((res) => {
-        if(res.data&&res.data.status==="1000") {
-          this.totalPage = res.data.pages||0;
+      this.$httpPost(apiUrl.getsystemMessagges, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.hasNext = res.data.hasNext;
           let list = res.data.list||[];
-          if(list.length < this.pageSize) {
+          if(this.hasNext) {
             this.newList = this.newList.concat(list);
-            setTimeout(() => {
+            this.$nextTick(() => {
+              this.$refs.scroller.donePullup();
+            });
+          }else{
+            this.newList = this.newList.concat(list);
+            this.$nextTick(() => {
               this.$refs.scroller.disablePullup();
-            }, 10);
-          }else {
-            this.newList = this.newList.concat(list);
-            this.$refs.scroller.donePullup();
+            });
           }
         } else {
-          showMsg(res.data.msg);
+          showMsg(res.status.message);
+          this.$nextTick(() => {
+            this.$refs.scroller.disablePullup();
+          });
         }
       }).catch((err) => {
         console.log(err);
@@ -75,8 +93,8 @@ export default {
     },
     onPullup:function() {
       //TODO 上拉加载数据
-      if(this.pageIndex<this.totalPage) {
-        this.pageIndex += 1;
+      if(this.hasNext) {
+        this.pageIndex ++;
         this.initNews();
       } else {
         this.$refs.scroller.disablePullup();
@@ -84,6 +102,7 @@ export default {
     }
   },
   mounted () {
+    this.userId = this.getLoginUser?this.getLoginUser.id:"";
     this.$nextTick(() => {
       this.initNews();
     });

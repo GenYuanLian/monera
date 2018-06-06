@@ -12,10 +12,10 @@
       </div>
       <div class="menue mg-b">
         <div @click="changeNickName">
-          <p>昵称</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="nickName" readonly>
+          <p>昵称</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{nickName ? nickName : '未设置'}}</p>
         </div>
         <div class="no-border" @click="changeUserName">
-          <p>用户名</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="userName" readonly>
+          <p>用户名</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{userName ? userName : '未设置'}}</p>
         </div>
       </div>
       <div class="menue">
@@ -25,22 +25,27 @@
       </div>
       <div class="menue">
         <div>
-          <p>手机</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="mobile" readonly>
+          <p>手机</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{mobile ? mobile : '未绑定'}}</p>
         </div>
       </div>
-      <div class="menue" @click="changeNickName">
+      <div class="menue">
         <div>
-          <p>微信</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="wechat" readonly>
+          <p>微信</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{wechat ? wechat : '未绑定'}}</p>
         </div>
       </div>
       <div class="menue mg-b">
         <div class="no-border">
-          <p>QQ</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未绑定" :value="qq" readonly>
+          <p>QQ</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{qq ? qq : '未绑定'}}</p>
+        </div>
+      </div>
+      <div class="menue">
+        <div @click="setPayPwd">
+          <p>交易密码</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{hasPayPwd ? '已设置' : '未设置'}}</p>
         </div>
       </div>
       <div class="menue">
         <div class="no-border" @click="setLoginPwd">
-          <p>登录密码</p><span class="icon-box"><i class="ico-more"></i></span><input  class="text-box" type="text" placeholder="未设置" :value="hasPwd?'已设置':'未设置'" readonly>
+          <p>登录密码</p><span class="icon-box"><i class="ico-more"></i></span><p class="text-box">{{hasPwd ? '已设置' : '未设置'}}</p>
         </div>
       </div>
     </section>
@@ -76,6 +81,7 @@ export default {
       qq:"", // QQ
       password:"", // 密码
       hasPwd:"",
+      hasPayPwd:false,
       uploadShow: false // 上传图片蒙版
     };
   },
@@ -105,6 +111,7 @@ export default {
           this.wechat = "";
           this.qq = "";
           this.hasPwd = res.data.info.hasPwd;
+          this.hasPayPwd = res.data.info.hasPayPwd;
         } else {
           showMsg(res.status.message);
         }
@@ -160,6 +167,10 @@ export default {
     setLoginPwd:function() {
       //TODO 设置登录密码
       this.$router.push("loginpwd_edit");
+    },
+    setPayPwd:function() {
+      //TODO 设置交易密码
+      this.$router.push("paypwd_edit");
     },
     stopPop() {
       // 阻止冒泡
@@ -248,10 +259,9 @@ body,
           color:#9FA2AE;
         }
         .text-box {
-          height: 66px;
-          line-height: 66px;
           font-size: 24px;
           color: #9fa2ae;
+          float: right;
           &.col-tips {
             color: #f9615c;
           }

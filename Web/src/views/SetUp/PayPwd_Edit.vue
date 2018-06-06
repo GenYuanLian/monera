@@ -1,24 +1,24 @@
 <template>
   <div class="gyl-paypwd-edit">
-    <div v-title>修改交易密码</div>
-    <Header title="修改交易密码" :border="true"></Header>
+    <div v-title>设置交易密码</div>
+    <Header title="设置交易密码" :border="true"></Header>
     <section class="content">
       <div class="con-row">
         <label>手机号：</label><input class="txt-mobile" type="text" :value="mobile | mobileFilter" readonly="readonly" placeholder="请输入手机号">
       </div>
       <div class="con-row">
-        <label>短信验证：</label><input class="txt-code" @focus="smsClear=true" @blur="smsClear=false" v-model="smsCode" type="text" placeholder="请输入短信验证码"><span @click="clearClick(1)" v-show="smsClear" class="txt-code-clear ico-clear"></span>
-        <GetVerifyCode :smstype="'findPayPwd'" :mobile="mobile" v-on:sms-num="setSmsNum"></GetVerifyCode>
+        <label>短信验证：</label><input class="txt-code" v-model="smsCode" type="text" placeholder="请输入短信验证码">
+        <GetVerifyCode :smstype="'resetPayPwd'" :mobile="mobile" v-on:sms-num="setSmsNum"></GetVerifyCode>
       </div>
       <div class="con-row">
-        <label>旧密码：</label><input class="txt-pwd" @focus="pwdoClear=true" @blur="pwdoClear=false" v-model="oldPwd" type="password" maxlength="6" placeholder="请输入旧的交易密码，6位数字"><span @click="clearClick(2)" v-show="pwdoClear" class="txt-clear ico-clear"></span>
+        <label>密码：</label><input class="txt-pwd" v-model="pwd1" type="password" maxlength="6" placeholder="请输入交易密码，6位数字">
       </div>
       <div class="con-row">
-        <label>新密码：</label><input class="txt-pwd" @focus="pwdnClear=true" @blur="pwdnClear=false" v-model="newPwd" type="password" maxlength="6" placeholder="请输入新的交易密码，6位数字"><span @click="clearClick(3)" v-show="pwdnClear" class="txt-clear ico-clear"></span>
+        <label>确认密码：</label><input class="txt-pwd" v-model="pwd2" type="password" maxlength="6" placeholder="请再次输入交易密码">
       </div>
     </section>
     <footer class="gyl-footer m-t160">
-      <input class="eru-btn btn-l btn-primary" type="button" value="确认" @click="confirmClick">
+      <input class="gyl-btn" type="button" value="确认" @click="confirmClick">
     </footer>
   </div>
 </template>
@@ -33,13 +33,11 @@ export default {
   data() {
     return {
       mobile: "",
-      smsCode: "",
-      oldPwd: "",
-      newPwd: "",
-      smsNumber: "",
-      smsClear: false,
-      pwdoClear: false,
-      pwdnClear: false
+      smsCode: "", // 短信验证码
+      pwd1: "",
+      pwd2: "",
+      smsNumber: "", // 验证码发送标识
+      redirect:"" // 重定向地址
     };
   },
   components: {
@@ -49,18 +47,6 @@ export default {
     ...mapGetters(["getLoginUser"])
   },
   methods: {
-    clearClick: function(flag) {
-      //TODO 清空
-      if(flag==1) {
-        this.smsCode = "";
-      }
-      if(flag==2) {
-        this.oldPwd = "";
-      }
-      if(flag==3) {
-        this.newPwd = "";
-      }
-    },
     setSmsNum: function(val) {
       //TODO 验证码标识
       this.smsNumber = val;
@@ -75,28 +61,30 @@ export default {
         showMsg("请先获取验证码");
         return;
       }
-      if(!valid.numpwd(this.oldPwd)) {
-        showMsg("请输入正确的旧交易密码");
+      if(!valid.numpwd(this.pwd1)) {
+        showMsg("请输入正确的交易密码");
         return;
       }
-      if(!valid.numpwd(this.newPwd)) {
-        showMsg("请输入正确的新交易密码");
+      if(this.pwd2 != this.pwd1) {
+        showMsg("请输入相同的交易密码");
         return;
       }
       let param = {
         mobile: this.mobile,
         smsCode: this.smsCode,
-        oldTradePwd: md5(this.oldPwd),
-        tradePwd: md5(this.newPwd),
+        payPwd: md5(this.pwd1),
         smsNumber: this.smsNumber
       };
-      this.$httpPost(apiUrl.modifyTradePwd, param).then((res) => {
-        if(res.data&&res.data.status==="1000") {
-          let data = res.data;
-          showMsg(res.data.msg);
-          this.$router.push('mine');
+      this.$httpPost(apiUrl.resetPayPwd, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          showMsg(res.status.message);
+          if(this.redirect != '') {
+            this.$router.replace(this.redirect);
+          } else {
+            this.$router.push('mine');
+          }
         } else {
-          showMsg(res.data.msg);
+          showMsg(res.status.message);
         }
       }).catch((err) => {
         console.log(err);
@@ -105,6 +93,7 @@ export default {
   },
   mounted () {
     this.mobile = this.getLoginUser?this.getLoginUser.mobile:"";
+    this.redirect = this.$route.query.redirect ? this.$route.query.redirect : '';
   }
 };
 </script>
@@ -142,14 +131,14 @@ html,body{
         height: 80px;
         line-height: 80px;
         font-size: 28px;
-        color: #9FA2AE;
+        color: #333;
       }
       .txt-pwd{
         width:60%;
         height: 80px;
         line-height: 80px;
         font-size: 28px;
-        color: #9FA2AE;
+        color: #333;
       }
       .gyl-getCode{
         float:right;
@@ -166,12 +155,22 @@ html,body{
         display: inline-block;
         width:18px;
         height:18px;
-        margin-top:41px;
+        margin-top:-4px;
         margin-right:20px;
+        vertical-align: middle;
       }
     }
     :last-child{
       border-bottom:none;
+    }
+  }
+  .gyl-footer{
+    width: 100%;
+    height: 80px;
+    .gyl-btn{
+      width: calc(~"100% - 150px");
+      background-color: #317db9;
+      color: #fff;
     }
   }
 }

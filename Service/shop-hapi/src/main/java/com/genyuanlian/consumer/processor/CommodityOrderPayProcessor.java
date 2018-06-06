@@ -29,8 +29,10 @@ public class CommodityOrderPayProcessor extends BaseApiProcessor {
 	protected void process(HttpServletRequest request, HttpServletResponse response, ResultSender sender)
 			throws Exception {
 		String orderNo = request.getParameter("orderNo");
+		
+		String payPwd=request.getParameter("payPwd");
 
-		if (!checkParams(orderNo)) {
+		if (!checkParams(orderNo,payPwd)) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
 					response);
 			return;
@@ -50,6 +52,7 @@ public class CommodityOrderPayProcessor extends BaseApiProcessor {
 		params.setProductDesc(order.getRemark());
 		params.setSubject(order.getCommodityName());
 		params.setTotalAmount(order.getAmount());
+		params.setPayPwd(payPwd);
 
 		// 调用支付接口
 		ShopMessageVo<String> messageVo = commodityOrderApi.orderPay(params);

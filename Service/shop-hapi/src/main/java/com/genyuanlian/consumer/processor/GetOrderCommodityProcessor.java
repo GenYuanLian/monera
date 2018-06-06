@@ -13,10 +13,8 @@ import com.genyuanlian.consumer.shop.vo.MerchantCommodityResponseVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.constant.ErrorCodeEnum;
 import com.hnair.consumer.processor.BaseApiProcessor;
-import com.hnair.consumer.utils.LoginCheck;
 import com.hnair.consumer.utils.ResultSender;
 
-@LoginCheck
 @Component("hapigetOrderCommodityprocessor")
 public class GetOrderCommodityProcessor extends BaseApiProcessor {
 	@Resource

@@ -80,7 +80,7 @@
         </div>
       </div>
     </section>
-    <footer class="foot" v-if="orderMsg.status!=4 || orderMsg.status!=7 || orderMsg.status!=8">
+    <footer class="foot" v-if="orderMsg.status!=4 && orderMsg.status!=7 && orderMsg.status!=8">
       <input v-if="orderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancleOrder">
       <input v-if="orderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="payOrder">
       <input v-if="orderMsg.status==3" class="one-btn" type="button" value="再来一单" @click="buyAgain">

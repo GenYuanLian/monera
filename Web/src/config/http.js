@@ -81,7 +81,9 @@ axios.interceptors.response.use((res) => {
   if (res.data.status.code === 10003) {
     //登录过期
     store.commit(types.LOGOUT);
-    showMsg(res.data.status.message);
+    showMsg(res.data.status.message, () => {
+      location.href = "/#/login";
+    });
   }
   if (res.data.status.code < 0) {
     showMsg(res.data.status.message);

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.genyuanlian.consumer.service.IBWSService;
@@ -25,13 +26,16 @@ import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopLoginLog;
 import com.genyuanlian.consumer.shop.model.ShopMember;
 import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
+import com.genyuanlian.consumer.shop.model.ShopMemberSecurity;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
 import com.genyuanlian.consumer.shop.vo.IdParamsVo;
 import com.genyuanlian.consumer.shop.vo.LoginNameParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberAddressParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberFindPwdParamsVo;
+import com.genyuanlian.consumer.shop.vo.MemberIdPagedParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberIdParamsVo;
+import com.genyuanlian.consumer.shop.vo.MemberInvitationVo;
 import com.genyuanlian.consumer.shop.vo.MemberLoginParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberRegisterParamsVo;
 import com.genyuanlian.consumer.shop.vo.NicknameParamsVo;
@@ -106,7 +110,10 @@ public class MemberApiImpl implements IMemberApi {
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorMessage());
 				return messageVo;
 			}
+
+			params.setReferraId(referras.get(0).getId());
 		}
+
 		// 持久化
 		ShopMember register = registerPersist(params);
 
@@ -128,6 +135,7 @@ public class MemberApiImpl implements IMemberApi {
 		register.setMobile(params.getMobile());
 		register.setLoginPwd(params.getPwd());
 		register.setReferraCode(params.getReferraCode());
+		register.setReferraId(params.getReferraId());
 		register.setChannel(params.getChannel());
 		register.setChannelVersion(params.getChannelVersion());
 		register.setSignIp(params.getIp());
@@ -357,13 +365,16 @@ public class MemberApiImpl implements IMemberApi {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		logger.info("获取会员基本信息调用到这里了=================,会员Id:" + params.getMemberId());
 
-		// 根据登陆名称，密码查询用户信息
+		// 查询用户信息
 		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
 		if (member == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
 			return messageVo;
 		}
+
+		// 用户安全
+		ShopMemberSecurity security = commonService.get(ShopMemberSecurity.class, "memberId", params.getMemberId());
 
 		resultMap.put("memberId", member.getId());
 		resultMap.put("mobile", member.getMobile());
@@ -378,6 +389,11 @@ public class MemberApiImpl implements IMemberApi {
 		resultMap.put("status", member.getStatus());
 		resultMap.put("userName", member.getLoginName());
 		resultMap.put("hasPwd", ProUtility.isNotNull(member.getLoginPwd()) ? true : false);
+		if (security != null && ProUtility.isNotNull(security.getPayPwd())) {
+			resultMap.put("hasPayPwd", true);
+		} else {
+			resultMap.put("hasPayPwd", false);
+		}
 
 		// 提货卡统计信息
 		List<Integer> existStatus = new ArrayList<>();
@@ -396,6 +412,98 @@ public class MemberApiImpl implements IMemberApi {
 		messageVo.setResult(true);
 		messageVo.setT(resultMap);
 		messageVo.setMessage("数据获取成功");
+		return messageVo;
+	}
+
+	@Override
+	public ShopMessageVo<Map<String, Object>> getInvitationCode(MemberIdParamsVo params) {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		logger.info("获取会员邀请码调用到这里了=================,会员Id:" + params.getMemberId());
+
+		// 查询用户信息
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		resultMap.put("invitationCode", member.getInvitationCode());
+
+		messageVo.setResult(true);
+		messageVo.setT(resultMap);
+		messageVo.setMessage("数据获取成功");
+		return messageVo;
+	}
+
+	@Override
+	public ShopMessageVo<Map<String, Object>> getMemberInvitRegister(MemberIdPagedParamsVo params) {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		logger.info("获取我的邀请会员注册列表分页数据调用到这里了=================");
+
+		// 查询用户信息
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		if (params.getPageIndex() == null) {
+			params.setPageIndex(0);
+		}
+
+		if (params.getPageSize() == null) {
+			params.setPageSize(20);
+		}
+
+		List<ShopMember> list = commonService.getListBySqlId(ShopMember.class, "pageData", "referraId",
+				params.getMemberId(), "pageIndex", params.getPageIndex() * params.getPageSize(), "pageSize",
+				params.getPageSize() + 1);
+
+		Integer totalCount = commonService.getBySqlId(ShopMember.class, "pageCount", "referraId", params.getMemberId());
+		resultMap.put("totalCount", totalCount);
+
+		List<MemberInvitationVo> vos = new ArrayList<MemberInvitationVo>();
+		if (list == null || list.size() == 0) {
+			resultMap.put("hasNext", 0);
+		} else {
+			int listCount = list.size();
+			if (listCount > params.getPageSize()) {
+				resultMap.put("hasNext", 1);
+				list.remove(listCount - 1);
+			} else {
+				resultMap.put("hasNext", 0);
+
+			}
+
+			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
+			for (ShopMember mem : list) {
+				MemberInvitationVo vo = new MemberInvitationVo();
+				vo.setId(mem.getId());
+				vo.setMobile(mem.getMobile());
+				vo.setCreateTime(mem.getCreateTime());
+				if (ProUtility.isNotNull(mem.getHeadPortrait())) {
+					vo.setHeadPortrait(imageDomain + mem.getHeadPortrait());
+				}
+
+				if (ProUtility.isNotNull(mem.getNickName())) {
+					vo.setName(mem.getNickName());
+				} else {
+					vo.setName(mem.getLoginName());
+				}
+
+				vos.add(vo);
+			}
+		}
+
+		resultMap.put("list", vos);
+		messageVo.setT(resultMap);
+		messageVo.setMessage("数据获取成功");
+		messageVo.setResult(true);
+
 		return messageVo;
 	}
 
@@ -422,12 +530,10 @@ public class MemberApiImpl implements IMemberApi {
 		// 根据登陆名称，密码查询用户信息
 		ShopMember member = commonService.get(ShopMember.class, "mobile", params.getMobile());
 		if (member != null) {
-			ShopMember upMember = new ShopMember();
-			upMember.setId(member.getId());
-			upMember.setLoginPwd(params.getPwd());
-			upMember.setPwdUptime(new Date());
-			upMember.setOldPwd(member.getLoginPwd());
-			commonService.update(upMember);
+			member.setLoginPwd(params.getPwd());
+			member.setPwdUptime(new Date());
+			member.setOldPwd(member.getLoginPwd());
+			commonService.update(member);
 
 			messageVo.setResult(true);
 			messageVo.setT(resultMap);
@@ -482,10 +588,8 @@ public class MemberApiImpl implements IMemberApi {
 		// 查询用户信息
 		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
 		if (member != null) {
-			ShopMember upMember = new ShopMember();
-			upMember.setId(member.getId());
-			upMember.setHeadPortrait(params.getImageUrl());
-			commonService.update(upMember);
+			member.setHeadPortrait(params.getImageUrl());
+			commonService.update(member);
 
 			messageVo.setResult(true);
 			messageVo.setT(resultMap);
@@ -507,10 +611,8 @@ public class MemberApiImpl implements IMemberApi {
 		// 查询用户信息
 		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
 		if (member != null) {
-			ShopMember upMember = new ShopMember();
-			upMember.setId(member.getId());
-			upMember.setLoginName(params.getLoginName());
-			commonService.update(upMember);
+			member.setLoginName(params.getLoginName());
+			commonService.update(member);
 
 			messageVo.setResult(true);
 			messageVo.setT(resultMap);
@@ -532,10 +634,8 @@ public class MemberApiImpl implements IMemberApi {
 		// 查询用户信息
 		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
 		if (member != null) {
-			ShopMember upMember = new ShopMember();
-			upMember.setId(member.getId());
-			upMember.setNickName(params.getNickName());
-			commonService.update(upMember);
+			member.setNickName(params.getNickName());
+			commonService.update(member);
 
 			messageVo.setResult(true);
 			messageVo.setT(resultMap);
@@ -751,10 +851,8 @@ public class MemberApiImpl implements IMemberApi {
 		// 查询用户收货地址信息
 		ShopMemberAddress address = commonService.get(params.getId(), ShopMemberAddress.class);
 		if (address != null) {
-			ShopMemberAddress upAddress = new ShopMemberAddress();
-			upAddress.setId(address.getId());
-			upAddress.setStatus(2);
-			commonService.update(upAddress);
+			address.setStatus(2);
+			commonService.update(address);
 
 			messageVo.setResult(true);
 			messageVo.setT(resultMap);
@@ -765,6 +863,51 @@ public class MemberApiImpl implements IMemberApi {
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 			return messageVo;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	@Transactional
+	public ShopMessageVo<String> resetPayPwd(MemberFindPwdParamsVo req) {
+		ShopMessageVo<String> messageVo = new ShopMessageVo<>();
+
+		// 判断短信验证码是否正确
+		String cacheKeySmsNumber = req.getSmsNumber() + req.getMobile();
+		Object smsNumber = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
+		if (smsNumber != null && ProUtility.isNotNull(smsNumber.toString())
+				&& smsNumber.toString().equals(req.getSmsCode())) {
+			masterRedisTemplate.delete(cacheKeySmsNumber);
+		} else {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
+			return messageVo;
+		}
+
+		// 查询会员
+		ShopMember member = commonService.get(ShopMember.class, "mobile", req.getMobile());
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		// 查询交易密码
+		ShopMemberSecurity memberSecurity = commonService.get(ShopMemberSecurity.class, "memberId", member.getId());
+		if (memberSecurity == null) {
+			memberSecurity = new ShopMemberSecurity();
+			memberSecurity.setMemberId(member.getId());
+			memberSecurity.setPayPwd(req.getPwd());
+			memberSecurity.setCreateTime(DateUtil.getCurrentDateTime());
+			commonService.save(memberSecurity);
+			messageVo.setT("交易密码设置成功");
+		} else {
+			memberSecurity.setPayPwd(req.getPwd());
+			commonService.update(memberSecurity);
+			messageVo.setT("重置交易密码成功");
+		}
+		messageVo.setResult(true);
+
+		return messageVo;
 	}
 
 }

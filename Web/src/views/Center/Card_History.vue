@@ -199,7 +199,7 @@ html,body{
     .no-card{
       height: 80px;
       line-height: 80px;
-      font-size: 20px;
+      font-size: 24px;
       color: #cecece;
       text-align: center;
       letter-spacing: 2px;

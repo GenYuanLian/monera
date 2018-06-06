@@ -339,5 +339,9 @@ export const valid = {
     }
     if(!pass) console.log(tip);
     return pass;
+  },
+  walletAddress:function(addr) {
+    const reg = /[0-9a-zA-Z]{34}$/;
+    return reg.test(addr);
   }
 };

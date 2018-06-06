@@ -22,7 +22,7 @@
           <li @click="btnPassword($event)">9</li>
           <li class="b9"></li>
           <li @click="btnPassword($event)">0</li>
-          <li class="b9" @click="btnDelete"><i class="ico-delete"></i></li>
+          <li class="b9" @click="btnDelete"><i class="ico-num-del"></i></li>
         </ul>
       </footer>
     </section>
@@ -39,9 +39,6 @@ export default {
   },
   created() {},
   methods: {
-    // showKeyNum: function() {
-    //   this.keyNum = true;
-    // },
     btnPassword(e) {
       let pwd = "";
       let obj = e.currentTarget;
@@ -127,9 +124,9 @@ export default {
     height: 101px;
     padding: 0;
     margin: 0 auto;
-    border-top: 1px solid #efefef;/*no*/
-    border-bottom: 1px solid #efefef;/*no*/
-    border-right: 1px solid #efefef;/*no*/
+    border-top: 1px solid #ccc;/*no*/
+    border-bottom: 1px solid #ccc;/*no*/
+    border-right: 1px solid #ccc;/*no*/
     overflow: hidden;
     margin-bottom: 108px;
     margin-top: 2px;
@@ -140,7 +137,7 @@ export default {
     height: 100%;
     padding: 0;
     float: left;
-    border-left: 1px solid #efefef;/*no*/
+    border-left: 1px solid #ccc;/*no*/
   }
 
   .ipt-pay input {
@@ -190,12 +187,12 @@ export default {
   }
 
   .b9 {
-    background: #c2c2c2 !important;
-  }
-  .ico-delete{
-    width: 47px;
-    height: 47px;
-    margin-top: 30px;
+    background: #efefef !important;
+    i{
+      width: 46px;
+      height: 46px;
+      margin-top: 28px;
+    }
   }
 }
 </style>

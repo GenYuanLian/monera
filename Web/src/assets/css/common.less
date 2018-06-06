@@ -1,20 +1,20 @@
 @import './normalize.css';
-@font-face {  
-  font-family: "DIN-Bold";  
+@font-face {
+  font-family: "DIN-Bold";
   src: url('../fonts/DINCond-Bold.otf');
   src: url('../fonts/DINCond-Bold.eot?#iefix') format('embedded-opentype'),
     url('../fonts/DINCond-Bold.woff') format('woff'),
     url('../fonts/DINCond-Bold.ttf') format('truetype'),
     url('../fonts/DINCond-Bold.svg') format('svg');
-} 
-@font-face {  
-  font-family: "DIN-Medium";  
+}
+@font-face {
+  font-family: "DIN-Medium";
   src: url('../fonts/DINCond-Medium.otf');
   src: url('../fonts/DINCond-Medium.eot?#iefix') format('embedded-opentype'),
     url('../fonts/DINCond-Medium.woff') format('woff'),
     url('../fonts/DINCond-Medium.ttf') format('truetype'),
     url('../fonts/DINCond-Medium.svg') format('svg');
-} 
+}
 
 
 html, body {
@@ -81,7 +81,7 @@ input{
   background-color: transparent;
   // -webkit-border-radius: 6px;
 }
-/* input[number] 去除上下箭头 */ 
+/* input[number] 去除上下箭头 */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none !important;
@@ -243,12 +243,41 @@ select:-webkit-autofill {
   margin-bottom:20px;
 }
 
+.no-data{
+  text-align: center;
+  height:80px;
+  line-height: 80px;
+}
+
 .gyl-footer{
   width:100%;
   height:auto;
   text-align: center;
 }
+/*
+  没有订单，
+  没有收藏，
+  没有消息
+*/
 
+.no-list-show{
+  width: 100%;
+  height: auto;
+  img{
+    display: block;
+    width: 408px;
+    height: auto;
+    margin: 200px auto;
+    margin-bottom: 80px;
+  }
+  p{
+    line-height: 40px;
+    font-size: 40px;
+    color: #555;
+    text-align: center;
+    margin: 0 auto;
+  }
+}
 /*
 * 按钮样式
 */
@@ -319,7 +348,7 @@ select:-webkit-autofill {
   display: inline-block;
   -webkit-appearance: none;
   user-select: none;
-  outline: none; 
+  outline: none;
 }
 .mui-switch:before {
   content: '';
@@ -334,35 +363,35 @@ select:-webkit-autofill {
   border-bottom-left-radius: 100%;
   border-bottom-right-radius: 100%;
   background-color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); 
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 .mui-switch:checked {
   border-color: #44DB5E;
   box-shadow: #44DB5E 0 0 0 63px inset;
-  background-color: #44DB5E; 
+  background-color: #44DB5E;
 }
 .mui-switch:checked:before {
-  left: 42px; 
+  left: 42px;
 }
 .mui-switch.mui-switch-animbg {
-  transition: background-color ease 0.4s; 
+  transition: background-color ease 0.4s;
 }
 .mui-switch.mui-switch-animbg:before {
-  transition: left 0.3s; 
+  transition: left 0.3s;
 }
 .mui-switch.mui-switch-animbg:checked {
   box-shadow: #dfdfdf 0 0 0 0 inset;
   background-color: #44DB5E;
-  transition: border-color 0.4s, background-color ease 0.4s; 
+  transition: border-color 0.4s, background-color ease 0.4s;
 }
 .mui-switch.mui-switch-animbg:checked:before {
-  transition: left 0.3s; 
+  transition: left 0.3s;
 }
 .mui-switch.mui-switch-anim {
-  transition: border cubic-bezier(0, 0, 0, 1) 0.4s, box-shadow cubic-bezier(0, 0, 0, 1) 0.4s; 
+  transition: border cubic-bezier(0, 0, 0, 1) 0.4s, box-shadow cubic-bezier(0, 0, 0, 1) 0.4s;
 }
 .mui-switch.mui-switch-anim:before {
-  transition: left 0.3s; 
+  transition: left 0.3s;
 }
 .mui-switch.mui-switch-anim:checked {
   box-shadow: #44DB5E 0 0 0 16px inset;
@@ -370,7 +399,7 @@ select:-webkit-autofill {
   transition: border ease 0.4s, box-shadow ease 0.4s, background-color ease 1.2s;
 }
 .mui-switch.mui-switch-anim:checked:before {
-  transition: left 0.3s; 
+  transition: left 0.3s;
 }
 
 /*
@@ -719,6 +748,12 @@ select:-webkit-autofill {
   background: url('../images/Icon/ico-delete.png') center no-repeat;
 }
 
+.ico-num-del{
+  display: inline-block;
+  background: url('../images/Icon/ico-num-del@2x.png') center no-repeat;
+  background-size:auto 100%;
+}
+
 .ico-collection{
   display: inline-block;
   background: url('../images/Icon/ico-collect.png') center no-repeat;
@@ -785,5 +820,15 @@ select:-webkit-autofill {
 .ico-power{
   display: inline-block;
   background: url('../images/Icon/ico-power@2x.png') center no-repeat;
+  background-size:auto 100%;
+}
+.ico-share-nav{
+  display: inline-block;
+  background: url('../images/Icon/ico-share-nav@2x.png') center no-repeat;
+  background-size:auto 100%;
+}
+.ico-share{
+  display: inline-block;
+  background: url('../images/Icon/ico-share@2x.png') center no-repeat;
   background-size:auto 100%;
 }

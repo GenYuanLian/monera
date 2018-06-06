@@ -1,9 +1,7 @@
 package com.genyuanlian.consumer.service.impl;
 
-
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -16,7 +14,6 @@ import com.genyuanlian.consumer.service.IPayRecordService;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
 import com.genyuanlian.consumer.shop.model.ShopPayRecord;
-import com.genyuanlian.consumer.shop.utils.AlipayProperties;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.dao.spi.ICommonDao;
 import com.hnair.consumer.utils.DateUtil;
@@ -35,9 +32,9 @@ public class PayRecordServiceImpl implements IPayRecordService {
 
 		List<ShopPayRecord> records = commonDao.getList(ShopPayRecord.class, "orderNo", orderNo);
 
-		String payNum = orderNo +DateUtil.formatDateByFormat(new Date(), "HHmmss");
+		String payNum = orderNo + DateUtil.formatDateByFormat(new Date(), "HHmmss");
 		ShopPayRecord payRecord = new ShopPayRecord();
-		if (records!=null && records.size()>0) {
+		if (records != null && records.size() > 0) {
 			for (ShopPayRecord r : records) {
 				if (r.getStatus() == 1) {
 					// 判断订单是否已支付成功
@@ -82,18 +79,15 @@ public class PayRecordServiceImpl implements IPayRecordService {
 			} else {
 				commonDao.update(payRecord);
 			}
-			
-			//保存支付方式
-			ShopOrder order = commonDao.get(ShopOrder.class, "orderNo",payRecord.getOrderNo());
-			ShopOrder updateOrder=new ShopOrder();
-			updateOrder.setId(order.getId());
-			updateOrder.setPayType(payRecord.getAccountType());
-			commonDao.update(updateOrder);
-			
+
+			// 保存支付方式
+			ShopOrder order = commonDao.get(ShopOrder.class, "orderNo", payRecord.getOrderNo());
+			order.setPayType(payRecord.getAccountType());
+			commonDao.update(order);
+
 		} catch (Exception e) {
 			logger.error("保持支付记录错误：" + e.getMessage());
 		}
 	}
 
-	
 }

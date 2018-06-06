@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.genyuanlian.consumer.shop.api.IFavoriteApi;
 import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
+import com.hnair.consumer.constant.ErrorCodeEnum;
 import com.hnair.consumer.processor.BaseApiProcessor;
 import com.hnair.consumer.utils.ResultSender;
 
@@ -33,16 +34,22 @@ public class GetPuCardTypesProcessor extends BaseApiProcessor {
 	protected void process(HttpServletRequest request, HttpServletResponse response, ResultSender sender)
 			throws Exception {
 		String merchantId = request.getParameter("merchantId");
-		String memberId=request.getParameter("memberId");
+		String memberId = request.getParameter("memberId");
 
-		//提货卡类型集合
+		if (!checkParams(merchantId)) {
+			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
+					response);
+			return;
+		}
+
+		// 提货卡类型集合
 		ShopMessageVo<Map<String, Object>> messageVo = puCardApi.getPuCardTypes(Long.valueOf(merchantId));
 
 		if (StringUtils.isNotBlank(memberId)) {
 			Boolean isCollection = favoriteApi.isCollection(Long.valueOf(memberId), Long.valueOf(merchantId), 1);
 			sender.put("isCollection", isCollection);
 		}
-		
+
 		if (messageVo.isResult()) {
 			sender.put("puCardTypes", messageVo.getT().get("puCardTypes"));
 			sender.put("merchant", messageVo.getT().get("merchant"));

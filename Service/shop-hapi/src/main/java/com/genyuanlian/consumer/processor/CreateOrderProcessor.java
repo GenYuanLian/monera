@@ -53,9 +53,12 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 
 		// 收货地址
 		String addressId = request.getParameter("addressId");
-		
-		//钱包地址
-		String walletAddress=request.getParameter("walletAddress");
+
+		// 钱包地址
+		String walletAddress = request.getParameter("walletAddress");
+
+		// 推荐码
+		String referraCode = request.getParameter("referraCode");
 
 		if (!checkParams(commodityType, commodityId, saleCount, amount) || Integer.valueOf(saleCount) <= 0) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
@@ -82,6 +85,9 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 			}
 			if (StringUtils.isNotBlank(walletAddress)) {
 				params.setWalletAddress(walletAddress);
+			}
+			if (StringUtils.isNotBlank(referraCode)) {
+				params.setReferraCode(referraCode);
 			}
 			messageVo = commodityOrderApi.createOrder(params);
 		}

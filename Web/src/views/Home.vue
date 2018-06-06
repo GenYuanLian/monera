@@ -6,7 +6,7 @@
           <span><i class="ico-service"></i></span>
           <a href="javascript:;"></a>
         </div> -->
-        <div class="head-title"><i class="ico-logo"></i>买卖大集</div>
+        <div class="head-title"><a href="https://www.genyuanlian.com/"><i class="ico-logo"></i></a>买卖大集</div>
         <!-- <div class="head-r" @click="newsClick">
           <a href="javascript:;"></a>
           <span><i class="ico-news"></i></span>
@@ -224,13 +224,19 @@ html,body{
       font-size: 27px;
       line-height: 86px;
       letter-spacing: 2px;
+      a{
+        display: inline-block;
+        width: 54px;
+        height:86px;
+        line-height: 86px;
+        margin-right: 15px;
+      }
       i{
         display: inline-block;
         width: 54px;
         height: 54px;
         vertical-align: middle;
         background-size: 100% 100%;
-        margin-right: 15px;
         margin-top: -5px;
       }
     }

@@ -29,6 +29,7 @@ const CardDetail = resolve => require(["@/views/Center/Card_Detail"], resolve);
 const Collection = resolve => require(["@/views/Center/Collection"], resolve);
 const ComputingServer = resolve => require(["@/views/Center/Computing_Server"], resolve);
 const ComSerDetail = resolve => require(["@/views/Center/ComSer_Detail"], resolve);
+const MineShare = resolve => require(["@/views/Center/Mine_Share"], resolve);
 const PersonalInfor = resolve => require(["@/views/User/Personal_Infor"], resolve);
 const NickName = resolve => require(["@/views/User/Nick_Name"], resolve);
 const UserName = resolve => require(["@/views/User/User_Name"], resolve);
@@ -54,6 +55,8 @@ const MerchantDetail = resolve => require(["@/views/Merchant/Merchant_Detail"], 
 const MerchantEval = resolve => require(["@/views/Merchant/Merchant_Evaluate"], resolve);
 const ActiveCard = resolve => require(["@/views/Other/Active_Card"], resolve);
 const Download = resolve => require(["@/views/Other/Download"], resolve);
+const ConfirmPay = resolve => require(["@/views/Admin/Confirm_Pay"], resolve);
+const InviteUser = resolve => require(["@/views/Center/Invite_User"], resolve);
 Vue.use(VueRouter);
 const routes = [{
   path:"*",
@@ -312,6 +315,21 @@ const routes = [{
   path: "/download",
   name: "download",
   component: Download
+},
+{
+  path: "/confirm_pay",
+  name: "confirm_pay",
+  component: ConfirmPay
+},
+{
+  path: "/invite_user",
+  name: "invite_user",
+  component: InviteUser
+},
+{
+  path: "/mine_share",
+  name: "mine_share",
+  component: MineShare
 }
 ];
 // 页面刷新时，重新赋值token

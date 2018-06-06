@@ -60,7 +60,7 @@ public class AlipayApiImpl implements IAlipayApi {
 		// 实例化具体API对应的request类,类名称和接口名称对应,当前调用接口名称：alipay.trade.wap.pay
 		AlipayTradeWapPayRequest request = new AlipayTradeWapPayRequest();
 		// 传入return_url和notify_ur;
-		request.setReturnUrl(AlipayProperties.ALIPAY_RETURN_URL+"?orderNo="+param.getOrderNo()+"&proType=1");
+		request.setReturnUrl(param.getReturnUrl());
 		request.setNotifyUrl(AlipayProperties.ALIPAY_NOTIFY_URL);
 		logger.info("return_url=" + request.getReturnUrl());
 		// SDK已经封装掉了公共参数，这里只需要传入业务参数

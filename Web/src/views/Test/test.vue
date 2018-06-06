@@ -21,6 +21,7 @@
         <msgScroll ref="msgS" :msg="'此处为公告栏2，啦啦啦啦啦啦啦啦啦,此处为公告栏，啦啦啦啦啦啦啦啦啦!!!'"></msgScroll>
         <div @click="clickSign">wwwwwwwwwww</div>
         <Actionsheet v-model="showSign" :menus="signList" @on-click-menu="chooseSign" ></Actionsheet>
+        <QrCode :text="'http://www.baidu.com'" :width="150"></QrCode>
     </div>
 </template>
 
@@ -30,6 +31,7 @@
   import { Clocker, XAddress, ChinaAddressV4Data, Picker, Actionsheet } from 'vux';
   import apiUrl from '@/config/apiUrl.js';
   import msgScroll from '@/components/messageScroll/index';
+  import QrCode from '@/components/common/QrCode';
   export default {
     data() {
       return {
@@ -76,7 +78,8 @@
       XAddress,
       Picker,
       msgScroll,
-      Actionsheet
+      Actionsheet,
+      QrCode
     },
     mounted:function() {
       // this.mesLunbo();

@@ -50,6 +50,12 @@ export default {
   getCalcForceServices:'/shop/api.go?action=getCalcForceServices',
   getCalcForceIncomes:'/shop/api.go?action=getCalcForceIncomes',
   confirmPayment:'/shop/api.go?action=confirmPayment',
+  getsystemMessagges:'/shop/api.go?action=getsystemMessagges',
+  getPucardBalance:'/shop/api.go?action=getPucardBalance',
+  resetPayPwd:'/shop/api.go?action=resetPayPwd',
   weixinpayH5: '/shop/api.go?action=weixinpayH5',
-  getWeixinCode:'/shop/api.go?action=getWeixinCode'
+  getWeixinCode:'/shop/api.go?action=getWeixinCode',
+  getSourceWalletVersion:'/shop/api.go?action=getSourceWalletVersion',
+  getInvitationCode:'/shop/api.go?action=getInvitationCode',
+  getMemberInvitRegister:'/shop/api.go?action=getMemberInvitRegister'
 };

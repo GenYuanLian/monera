@@ -20,7 +20,6 @@ import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopComment;
-import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
@@ -324,6 +323,17 @@ public class PuCardApiImpl implements IPuCardApi {
 		Double price = BigDecimal.valueOf(puCardType.getPrice()).multiply(BigDecimal.valueOf(puCardType.getDiscount()))
 				.doubleValue();
 		vo.setCommodityPrice(price);
+
+		// 获取库存
+		List<Long> typeIds = new ArrayList<Long>();
+		typeIds.add(puCardType.getId());
+		List<ShopPuCardType> puCardTypes = commonService.getListBySqlId(ShopPuCard.class, "groupByCardType", "list",
+				typeIds, "type", 2, "channel", 6);
+		if (puCardTypes != null && puCardTypes.size() > 0) {
+			vo.setInventoryQuantity(puCardTypes.get(0).getInventory());
+		} else {
+			vo.setInventoryQuantity(0);
+		}
 
 		List<CommodityVo> list = new ArrayList<CommodityVo>();
 		list.add(vo);

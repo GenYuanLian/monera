@@ -112,6 +112,12 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
 			return messageVo;
 		}
+		
+		if ("resetPayPwd".equals(params.getSmstype()) && (members == null || members.size() == 0)) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
 
 		// 调用发送短信接口
 		String verificationCode = SnoGerUtil.getRandomNum(6);
@@ -124,6 +130,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		case "findPwd":
 		case "login":
 		case "confirmPayment":
+		case "resetPayPwd":
 			pars.add(verificationCode);
 			break;
 		}

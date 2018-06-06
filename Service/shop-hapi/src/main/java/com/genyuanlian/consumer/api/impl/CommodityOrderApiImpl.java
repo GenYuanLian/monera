@@ -2,12 +2,10 @@ package com.genyuanlian.consumer.api.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -22,6 +20,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import com.alibaba.fastjson.JSON;
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.ICommodityOrderApi;
+import com.genyuanlian.consumer.shop.api.ISystemApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
@@ -29,6 +28,7 @@ import com.genyuanlian.consumer.shop.model.ShopCommodityOrderPay;
 import com.genyuanlian.consumer.shop.model.ShopConfirmPaymentLog;
 import com.genyuanlian.consumer.shop.model.ShopMember;
 import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
+import com.genyuanlian.consumer.shop.model.ShopMemberSecurity;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
 import com.genyuanlian.consumer.shop.model.ShopOrderCalcForce;
@@ -47,18 +47,24 @@ import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.utils.ShopUtis;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
+import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.SnoGerUtil;
+import com.hnair.consumer.utils.ValidateRegexUtils;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
 @Component("commodityOrderApi")
 public class CommodityOrderApiImpl implements ICommodityOrderApi {
 	private static Logger logger = LoggerFactory.getLogger(CommodityOrderApiImpl.class);
+	private static String systemPublish = ConfigPropertieUtils.getString("system.publish");
 
 	@Resource
 	private ICommonService commonService;
 
 	@Resource
 	private IBWSService bwsService;
+
+	@Resource
+	private ISystemApi systemApi;
 
 	@SuppressWarnings("rawtypes")
 	@Resource(name = "masterRedisTemplate")
@@ -77,6 +83,18 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100014.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100014.getErrorMessage());
 			return messageVo;
+		}
+
+		// 如果有推荐码参数，验证参数是否正确
+		if (ProUtility.isNotNull(params.getReferraCode())) {
+			List<ShopMember> referras = commonService.getList(ShopMember.class, "referraCode", params.getReferraCode());
+			if (referras == null || referras.size() == 0) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorMessage());
+				return messageVo;
+			}
+
+			params.setReferraId(referras.get(0).getId());
 		}
 
 		// 查询商品
@@ -122,13 +140,19 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		}
 
 		if (commodity.getCommodityType() == 3) {
-			// 若购买产品为算力服务
+			// 若购买产品为算力服务，则钱包公钥地址必填
 			if (StringUtils.isBlank(params.getWalletAddress())) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200011.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200011.getErrorMessage());
 				return messageVo;
 			}
 
+			// 钱包公钥地址格式验证
+			if (!ValidateRegexUtils.validate(params.getWalletAddress(), ValidateRegexUtils.PUBLIC_KEY_ADDR)) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200013.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200013.getErrorMessage());
+				return messageVo;
+			}
 		}
 
 		Date now = DateUtil.getCurrentDateTime();
@@ -150,6 +174,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		descMap.put("amount", params.getAmount().toString());
 		descMap.put("logo", commodity.getLogo());
 		order.setDescription(JSON.toJSONString(descMap));
+		order.setReferraCode(params.getReferraCode());
+		order.setReferraId(params.getReferraId());
 
 		// 持久化订单
 		commonService.save(order);
@@ -173,6 +199,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		orderDetail.setAmount(params.getAmount().doubleValue());
 		orderDetail.setStatus(0);
 		orderDetail.setRemark(params.getRemark());
+		orderDetail.setReferraCode(params.getReferraCode());
+		orderDetail.setReferraId(params.getReferraId());
 		if (commodity.getCommodityType() == 3) {
 			orderDetail.setPublicKeyAddr(params.getWalletAddress());
 			orderDetail.setCalcForceOrder(1);
@@ -238,6 +266,20 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
 		logger.info("商品订单支付调用到这里了=================,支付金额:" + params.getTotalAmount() + "用户ID:" + params.getMemberId()
 				+ "订单编号:" + params.getOrderNo() + "商品名称:" + params.getSubject());
+
+		// 检查支付密码
+		ShopMemberSecurity memberSecurity = commonService.get(ShopMemberSecurity.class, "memberId",
+				params.getMemberId());
+		if (memberSecurity == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800014.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800014.getErrorMessage());
+			return messageVo;
+		}
+		if (!params.getPayPwd().equals(memberSecurity.getPayPwd())) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800015.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800015.getErrorMessage());
+			return messageVo;
+		}
 
 		// 检查订单
 		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", params.getOrderNo());
@@ -388,7 +430,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 		// 目标订单状态，默认为已支付
 		Integer orderStatus = 3;
-		
+
 		if (orderDetail.getCalcForceOrder() == 1) {
 			// 算力服务订单
 			ShopProductCalcForce product = commonService.get(commodity.getProductId(), ShopProductCalcForce.class);
@@ -418,8 +460,9 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 				// 创建对应的集合任务
 				CreateOrderCalcForce(orderDetails);
-			}else {
-				orderDetail.setBalancePayment(BigDecimal.valueOf(product.getPriceTotal()).subtract(BigDecimal.valueOf(commodity.getPrice())).doubleValue()); 
+			} else {
+				orderDetail.setBalancePayment(BigDecimal.valueOf(product.getPriceTotal())
+						.subtract(BigDecimal.valueOf(commodity.getPrice())).doubleValue());
 			}
 		}
 
@@ -498,15 +541,101 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 				service.setCreateTime(now);
 				commonService.save(service);
 
-				// 根据规则生成并保存算力包收益计划任务
+				// 第一天预计收益
 				BigDecimal estimate = BigDecimal.ZERO;
+
+				// 降幅因子
+				int stageDeclineFactor = product.getDuration() / product.getDeclineFactorDay();
+				Map<Integer, Double> mapDeclineFactor = new HashMap<Integer, Double>();
+				for (int j = 0; j < stageDeclineFactor; j++) {
+					switch (j) {
+					case 0:
+						mapDeclineFactor.put(j + 1, product.getDeclineFactorC1());
+						break;
+					case 1:
+						mapDeclineFactor.put(j + 1, product.getDeclineFactorC2());
+						break;
+					case 2:
+						mapDeclineFactor.put(j + 1, product.getDeclineFactorC3());
+						break;
+					case 3:
+						mapDeclineFactor.put(j + 1, product.getDeclineFactorC4());
+						break;
+					case 4:
+						mapDeclineFactor.put(j + 1, product.getDeclineFactorC5());
+						break;
+					case 5:
+						mapDeclineFactor.put(j + 1, product.getDeclineFactorC6());
+						break;
+					}
+				}
+				if (systemPublish.trim().toLowerCase().equals("dev")) {
+					System.out.println("###############降幅因子################");
+					System.out.println("mapDeclineFactor" + mapDeclineFactor);
+				}
+
+				// 随机因子
+				int stageRandomFactor = product.getDuration() / product.getRandomFactorDay();
+				Map<Integer, List<BigDecimal>> mapRandomFactor = new HashMap<Integer, List<BigDecimal>>();
+				for (int j = 0; j < stageRandomFactor; j++) {
+					BigDecimal min = new BigDecimal(product.getRandomFactorMin());
+					BigDecimal max = new BigDecimal(product.getRandomFactorMax());
+					BigDecimal sum = new BigDecimal(product.getRandomFactorSum());
+					int n = product.getRandomFactorDay();
+					List<BigDecimal> result = SnoGerUtil.randomSet(min, max, sum, n);
+					mapRandomFactor.put(j + 1, result);
+				}
+				if (systemPublish.trim().toLowerCase().equals("dev")) {
+					System.out.println("###############随机因子################");
+					System.out.println("mapRandomFactor" + mapRandomFactor);
+				}
+
+				// 随机尾数
+				int stageRandomDigit = product.getDuration() / product.getRandomDigitDay();
+				Map<Integer, List<BigDecimal>> mapRandomDigit = new HashMap<Integer, List<BigDecimal>>();
+				for (int j = 0; j < stageRandomDigit; j++) {
+					BigDecimal min = new BigDecimal(product.getRandomDigitMin());
+					BigDecimal max = new BigDecimal(product.getRandomDigitMax());
+					BigDecimal sum = new BigDecimal(product.getRandomDigitSum());
+					int n = product.getRandomDigitDay();
+					List<BigDecimal> result = SnoGerUtil.randomSet(min, max, sum, n);
+					mapRandomDigit.put(j + 1, result);
+				}
+				if (systemPublish.trim().toLowerCase().equals("dev")) {
+					System.out.println("###############随机尾数################");
+					System.out.println("mapRandomDigit" + mapRandomDigit);
+				}
+
+				// 根据规则生成并保存算力包收益计划任务
+				// 总日平均
+				BigDecimal A = BigDecimal.valueOf(product.getTonkenTotal())
+						.divide(BigDecimal.valueOf(product.getDuration()), 8, BigDecimal.ROUND_HALF_UP);
 				for (int j = 0; j < product.getDuration(); j++) {
 					ShopOrderCalcForceTask task = new ShopOrderCalcForceTask();
 					task.setOrderCalcForceId(service.getId());
 					task.setPublicKeyAddr(detail.getPublicKeyAddr());
 					task.setMemberId(detail.getMemberId());
 					task.setPlanDate(DateUtil.formatDateByFormat(DateUtil.addDate(now, j), "yyyy-MM-dd"));
-					BigDecimal amount = new BigDecimal(0.1);
+
+					// 降幅因子
+					int stageDeclineFactorKey = (j / product.getDeclineFactorDay()) + 1;
+					BigDecimal declineFactor = BigDecimal.valueOf(mapDeclineFactor.get(stageDeclineFactorKey));
+					BigDecimal x = BigDecimal.valueOf(product.getDeclineFactor());
+
+					// 随机因子
+					int stageRandomFactorKey = (j / product.getRandomFactorDay()) + 1;
+					int indexRandomFactor = j % product.getRandomFactorDay();
+					List<BigDecimal> randomFactorList = mapRandomFactor.get(stageRandomFactorKey);
+					BigDecimal r = randomFactorList.get(indexRandomFactor);
+
+					// 随机尾数
+					int stageRandomDigitKey = (j / product.getRandomDigitDay()) + 1;
+					int indexRandomDigit = j % product.getRandomDigitDay();
+					List<BigDecimal> randomDigitList = mapRandomDigit.get(stageRandomDigitKey);
+					BigDecimal L = randomDigitList.get(indexRandomDigit);
+
+					// 日收益值
+					BigDecimal amount = calculateForceTaskBstkAmount(A, declineFactor, x, r, L);
 					if (j == 0) {
 						estimate = amount;
 					}
@@ -517,17 +646,14 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 				}
 
 				// 更新算力服务
-				ShopOrderCalcForce upService = new ShopOrderCalcForce();
-				upService.setId(service.getId());
-				upService.setEstimateIncomeBstk(estimate.doubleValue());
-				commonService.update(upService);
+				BigDecimal r = SnoGerUtil.getRandomBigDecimalByRange(new BigDecimal(-3), new BigDecimal(3));
+				service.setEstimateIncomeBstk(estimate.add(r).doubleValue());
+				commonService.update(service);
 			}
 
 			// 算力服务任务创建标记:0-未创建，1-已创建
-			ShopOrderDetail upDetail = new ShopOrderDetail();
-			upDetail.setId(detail.getId());
-			upDetail.setCalcForceTaskFlag(1);
-			commonService.update(upDetail);
+			detail.setCalcForceTaskFlag(1);
+			commonService.update(detail);
 		}
 	}
 
@@ -536,12 +662,14 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 	 * 
 	 * @return
 	 */
-	private Double calculateForceTaskBstkAmount(ShopProductCalcForce product) {
-		Double amount = new Double(0.1);
-
+	private BigDecimal calculateForceTaskBstkAmount(BigDecimal A, BigDecimal declineFactor, BigDecimal x, BigDecimal r,
+			BigDecimal L) {
 		// Ar=At+R+L
-
-		return amount;
+		BigDecimal one = new BigDecimal(1);
+		BigDecimal At = A.multiply(one.add(declineFactor.multiply(x)));
+		BigDecimal R = At.multiply(r);
+		BigDecimal Ar = At.add(R).add(L);
+		return Ar;
 	}
 
 	@Override
@@ -558,46 +686,47 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		}
 		ShopMember member = members.get(0);
 		param.setMemberId(member.getId());
-		
-		//指定用户待付尾款的算力服务订单
+
+		// 指定用户待付尾款的算力服务订单
 		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "memberId", member.getId(),
 				"commodityType", 3, "calcForceOrder", 1, "status", 3);
-		if (orders==null || orders.size()==0) {
+		if (orders == null || orders.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800013.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800013.getErrorMessage());
 			return messageVo;
 		}
-		
-		BigDecimal balance=BigDecimal.valueOf(param.getInputAmount());;
-		StringBuffer orderDetailIds=new StringBuffer();
-		//按下单时间升序排列
-		orders.sort((o1,o2)->o1.getId().compareTo(o2.getId()));
-		BigDecimal totalAmount=BigDecimal.ZERO;  //本次处理的订单明细所付定金之和，需要转BSTK给商户
-		List<ShopOrderDetail> tasks=new ArrayList<>();
-		BigDecimal debtAmount=BigDecimal.ZERO;  //未处理订单，所需总尾款
+
+		BigDecimal balance = BigDecimal.valueOf(param.getInputAmount());
+		StringBuffer orderDetailIds = new StringBuffer();
+
+		// 按下单时间升序排列
+		orders.sort((o1, o2) -> o1.getId().compareTo(o2.getId()));
+		BigDecimal totalAmount = BigDecimal.ZERO; // 本次处理的订单明细所付定金之和，需要转BSTK给商户
+		List<ShopOrderDetail> tasks = new ArrayList<>();
+		BigDecimal debtAmount = BigDecimal.ZERO; // 未处理订单，所需总尾款
 		for (ShopOrderDetail orderDetail : orders) {
-			if (balance.compareTo(BigDecimal.valueOf(orderDetail.getBalancePayment()))>=0) {
-				balance=balance.subtract(BigDecimal.valueOf(orderDetail.getBalancePayment()));
+			if (balance.compareTo(BigDecimal.valueOf(orderDetail.getBalancePayment())) >= 0) {
+				balance = balance.subtract(BigDecimal.valueOf(orderDetail.getBalancePayment()));
 				totalAmount = totalAmount.add(BigDecimal.valueOf(orderDetail.getAmount()));
 				orderDetail.setStatus(6);
 				commonService.update(orderDetail);
 				orderDetailIds.append(orderDetail.getId());
 				tasks.add(orderDetail);
-			}else {
-				debtAmount= debtAmount.add(BigDecimal.valueOf(orderDetail.getBalancePayment()));
+			} else {
+				debtAmount = debtAmount.add(BigDecimal.valueOf(orderDetail.getBalancePayment()));
 			}
 		}
-		
+
 		param.setOrderDetailIds(orderDetailIds.toString());
 		param.setDeductAmount(BigDecimal.valueOf(param.getInputAmount()).subtract(balance).doubleValue());
 		param.setCreateTime(DateUtil.getCurrentDateTime());
 		commonService.save(param);
-		
-		if (tasks.size()>0) {
+
+		if (tasks.size() > 0) {
 			ShopMerchant merchant = commonService.get(orders.get(0).getMerchantId(), ShopMerchant.class);
 			// 检查商户钱包
-			ShopBstkWallet merWallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(),
-					"ownerType", 2);
+			ShopBstkWallet merWallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(), "ownerType",
+					2);
 			if (merWallet == null) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
@@ -616,25 +745,27 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 			// 创建对应的集合任务
 			CreateOrderCalcForce(tasks);
-			
+
 		}
-		
-		if (tasks.size()==0) {
-			messageVo.setT("汇款金额不足，未处理！尾款差额"+debtAmount.subtract(balance).toString()+"元");
-		} else if (tasks.size()==orders.size()) {
-			if (balance.compareTo(BigDecimal.ZERO)==0) {
-				messageVo.setT("已确认客户线下汇款信息！");
-			}else {
-				messageVo.setT("已确认客户线下汇款信息！客户此次汇款剩余"+balance.toString()+"元");
+
+		String message = "";
+		if (tasks.size() == 0) {
+			message = "汇款金额不足，未处理！尾款差额" + debtAmount.subtract(balance).toString() + "元";
+		} else if (tasks.size() == orders.size()) {
+			if (balance.compareTo(BigDecimal.ZERO) == 0) {
+				message = "已确认客户线下汇款信息！";
+			} else {
+				message = "已确认客户线下汇款信息！客户此次汇款剩余" + balance.toString() + "元";
 			}
-		}else {
-			messageVo.setT("订单未完全处理，尾款差额"+debtAmount.subtract(balance).toString()+"元");
+		} else {
+			message = "订单未完全处理，尾款差额" + debtAmount.subtract(balance).toString() + "元";
 		}
-		
+
+		// 发送系统消息
+		systemApi.sendSystemMessage(member.getId(), 1, "线下付款信息确认", message);
+		messageVo.setT(message);
 		messageVo.setResult(true);
-		
-		
+
 		return messageVo;
 	}
-	
 }

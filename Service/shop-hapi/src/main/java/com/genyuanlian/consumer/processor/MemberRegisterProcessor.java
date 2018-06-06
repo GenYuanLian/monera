@@ -30,7 +30,8 @@ public class MemberRegisterProcessor extends BaseApiProcessor {
 		String pwd = request.getParameter("pwd");
 		String channel = request.getParameter("channel");
 		String channelVersion = request.getParameter("channelVersion");
-        
+		String referraCode = request.getParameter("referraCode");
+		
 		if (!checkParams(mobile, smsCode,smsNumber, pwd, channel, channelVersion)) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
 					response);
@@ -44,6 +45,7 @@ public class MemberRegisterProcessor extends BaseApiProcessor {
 		params.setPwd(pwd);
 		params.setChannel(channel);
 		params.setChannelVersion(channelVersion);
+		params.setReferraCode(referraCode);
 		params.setIp(IpUtils.getIpAddr(request));
 		
 		ShopMessageVo<Map<String, Object>> messageVo = memberApi.register(params);

@@ -41,7 +41,8 @@ export default {
       time: 60,
       phoneClear: false,
       smsClear: false,
-      pwdClear: false
+      pwdClear: false,
+      referraCode:'' //邀请码
     };
   },
   components: {
@@ -131,7 +132,7 @@ export default {
         smsCode: this.smsCode,
         pwd: md5(this.userPwd),
         smsNumber: this.smsNumber,
-        referraCode:'' // 邀请码，暂时为空
+        referraCode: this.referraCode // 邀请码，暂时为空
       };
       this.$httpPost(apiUrl.userRegister, param).then((res) => {
         if(res.status.code==0&&res.data) {
@@ -164,7 +165,9 @@ export default {
       });
     }
   },
-  mounted() {}
+  mounted() {
+    this.referraCode = this.$route.query.code || '';
+  }
 };
 </script>
 <style lang="less">

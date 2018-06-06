@@ -69,6 +69,7 @@
         <p class="p-r-bot" @click="rePay">支付遇到问题，重新支付</p>
       </div>
     </div>
+    <PopPwd ref="payPwd" v-on:save-pwd="savePwd"></PopPwd>
   </div>
 </template>
 <script>
@@ -76,6 +77,7 @@ import { mapActions, mapGetters } from "vuex";
 import { showMsg, valid, versions } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
+import PopPwd from "@/components/common/PopPwd";
 import { md5 } from 'vux';
 export default {
   data() {
@@ -101,11 +103,12 @@ export default {
       payExplain:"", //支付说明
       isWxPay:false,
       payResult:false, // 支付结果弹窗
-      mask:0
+      mask:0,
+      payPwd:""
     };
   },
   components: {
-    Header
+    Header, PopPwd
   },
   methods: {
     addressClick: function() {
@@ -158,7 +161,7 @@ export default {
         }
         if(this.payType==3) {
           //提货卡支付
-          this.cardPay();
+          this.openCardPayPwd();
         }
       }
     },
@@ -198,8 +201,10 @@ export default {
     },
     aliPay: function() {
       //TODO 支付宝支付
+      let url = location.origin+"/#/pay_success?orderNo="+this.orderNo+"&proType="+this.productType;
       let param = {
-        orderNo: this.orderNo
+        orderNo: this.orderNo,
+        returnUrl:url
       };
       this.$httpPost(apiUrl.alipayH5, param).then((res) => {
         if(res.status.code==0&&res.data) {
@@ -219,12 +224,18 @@ export default {
       //TODO 提货卡支付
       let param = {
         orderNo: this.orderNo,
-        commodityType: this.productType
+        commodityType: this.productType,
+        payPwd: md5(this.payPwd)
       };
       this.$httpPost(apiUrl.orderPay, param).then((res) => {
         if(res.status.code==0&&res.data) {
+          this.$refs.payPwd.closeMask();
           let data = res.data;
           this.$router.push({name:"pay_success", query: {orderNo:this.orderNo, proType:this.productType}});
+        } else if(res.status.code==800014) {
+          showMsg(res.status.message, () => {
+            this.$router.push({name:"paypwd_edit", query:{redirect: this.$route.fullPath}});
+          });
         } else {
           showMsg(res.status.message);
         }
@@ -240,6 +251,15 @@ export default {
     rePay:function() {
       // TODO 重新支付
       this.payResult = false;
+    },
+    openCardPayPwd: function() {
+      //TODO 显示输入支付密码
+      this.$refs.payPwd.openMask();
+    },
+    savePwd:function(val) {
+      // TODO 获取支付密码
+      this.payPwd = val;
+      this.cardPay();
     }
   },
   mounted() {
@@ -271,6 +291,8 @@ html,body{
     overflow-x: hidden;
     overflow-y: auto;
     background-color: #f3f4f6;
+    padding-bottom:180px;
+    -webkit-overflow-scrolling: touch;
     .pay-title{
       width:100%;
       height:80px;

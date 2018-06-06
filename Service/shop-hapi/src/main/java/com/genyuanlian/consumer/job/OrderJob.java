@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
+import com.genyuanlian.consumer.shop.api.ISystemApi;
 import com.genyuanlian.consumer.shop.model.ShopBstkRecord;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopOrderCalcForce;
@@ -28,6 +29,7 @@ import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
+import com.genyuanlian.consumer.vo.SaleVolumeConfigVo;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
 import com.hnair.consumer.utils.ProUtility;
@@ -46,8 +48,12 @@ public class OrderJob {
 
 	private String jobLockVirtualSaleColume = ConfigPropertieUtils.getString("job.lock.virtual.sale.colume");
 
+	private String virtualSaleColumeConfig = ConfigPropertieUtils.getString("virtual.sale.volume.config");
+
 	@Resource
 	private ICommonService commonService;
+	@Resource
+	private ISystemApi systemApi;
 
 	/**
 	 * BWS接口服务
@@ -219,6 +225,7 @@ public class OrderJob {
 		}
 
 		logger.info("产品虚拟销售量定时任务-开始");
+
 		// 产品虚拟销售量定时任务
 		try {
 			Date now = new Date();
@@ -242,14 +249,18 @@ public class OrderJob {
 				}
 
 				if (exist == false) {
+					// 获取配置
+					SaleVolumeConfigVo conf = GetSaleVolumeConfig(c.getId(), 3, c.getCommodityType());
+
 					ShopSaleVolume sv = new ShopSaleVolume();
 					sv.setMerchantId(c.getMerchantId());
 					sv.setCommodityId(c.getId());
 					sv.setCommodityType(3);
 					sv.setSaleDate(saleDate);
-					int random = SnoGerUtil.getRandomNumByRange(1, 2);
-					sv.setOrderCount(random);
-					sv.setSaleVolume(random);
+					int randomOrder = SnoGerUtil.getRandomNumByRange(conf.getOrderCountMin(), conf.getOrderCountMax());
+					sv.setOrderCount(randomOrder);
+					int randomSale = SnoGerUtil.getRandomNumByRange(conf.getSaleCountMin(), conf.getSaleCountMax());
+					sv.setSaleVolume(randomSale);
 
 					commonService.save(sv);
 				}
@@ -267,13 +278,18 @@ public class OrderJob {
 				}
 
 				if (exist == false) {
+					// 获取配置
+					SaleVolumeConfigVo conf = GetSaleVolumeConfig(c.getId(), 1, 0);
+
 					ShopSaleVolume sv = new ShopSaleVolume();
 					sv.setMerchantId(c.getMerchantId());
 					sv.setCommodityId(c.getId());
 					sv.setCommodityType(1);
 					sv.setSaleDate(saleDate);
-					sv.setOrderCount(SnoGerUtil.getRandomNumByRange(4, 6));
-					sv.setSaleVolume(SnoGerUtil.getRandomNumByRange(10, 20));
+					int randomOrder = SnoGerUtil.getRandomNumByRange(conf.getOrderCountMin(), conf.getOrderCountMax());
+					sv.setOrderCount(randomOrder);
+					int randomSale = SnoGerUtil.getRandomNumByRange(conf.getSaleCountMin(), conf.getSaleCountMax());
+					sv.setSaleVolume(randomSale);
 
 					commonService.save(sv);
 				}
@@ -286,14 +302,46 @@ public class OrderJob {
 	}
 
 	/**
+	 * 
+	 * @param commodityId:0是默认值
+	 * @param commodityType:商品类型：1-提货卡,2-溯源卡,3-零售商品
+	 * @param productType:产品类型：1-区块链计算机,2-通用商品,3-算力服务；0是默认值，没有类型区分
+	 * @return
+	 */
+	private SaleVolumeConfigVo GetSaleVolumeConfig(Long commodityId, Integer commodityType, Integer productType) {
+		SaleVolumeConfigVo ret = null;
+		List<SaleVolumeConfigVo> config = JSONObject.parseArray(virtualSaleColumeConfig, SaleVolumeConfigVo.class);
+		SaleVolumeConfigVo def = null;
+		for (SaleVolumeConfigVo vo : config) {
+			if (vo.getCommodityType() == commodityType && vo.getCommodityId() == 0) {
+				def = vo;
+			}
+
+			if (vo.getCommodityId() == commodityId && vo.getCommodityType() == commodityType
+					&& vo.getProductType() == productType) {
+				ret = vo;
+				break;
+			}
+		}
+
+		if (ret == null) {
+			return def;
+		} else {
+			return ret;
+		}
+
+	}
+
+	/**
 	 * 执行算力服务收益
 	 */
-	@Scheduled(cron = "0 0/10 * * * ? ")
+	@Scheduled(cron = "0 0 3 * * ? ")
 	public void calcForceTask() {
 		if ("1".equals(jobLock)) {
 			return;
 		}
 
+		logger.info("执行算力服务收益-开始");
 		try {
 			String systemPublish = ConfigPropertieUtils.getString("system.publish");
 			int diff = Integer.parseInt(ConfigPropertieUtils.getString("calc.force.task.date.diff"));
@@ -324,7 +372,8 @@ public class OrderJob {
 			for (ShopOrderCalcForceTask task : tasks) {
 				// 调用bstk接口
 				BigDecimal income = BigDecimal.ZERO;
-				if (systemPublish == "dev" || systemPublish == "test") {
+				if (systemPublish.trim().toLowerCase().equals("dev")
+						|| systemPublish.trim().toLowerCase().equals("test")) {
 					income = new BigDecimal(0.1);
 				} else {
 					income = BigDecimal.valueOf(task.getBstkAmount());
@@ -346,8 +395,8 @@ public class OrderJob {
 					// 更新算力服务
 					ShopOrderCalcForce upService = new ShopOrderCalcForce();
 					upService.setId(task.getOrderCalcForceId());
-					upService.setTotalIncomeBstk(
-							BigDecimal.valueOf(service.getTotalIncomeBstk()).add(income).doubleValue());
+					upService.setTotalIncomeBstk(BigDecimal.valueOf(service.getTotalIncomeBstk())
+							.add(BigDecimal.valueOf(task.getBstkAmount())).doubleValue());
 
 					// 判断已完成状态:0-待收益，1-收益中，2-已完成，3-冻结
 					if (service.getValidityTo().equals(task.getPlanDate())) {
@@ -356,13 +405,21 @@ public class OrderJob {
 						upService.setEstimateIncomeBstk(new Double(0));
 					} else {
 						// 收益中
+						upService.setStatus(1);
 						if (nextTasksMap.containsKey(task.getOrderCalcForceId())) {
-							upService.setEstimateIncomeBstk(
-									nextTasksMap.get(task.getOrderCalcForceId()).getBstkAmount());
+							BigDecimal r = SnoGerUtil.getRandomBigDecimalByRange(new BigDecimal(-3), new BigDecimal(3));
+							BigDecimal estimateIncomeBstk = r.add(
+									BigDecimal.valueOf(nextTasksMap.get(task.getOrderCalcForceId()).getBstkAmount()));
+							upService.setEstimateIncomeBstk(estimateIncomeBstk.doubleValue());
 						}
 					}
 
+					// 注意对象默认值的问题
 					commonService.update(upService);
+
+					// 发送消息
+					systemApi.sendSystemMessage(task.getMemberId(), 1, "收益通知", "算力包" + service.getPackageNo() + "-"
+							+ task.getPlanDate() + ",本次收益" + task.getBstkAmount() + "BSTK已到账。");
 
 				} else {
 					task.setExecutionTime(new Date());
@@ -371,8 +428,10 @@ public class OrderJob {
 
 				}
 			}
+
+			logger.info("执行算力服务收益-完成");
 		} catch (Exception ex) {
-			logger.error("查询钱包余额告警失败", ex);
+			logger.error("执行算力服务收益失败", ex);
 		}
 	}
 }

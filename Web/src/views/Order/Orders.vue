@@ -3,7 +3,7 @@
     <div v-title>订单</div>
     <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content" v-show="ordersList&&ordersList.length>0">
-      <Scroller ref="scroller" height="-80px" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullupConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
+      <Scroller ref="scroller" height="-92px" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullupConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
         <div class="order-row-box">
           <div class="order-row" v-for="(order,index) in ordersList" :key="index">
             <div class="or-top">
@@ -31,7 +31,7 @@
               <span v-if="order.status==0" class="or-tip" @timeOut="timeOut(order.surplusPayTime, order.timer)">{{order.timer}}</span>
               <input v-if="order.status==0" type="button" value="去支付" @click="goPay(order.orderNo)">
               <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
-              <input v-if="order.status==3" type="button" value="提醒发货">
+              <input v-if="order.status==3" type="button" value="提醒发货" @click="remindOrder(order.orderNo)">
               <input v-if="order.status==6 || order.status==8"  type="button" value="再来一单" @click="buyAgainClick(order.commodityId, order.commodityType, order.merchantId, order.merchType)">
               <input v-if="order.status==6" class="evalue-btn"  type="button" value="去评价" @click="evaluateClick(order.orderNo)">
               <input v-if="order.status==2" type="button" value="重新下单" @click="reorderClick(order.merchantId,order.merchType)">
@@ -43,8 +43,11 @@
         </div>
       </Scroller>
     </section>
-    <section class="content" v-show="ordersList.length==0">
-      <div class="no-card">还没有订单哦，快去购买吧~</div>
+    <section class="content" v-if="ordersList.length==0">
+      <div class="no-list-show">
+        <img src="../../assets/images/Icon/no-order.png">
+        <p>您还没有订单哦，快去购买吧~</p>
+      </div>
     </section>
     <NavBar :isShow="true"></NavBar>
   </div>
@@ -82,7 +85,8 @@ export default {
       pageIndex:0,
       pageSize:10,
       hasNext: false,
-      ordersList:[] // 订单列表
+      ordersList:[], // 订单列表
+      userId:""
     };
   },
   filters: {
@@ -261,6 +265,10 @@ export default {
     evaluateClick: function(orderNo) {
       //TODO 去评价
       this.$router.push({name:'order_evaluate', query:{orderNo:orderNo}});
+    },
+    remindOrder: function(orderNo) {
+      //TODO 提醒发货
+      showMsg('已提醒商家，请耐心等待');
     }
   },
   mounted() {
@@ -292,14 +300,6 @@ html,body{
     -webkit-overflow-scrolling: touch;
     background-color: #f3f4f6;
     padding-bottom:180px;
-    .no-card{
-      height: 80px;
-      line-height: 80px;
-      font-size: 20px;
-      color: #cecece;
-      text-align: center;
-      letter-spacing: 2px;
-    }
     .order-row-box{
       width: 100%;
       height: 100%;

@@ -75,7 +75,7 @@
     </section>
     <footer class="foot">
       <p class="left-btn">待支付<strong>{{merchant.merchantType==2?'&yen;':'BSTK'}}{{totalMoney}}</strong></p>
-      <input class="buy-btn" type="button" value="去支付" @click="placeOrder">
+      <input class="buy-btn" type="button" value="去支付" @click="checkBalance">
     </footer>
   </div>
 </template>
@@ -116,7 +116,9 @@ export default {
         distMode:'商家配送',
         distFee:0
       },
-      addressList:[]
+      addressList:[],
+      userId:"",
+      sumBalance:0
     };
   },
   components: {
@@ -200,8 +202,12 @@ export default {
         showMsg("请选择数量");
         return;
       }
-      if(this.merchant.walletAddressRequire==1&&this.loadAddress=="") {
+      if(this.merchant.walletAddressRequire==1&&this.walletAddr=="") {
         showMsg("请输入钱包地址");
+        return;
+      }
+      if(this.merchant.walletAddressRequire==1&&!valid.walletAddress(this.walletAddr)) {
+        showMsg("请输入正确的钱包地址");
         return;
       }
       let param = {
@@ -239,6 +245,26 @@ export default {
       }else {
         this.getAddressList();
       }
+    },
+    checkBalance: function() {
+      //TODO 查询BSTK余额
+      let param = {};
+      this.$httpPost(apiUrl.getPucardBalance, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.sumBalance = res.data.sumBalance;
+          let merchId = res.data.puCardMerchId;
+          if(this.sumBalance>0 || this.productType == 1) {
+            this.placeOrder();
+          } else {
+            showMsg("请先购买提货卡");
+            this.$router.push({name:"merchant_info", query:{id:merchId, type:2}});
+          }
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
     }
   },
   mounted() {

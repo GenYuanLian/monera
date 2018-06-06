@@ -41,6 +41,11 @@
             <span class="nav-title">算力服务</span>
             <span class="row-right"><i class="ico-more"></i></span>
           </div>
+          <div class="block-row" @click="myInviteClick">
+            <span class="power"><i class="ico-share-nav"></i></span>
+            <span class="nav-title">我的分享</span>
+            <span class="row-right"><i class="ico-more"></i></span>
+          </div>
           <div class="block-row" @click="addressClick">
             <span class="address"><i class="ico-address"></i></span>
             <span class="nav-title">收货地址</span>
@@ -116,6 +121,14 @@ export default {
       //TODO 提货卡
       if(this.isLogin) {
         this.$router.push("card");
+      } else {
+        showMsg("请先登录");
+      }
+    },
+    myInviteClick: function() {
+      //TODO 我的分享
+      if(this.isLogin) {
+        this.$router.push("mine_share");
       } else {
         showMsg("请先登录");
       }
@@ -383,8 +396,8 @@ html,body{
             width:60px;
             height:60px;
             i{
-              width:57px;
-              height:43px;
+              width:52px;
+              height:40px;
               margin-bottom:-10px;
             }
           }
