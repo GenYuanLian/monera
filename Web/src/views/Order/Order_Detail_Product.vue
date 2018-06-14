@@ -21,13 +21,13 @@
         <div class="paied-top">
           <img class="or-img" :src="orderMsg.description" alt="">
           <div class="or-pro">
-            <p class="pro-detail"><span class="pro-name">{{orderMsg.merchantName}}</span><span class="pro-price fr">&yen;{{orderMsg.price}}</span></p>
+            <p class="pro-detail"><span class="pro-name">{{orderMsg.merchantName}}</span><span class="pro-price fr">{{orderMsg.price}}源点</span></p>
             <p class="pro-paied"><span class="paied-card">{{orderMsg.commodityName}}</span><span class="paied-num fr">x{{orderMsg.saleCount}}</span></p>
           </div>
         </div>
         <div class="paied-bot">
           <span>送货费  0</span>
-          <span class="paied-price">实付：{{orderMsg.amount}}BSTK</span>
+          <span class="paied-price">实付：{{orderMsg.amount}}源点</span>
         </div>
         <div class="pay-bank" v-if="payExplain||payExplain!=''">
           <div class="pay-tip"><i class="ico-pay-info"></i>支付提示</div>

@@ -6,12 +6,12 @@ import '../assets/css/common.less';
 import '../assets/js/flexible.js';
 import {
   ToastPlugin,
-  LoadingPlugin,
-  ConfirmPlugin
+  LoadingPlugin
 } from 'vux';
 import Vue from 'vue';
 import FastClick from 'fastclick';
 import http from './http.js';
+import VueClipboard from 'vue-clipboard2';
 import '../utils/filter';
 
 Vue.use(ToastPlugin);
@@ -19,11 +19,10 @@ Vue.use(LoadingPlugin);
 // 封装axios
 Vue.use(http);
 
+Vue.use(VueClipboard);
+
 // 解决click点击300毫秒延时问题
 FastClick.attach(document.body);
-
-// import moment from 'moment';
-// Vue.prototype.$moment = moment;
 
 // 标题指令
 Vue.directive('title', {

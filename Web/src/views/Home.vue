@@ -83,12 +83,12 @@ export default {
       let url = window.localStorage.getItem("LocalUrl")||window.location.href;
       let param = {
         title: "买卖大集",
-        desc: "欢迎您体验买卖大集",
+        desc: "欢迎您体验买卖大集电商",
         link: window.location.href,
-        imgUrl: this.headPortrait,
+        imgUrl: window.location.origin+"/gylshop/static/Images/gyl-logo.png",
         localUrl: url
       };
-      // weixin.wxChat(this, param);
+      weixin.wxChat(this, param);
     },
     shopImgOnIndexChange:function(index) {
       // TODO 轮播滚动时当前页面的索引值
@@ -137,11 +137,11 @@ export default {
   mounted() {
     this.getHomeBanner();
     this.getShopInfo();
-    if(versions.ios&&versions.wx) {
+    if(versions.wx) {
       //IOS终端&微信
-      // this.initWxChat();
+      this.initWxChat();
     };
-    if(this.getToken) {
+    if(this.getLoginUser && this.getLoginUser.id) {
       this.isLogin = true;
     } else {
       this.isLogin = false;

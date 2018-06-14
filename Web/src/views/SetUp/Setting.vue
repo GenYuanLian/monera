@@ -8,7 +8,7 @@
       <div class="con-row"><span class="title">非WIFI下图片质量</span><span class="con-r">普通</span></div>
       <div class="con-row"><span class="title">当前版本</span><span class="con-r"><p v-if="isVerTip" class="ver-tip">有新版本更新</p><p :class="!isVerTip?'no-tip':'version'">v1.0.0</p><i class="ico-more"></i></span></div>
     </section>
-    <div class="con-about">
+    <div class="con-about" @click="aboutClick">
       <span>关于我们</span>
     </div>
     <footer class="gyl-footer">
@@ -45,6 +45,10 @@ export default {
     loginPwdClick: function() {
       //TODO 登录密码
       this.$router.push("loginpwd_edit");
+    },
+    aboutClick: function() {
+      //TODO 关于我们
+      this.$router.push("about");
     },
     loginOutClick: function() {
       //TODO 退出登录
@@ -107,29 +111,29 @@ html,body{
       border-bottom: 1px solid  #efefef;/*no*/
       text-align: left;
       .title{
-        font-size: 32px;
+        font-size: 30px;
         color: #333646;
       }
       .con-r{
+        font-size: 26px;
         position: relative;
         display: inline-block;
         float:right;
-        margin-right:40px;
+        color: #666;
         .ver-tip{
-          font-size: 24px;
           color: #F9615C;
           margin-right:30px;
           float: left;
         }
         .version{
           position: absolute;
-          height: 24px;
-          line-height: 24px;
+          height: 26px;
+          line-height: 26px;
           bottom:0px;
           right:60px;
         }
         .no-tip{
-          margin-right: 0.4rem;
+          margin-right: 20px;
           float: left;
         }
         label{
@@ -157,7 +161,7 @@ html,body{
       display: block;
       width:100%;
       color:#333;
-      font-size:32px;
+      font-size:30px;
     }
   }
   .gyl-footer{
@@ -168,7 +172,7 @@ html,body{
       height:90px;
       line-height: 90px;
       border:0px solid #fff;
-      font-size: 32px;
+      font-size: 34px;
       color: #317db9;
       background-color: #fff;
       text-align: center;

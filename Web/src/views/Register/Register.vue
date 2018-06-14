@@ -156,7 +156,12 @@ export default {
       this.$httpPost(apiUrl.userLogin, param, { isLoading: false }).then((res) => {
         if(res.status.code==0&&res.data) {
           this.login(res.data.userInfo);
-          this.$router.push('home');
+          let redirect = this.$route.query.redirect;
+          if(redirect) {
+            this.$router.replace(decodeURIComponent(redirect));
+          } else {
+            this.$router.replace("/");
+          }
         } else {
           showMsg(res.status.message);
         }

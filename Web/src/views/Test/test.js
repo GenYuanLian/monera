@@ -1,5 +1,5 @@
 /**
- * Created by 程媛媛 on 2017/11/7.
+ * Created by zeke on 2017/11/7.
  */
 import Vue from "vue";
 import App from "./test.vue";

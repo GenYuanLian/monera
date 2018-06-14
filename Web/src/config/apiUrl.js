@@ -57,5 +57,10 @@ export default {
   getWeixinCode:'/shop/api.go?action=getWeixinCode',
   getSourceWalletVersion:'/shop/api.go?action=getSourceWalletVersion',
   getInvitationCode:'/shop/api.go?action=getInvitationCode',
-  getMemberInvitRegister:'/shop/api.go?action=getMemberInvitRegister'
+  getMemberInvitRegister:'/shop/api.go?action=getMemberInvitRegister',
+  shareCommodity:'/shop/api.go?action=shareCommodity',
+  myShares:'/shop/api.go?action=myShares',
+  shareConfig:'/shop/api.go?action=shareConfig',
+  shareCommodityOrders:'/shop/api.go?action=shareCommodityOrders',
+  buildInvitationCode:'/shop/api.go?action=buildInvitationCode'
 };

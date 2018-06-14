@@ -211,6 +211,19 @@ export const strTrim = (str) => {
 };
 
 /**
+ * 字符串格式化
+ */
+export const strFormat = (...args) => {
+  if (args.length == 0) return null;
+  var str = args[0];
+  for (var i = 1; i < args.length; i++) {
+    var re = new RegExp('\\{' + (i - 1) + '\\}', 'gm');
+    str = str.replace(re, args[i]);
+  }
+  return str;
+};
+
+/**
  * 转换银行卡类型字符串
  * @param {*} val
  */
@@ -341,7 +354,7 @@ export const valid = {
     return pass;
   },
   walletAddress:function(addr) {
-    const reg = /[0-9a-zA-Z]{34}$/;
+    const reg = /^([1]{1}[0-9a-zA-Z]{25,33})|([3]{1}[0-9a-zA-Z]{33})$/;
     return reg.test(addr);
   }
 };

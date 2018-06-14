@@ -22,24 +22,24 @@
           <msgScroll :id="'infoMsg'" ref="msgScroll" :msg="merchant.notice"></msgScroll>
         </div>
       </div>
-      <div class="mer-pro" v-show="merchantType==1">
-        <div class="product" v-for="(item,idx) in merchantProduct" v-bind:key="idx">
+      <div class="mer-pro" v-if="merchantType==1">
+        <div class="product" v-for="(item,idx) in merchantProduct" v-bind:key="idx" @click="buyClick(item.id, item.commodityType)">
           <div class="pro-img"><img :src="item.logo" :alt="item.title"></div>
           <div class="pro-info">
             <p class="mer-title" v-text="item.title"></p>
             <p class="pro-title" v-text="item.briefIntro"></p>
             <span class="pro-count">
-              <p class="pro-money">BSTK{{item.price}}</p>
+              <p class="pro-money">{{item.price}}源点</p>
               <p class="pro-sale">月售{{item.saleQuantity}}份</p>
             </span>
             <span class="pro-buy">
-              <input class="btn-buy" type="button" value="购买" @click="buyClick(item.id, item.commodityType)">
+              <input class="btn-buy" type="button" value="购买">
             </span>
           </div>
         </div>
       </div>
-      <div class="mer-block" v-show="merchantType==2">
-        <div class="product" v-for="(item,idx) in cardMerchantProduct" v-bind:key="idx">
+      <div class="mer-block" v-if="merchantType==2">
+        <div class="product" v-for="(item,idx) in cardMerchantProduct" v-bind:key="idx" @click="buyClick(item.id, item.commodityType)">
           <div class="pro-img"><img :src="item.pic" :alt="item.title"></div>
           <div class="pro-info">
             <p class="mer-title" v-text="item.title"></p>
@@ -49,7 +49,7 @@
               <p class="pro-sale">月售{{item.salesVolume}}份</p>
             </span>
             <span class="pro-buy">
-              <input class="btn-buy" type="button" value="购买" @click="buyClick(item.id, item.commodityType)">
+              <input class="btn-buy" type="button" value="购买">
             </span>
           </div>
         </div>
@@ -63,6 +63,7 @@ import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
 import msgScroll from '@/components/messageScroll/index';
+import weixin from "@/utils/wechat.js";
 import { md5 } from 'vux';
 export default {
   data() {
@@ -83,7 +84,8 @@ export default {
       merchantProduct: null,
       cardMerchant: {},
       cardMerchantProduct: null,
-      merchantBgImg:""
+      merchantBgImg:"",
+      inviteCode:""
     };
   },
   computed:{
@@ -111,6 +113,7 @@ export default {
           this.collectChange();
           this.merchantBgImg = res.data.pics&&res.data.pics.length>0?res.data.pics[0].url:"";
           this.$refs.msgScroll.scroll();
+          this.initWxChat();
         }else{
           showMsg(res.status.message);
         }
@@ -142,11 +145,28 @@ export default {
     buyClick: function(id, type) {
       //商品购买
       if(this.merchantType==1) {
-        this.$router.push({name: "product_detail", query: {proId:id, proType:type}});
+        if(this.inviteCode) {
+          this.$router.push({name: "product_detail", query: {proId:id, proType:type, code: this.inviteCode}});
+        } else {
+          this.$router.push({name: "product_detail", query: {proId:id, proType:type}});
+        }
       }
       if(this.merchantType==2) {
         this.$router.push({name: "order_place", query: {proId:id, proType:type}});
       }
+    },
+    getInviteCode: function() {
+      //TODO 获取用户邀请码
+      let param = {};
+      this.$httpPost(apiUrl.getInvitationCode, param).then((res) => {
+        if(res.status.code==0&&res.data) {
+          this.inviteCode = res.data.invitationCode;
+        } else {
+          showMsg(res.status.message);
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
     },
     collection:function() {
       // TODO 收藏按钮
@@ -177,16 +197,30 @@ export default {
       } else {
         this.headRight.className = 'ico-collect';
       }
+    },
+    initWxChat: function() {
+      let url = window.localStorage.getItem("LocalUrl")||window.location.href;
+      let param = {
+        title: this.headTitle,
+        desc: this.merchant.briefIntro,
+        link: window.location.href.split('#')[0]+'?#'+window.location.href.split('#')[1],
+        imgUrl: this.merchant.logoPic,
+        localUrl: url
+      };
+      weixin.wxChat(this, param);
     }
   },
   mounted() {
+    this.userId = this.getLoginUser?this.getLoginUser.id:"";
     this.merchantId = this.$route.query.id||"";
     this.merchantType = this.$route.query.type||0;
     if(this.merchantType==1) {
       this.getMerchant();
-    }
-    if(this.merchantType==2) {
+    } else if(this.merchantType==2) {
       this.getCardMerchant();
+    }
+    if(this.userId) {
+      this.getInviteCode();
     }
   },
   beforeDestroy() {

@@ -30,6 +30,13 @@
 </template>
 <script>
 export default {
+  data() {
+    return {
+      index: -1,
+      keyNum: false,
+      arrIpt: ["", "", "", "", "", ""]
+    };
+  },
   props: {
     title: {
       type:String,
@@ -40,14 +47,6 @@ export default {
       default: false
     }
   },
-  data() {
-    return {
-      index: -1,
-      keyNum: false,
-      arrIpt: ["", "", "", "", "", ""]
-    };
-  },
-  created() {},
   methods: {
     showKeyNum: function() {
       this.keyNum = true;

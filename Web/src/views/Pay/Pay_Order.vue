@@ -23,7 +23,7 @@
         </div>
         <div class="pay-money">
           <span class="lab-title">订单金额</span>
-          <span class="money">{{order.commodityType==1?'&yen;':'BSTK'}}{{order.amount}}</span>
+          <span class="money">{{order.commodityType==1?'&yen;':'源点'}}{{order.amount}}</span>
         </div>
         <div class="pay-bank" v-if="payExplain||payExplain!=''">
           <div class="pay-tip"><i class="ico-pay-info"></i>支付提示</div>
@@ -39,7 +39,7 @@
       <div class="paytype" v-if="order.commodityType==1">
         <div class="pay-title">选择支付方式</div>
         <div class="wxpay">
-          <span class="ico-wx"><i class="ico-wxpay"></i></span>
+          <span class="lab-wxpay"><i class="ico-wxpay"></i></span>
           <span class="lab-title">微信支付</span>
           <span class="pay-radio" @click="payCheck(1)"><i class="ico-radio" :class="payType==1?'checked':''"></i></span>
         </div>
@@ -69,7 +69,7 @@
         <p class="p-r-bot" @click="rePay">支付遇到问题，重新支付</p>
       </div>
     </div>
-    <PopPwd ref="payPwd" v-on:save-pwd="savePwd"></PopPwd>
+    <PopPwd ref="payPwd" v-on:save-pwd="savePwd" :isShowSet="true" v-on:set-pwd-path="setPwdPath"></PopPwd>
   </div>
 </template>
 <script>
@@ -257,9 +257,13 @@ export default {
       this.$refs.payPwd.openMask();
     },
     savePwd:function(val) {
-      // TODO 获取支付密码
+      //TODO 获取支付密码
       this.payPwd = val;
       this.cardPay();
+    },
+    setPwdPath: function() {
+      //TODO 打开设置支付密码
+      this.$router.push({name:"paypwd_edit", query:{redirect: this.$route.fullPath}});
     }
   },
   mounted() {
@@ -471,7 +475,7 @@ html,body{
           }
         }
       }
-      .ico-wx{
+      .lab-wxpay{
         display:inline-block;
         width:43px;
         height:80px;

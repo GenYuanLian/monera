@@ -6,7 +6,7 @@
       <Scroller ref="scroller" height="100%" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullUpConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
         <div class="card-box">
           <div class="card-row used" :class="classHandle(card.status)"  v-for="(card, index) in cardList" :key="index" @click="jumpCardDetail(card.id)">
-            <p class="card-amount">{{card.bstkValue}}BSTK</p>
+            <p class="card-amount">{{card.bstkValue}}源点</p>
             <div class="card-row-right">
               <p class="card-number">卡号&nbsp;&nbsp;&nbsp;{{card.code}}</p>
               <p class="card-leave">余额&nbsp;&nbsp;&nbsp;{{card.balance}}</p>

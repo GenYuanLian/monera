@@ -1,5 +1,5 @@
 <template>
-  <div class="component_popup" v-if="showWin">
+  <div class="component_popup" v-show="showWin">
     <div class="component_popup_box">
       <div v-if="popObj.popTitle" class="pop_title">{{popObj.popTitle}}</div>
       <div class="pop_text" v-html="popObj.popText"></div>
@@ -14,10 +14,8 @@
     </div>
   </div>
 </template>
-
 <script type="text/ECMAScript-6">
   import Vue from 'vue';
-  // import {Hi} from 'assets/js/ddbase';
   export default{
     data: function () {
       return {
@@ -85,12 +83,10 @@
     methods:{
       closeWin:function() {
         //TODO 关闭弹窗
-        // Hi.removeOverflowHidden();
         this.showWin = false;
       },
       openWin:function() {
         //TODO 打开弹窗
-        // Hi.setOverflowHidden();
         this.showWin = true;
       },
       cancelFns:function () {
@@ -108,12 +104,11 @@
       }
     },
     mounted: function() {
-      // this.showWin = this.isShow;
+      this.showWin = this.isShow;
     }
   };
 </script>
-
-<style lang="less" rel="stylesheet/less">
+<style lang="less" scoped>
   .component_popup{
     width: 100%;
     height: 100%;

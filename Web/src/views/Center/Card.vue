@@ -6,7 +6,7 @@
       <div class="card-info">
         <div class="card-left fl">
           <p>有效提货卡：{{cardCount}}张</p>
-          <p>余额合计：{{sumBalance}}BSTK</p>
+          <p>余额合计：{{sumBalance}}源点</p>
         </div>
         <div v-show="false" class="card-right fr" @click="jumpCardActive">提货卡激活</div>
         <div class="card-bot fl" @click="jumpCardHistory">历史提货卡<i class="ico-more"></i></div>
@@ -15,9 +15,9 @@
         <div class="card-box">
           <div class="card-row" v-for="(card, index) in cardList" :key="index" @click="jumpCardDetail(card.id)">
             <div class="card-amount">
-              <img v-if="card.picUrl&&card.picUrl!=''" :src="card.picUrl" alt="">
-              <img v-else src="../../assets/images/Bg/card-bg.png" alt="">
-              <p>{{card.bstkValue}}BSTK</p>
+              <!-- <img v-if="card.picUrl&&card.picUrl!=''" :src="card.picUrl" alt=""> -->
+              <img src="../../assets/images/Bg/card-bg.png" alt="">
+              <p>{{card.bstkValue}}源点</p>
             </div>
             <div class="card-row-right">
               <p class="card-number">卡号&nbsp;&nbsp;&nbsp;{{card.code}}</p>
@@ -210,7 +210,7 @@ html,body{
           width: 176px;
           height: 130px;
           border: 1px solid #efefef;/*no*/
-          border-radius: 10px;
+          border-radius: 14px;
           font-size: 24px;
           text-align: center;
           line-height: 130px;
@@ -232,7 +232,7 @@ html,body{
         }
         .card-row-right{
           float: right;
-          width: calc(~"100% - 200px");
+          width: calc(~"100% - 202px");
           .card-number{
             height: 48px;
             line-height: 50px;

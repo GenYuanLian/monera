@@ -21,7 +21,7 @@
 </template>
 <script>
 import { mapActions, mapGetters } from "vuex";
-import { showMsg, loading, valid } from '@/utils/common.js';
+import { showMsg, loading, valid, strFormat } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import { md5 } from 'vux';
 import Header from '@/components/common/Header';
@@ -163,7 +163,7 @@ export default {
       this.$httpPost(apiUrl.userLogin, param).then((res) => {
         if(res.status.code==0&&res.data) {
           this.login(res.data.userInfo);
-          let redirect = this.$route.query.redirect;
+          let redirect = this.$route.query.redirect?strFormat(this.$route.query.redirect, res.data.userInfo.referraCode):this.$route.query.redirect;
           if(redirect) {
             this.$router.replace(decodeURIComponent(redirect));
           } else {

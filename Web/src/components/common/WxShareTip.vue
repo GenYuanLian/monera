@@ -1,6 +1,6 @@
 <template>
   <div class="wx-share-tip" v-if="show" @click="closeWin">
-    <img class="img-tip" src="../../assets/images/Center/wx-share-tip.svg" alt="">
+    <img class="img-tip" src="../../assets/images/Bg/share-tip-bg@2x.png" alt="">
   </div>
 </template>
 <script>
@@ -42,16 +42,16 @@ export default {
   height:100%;
   overflow: hidden;
   z-index: 999;
-  opacity: 0.5;
+  opacity: 0.6;
   background: #000000;
   .img-tip{
     float:right;
     right:0;
-    width:461px;
-    height:350px;
+    width:537px;
+    height:448px;
     font-size: 0px;
     margin-top:10px;
-    margin-right: 50px;
+    margin-right: 70px;
     overflow: hidden;
   }
 }

@@ -224,15 +224,16 @@ body,
           }
           .btn-upload{
             top:-88px;
+            outline:none;
           }
         }
         p {
           float: left;
           line-height: 66px;
-          font-size: 28px;
+          font-size: 30px;
           color: #333646;
           &.row-title{
-            font-size: 28px;
+            font-size: 30px;
             color: #999999;
             overflow: hidden;
           }
@@ -259,7 +260,7 @@ body,
           color:#9FA2AE;
         }
         .text-box {
-          font-size: 24px;
+          font-size: 26px;
           color: #9fa2ae;
           float: right;
           &.col-tips {
@@ -312,7 +313,7 @@ body,
         height: 100px;
         line-height: 100px;
         text-align: center;
-        font-size: 32px;
+        font-size: 30px;
         color: #F9615C;
         margin-bottom: 20px;
         background: #fff;

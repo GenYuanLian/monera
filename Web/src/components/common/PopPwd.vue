@@ -8,6 +8,7 @@
             <input type="password" maxlength="1" :value="item" disabled>
           </div>
         </div>
+        <div v-if="isShowSet" class="set-paypwd" @click="setPwdClick">如没设置支付密码，点击此处设置</div>
       </div>
       <footer>
         <ul class="pay-btn">
@@ -37,7 +38,12 @@ export default {
       arrIpt: ["", "", "", "", "", ""]
     };
   },
-  created() {},
+  props:{
+    isShowSet: {
+      type: Boolean,
+      default: false
+    }
+  },
   methods: {
     btnPassword(e) {
       let pwd = "";
@@ -70,6 +76,10 @@ export default {
     closeMask() {
       this.payShow = false;
       this.arrIpt=["", "", "", "", "", ""];
+    },
+    setPwdClick() {
+      //TODO 打开设置支付密码页面
+      this.$emit("set-pwd-path");
     }
   },
   mounted() {}
@@ -86,7 +96,6 @@ export default {
   background-color: rgba(0,0,0,.3);
   .pay-mask{
     width: 100%;
-    height: 752px;
     position: absolute;
     bottom: 0;
     background: #F3F4F6;;
@@ -131,7 +140,12 @@ export default {
     margin-bottom: 108px;
     margin-top: 2px;
   }
-
+  .set-paypwd{
+    margin:20px;
+    height:60px;
+    line-height: 60px;
+    text-align: center;
+  }
   .ipt-pay {
     width: 99px;
     height: 100%;

@@ -13,7 +13,7 @@
             <div class="or-center" @click="jumpOrderDetail(order.commodityType, order.orderNo)">
               <img class="or-img" :src="order.description" alt="">
               <div class="or-pro">
-                <p class="pro-detail"><span class="pro-name">{{order.merchantName}}</span><span class="pro-price fr">&yen;{{order.amount}}</span></p>
+                <p class="pro-detail"><span class="pro-name">{{order.merchantName}}</span><span v-if="order.commodityType==1" class="pro-price fr">&yen;{{order.amount}}</span><span v-else class="pro-price fr">{{order.amount}}源点</span></p>
                 <p class="pro-paied"><span class="paied-card">{{order.commodityName}}</span><span class="paied-num fr">x{{order.saleCount}}</span></p>
               </div>
             </div>
@@ -49,7 +49,7 @@
         <p>您还没有订单哦，快去购买吧~</p>
       </div>
     </section>
-    <NavBar :isShow="true"></NavBar>
+    <NavBar :isShow="true" :isLogin="isLogin"></NavBar>
   </div>
 </template>
 <script>
@@ -86,17 +86,21 @@ export default {
       pageSize:10,
       hasNext: false,
       ordersList:[], // 订单列表
-      userId:""
+      userId:"",
+      isLogin: false
     };
   },
   filters: {
     dateFormat
   },
+  computed: {
+    ...mapGetters({
+      getToken: 'getToken',
+      getLoginUser: 'getLoginUser'
+    })
+  },
   components: {
     Header, NavBar, Scroller
-  },
-  computed:{
-    ...mapGetters(["getLoginUser", "getUserInfo"])
   },
   methods: {
     clearClick: function(flag) {
@@ -274,9 +278,13 @@ export default {
   mounted() {
     this.userId = this.getLoginUser?this.getLoginUser.id:"";
     if(this.userId) {
+      this.isLogin = true;
       this.$nextTick(() => {
         this.getOrderList();
       });
+    } else {
+      this.$router.push({name:'login', query:{redirect:'/orders'}});
+      // showMsg("请重新登录");
     }
   }
 };

@@ -21,7 +21,10 @@
         <msgScroll ref="msgS" :msg="'此处为公告栏2，啦啦啦啦啦啦啦啦啦,此处为公告栏，啦啦啦啦啦啦啦啦啦!!!'"></msgScroll>
         <div @click="clickSign">wwwwwwwwwww</div>
         <Actionsheet v-model="showSign" :menus="signList" @on-click-menu="chooseSign" ></Actionsheet>
-        <QrCode :text="'http://www.baidu.com'" :width="150"></QrCode>
+        <QrCode ref="qrCode" :text="'http://www.baidu.com'" :width="150"></QrCode>
+        <div>合并图片</div>
+        <canvas id="imgCanvas"></canvas>
+        <img :src="shareImg" crossOrigin="anonymous" alt="">
     </div>
 </template>
 
@@ -69,7 +72,8 @@
           menu1: "家",
           menu2: "公司",
           menu3: "学校"
-        }
+        },
+        shareImg:""
       };
     },
     components: {
@@ -80,10 +84,6 @@
       msgScroll,
       Actionsheet,
       QrCode
-    },
-    mounted:function() {
-      // this.mesLunbo();
-      // this.$refs.msgS.scroll();
     },
     methods: {
       uploadImage(formData) {
@@ -168,7 +168,29 @@
         // TODO 选择标签
         console.log(item);
         this.showSign = false;
+      },
+      mergeShareImg: function() {
+        //TODO 合并分享图片
+        var _this = this;
+        var cvs = document.getElementById("imgCanvas");
+        var ctx = cvs.getContext('2d');
+        var img = new Image();
+        img.src="http://shoptestimage.genyuanlian.com/images//merchant/home-banner-001.jpg";
+        var imgQr = new Image();
+        imgQr.src = "http://shoptestimage.genyuanlian.com/images//merchant/pickuplog.jpg";
+        var imgNew = new Image();
+        imgNew.setAttribute("crossOrigin", 'Anonymous');
+        img.onload = function() {
+          ctx.drawImage(this, 0, 0);
+          ctx.drawImage(imgQr, 50, 50, 60, 60);
+          var base64 = cvs.toDataURL("image/jpg");
+        };
       }
+    },
+    mounted:function() {
+      // this.mesLunbo();
+      // this.$refs.msgS.scroll();
+      this.mergeShareImg();
     }
   };
 </script>
@@ -176,6 +198,8 @@
 <style lang="less" rel="stylesheet/less">
     .content{
       margin-top:10px;
+      height:100%;
+      overflow-y: auto;
       .button{
           width: 10px;
           height:10px;
@@ -215,6 +239,9 @@
       }
       .weui-actionsheet__cell{
         padding: 20px 0;
+      }
+      .gyl-qrcode{
+        height:auto !important;
       }
     }
 </style>

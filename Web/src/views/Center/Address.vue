@@ -14,7 +14,10 @@
           <span class="addr-delete" @click.stop="deleteClick(addr.id)"><i class="ico-delete"></i>删除</span>
         </div>
       </div>
-      <div class="no-card" v-if="addressList.length==0">还没有地址哦，快去添加吧~</div>
+      <div class="no-list-show" v-if="addressList.length==0">
+        <img src="../../assets/images/Icon/no-address.png">
+        <p>您还没有地址哦，快去添加吧~</p>
+      </div>
     </section>
     <footer class="foot">
       <input type="button" value="添加新地址" @click="jumpAdressEdit">
@@ -198,14 +201,6 @@ html,body{
           margin-right: 12px;
         }
       }
-    }
-    .no-card{
-      height: 80px;
-      line-height: 80px;
-      font-size: 24px;
-      color: #cecece;
-      text-align: center;
-      letter-spacing: 2px;
     }
   }
   .foot{

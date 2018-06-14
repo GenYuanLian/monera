@@ -32,18 +32,18 @@
         <div class="mine-card">
           <div class="card-row" @click="cardClick">
             <div class="card-num"><span class="card"><i class="ico-card"></i></span><span class="nav-title">提货卡</span><span class="num">{{cardCount}}张</span></div>
-            <div class="card-acc"><span class="card-account"><i class="ico-balances"></i></span><span class="nav-title">余额合计</span><span class="total">{{cardBalance}}BSTK</span></div>
+            <div class="card-acc"><span class="card-account"><i class="ico-balances"></i></span><span class="nav-title">余额合计</span><span class="total">{{cardBalance}}源点</span></div>
           </div>
         </div>
         <div class="mine-block">
-          <div class="block-row" @click="powerClick">
-            <span class="power"><i class="ico-power"></i></span>
-            <span class="nav-title">算力服务</span>
-            <span class="row-right"><i class="ico-more"></i></span>
-          </div>
           <div class="block-row" @click="myInviteClick">
             <span class="power"><i class="ico-share-nav"></i></span>
             <span class="nav-title">我的分享</span>
+            <span class="row-right"><i class="ico-more"></i></span>
+          </div>
+          <div class="block-row" @click="powerClick">
+            <span class="power"><i class="ico-power"></i></span>
+            <span class="nav-title">算力服务</span>
             <span class="row-right"><i class="ico-more"></i></span>
           </div>
           <div class="block-row" @click="addressClick">
@@ -79,6 +79,7 @@ import { mapActions, mapGetters } from "vuex";
 import NavBar from '@/components/common/NavBar';
 import { showMsg, loading, valid } from "@/utils/common.js";
 import apiUrl from "@/config/apiUrl.js";
+import weixin from "@/utils/wechat.js";
 export default {
   data() {
     return {
@@ -128,7 +129,7 @@ export default {
     myInviteClick: function() {
       //TODO 我的分享
       if(this.isLogin) {
-        this.$router.push("mine_share");
+        this.$router.push({name:"mine_share", query:{memberId:this.userId}});
       } else {
         showMsg("请先登录");
       }
@@ -181,6 +182,7 @@ export default {
           this.cardCount = res.data.info.cardCount;
           this.cardBalance = res.data.info.sumBalance;
           this.saveUserInfo(res.data.info);
+          this.initWxChat();
         } else {
           showMsg(res.status.message);
         }
@@ -188,6 +190,17 @@ export default {
         this.isLogin = false;
         console.log(err);
       });
+    },
+    initWxChat: function() {
+      let url = window.localStorage.getItem("LocalUrl")||window.location.href;
+      let param = {
+        title: "买卖大集",
+        desc: "买卖大集欢迎您体验",
+        link: window.location.href.split('#')[0]+'?#'+window.location.href.split('#')[1],
+        imgUrl: this.headImg,
+        localUrl: url
+      };
+      weixin.wxChat(this, param);
     }
   },
   mounted() {
@@ -207,7 +220,7 @@ html,body{
   box-sizing: border-box;
   width:100%;
   height: 100%;
-  padding-bottom:100px;
+  padding-bottom:97px;
   // height: calc(~"100% - 98px");
   background-color:  #f3f4f6;
   .gyl-mine{

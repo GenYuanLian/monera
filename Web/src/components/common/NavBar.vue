@@ -40,7 +40,7 @@ export default {
     ordersClick: function() {
       //TODO 订单列表
       if(!this.isLogin) {
-        this.$router.push('login');
+        this.$router.push({name:'login', query:{redirect:'/orders'}});
       } else {
         this.$router.push("orders");
       }
@@ -106,7 +106,7 @@ export default {
   box-sizing: border-box;
   border-top: 1px solid #efefef; /*no*/
   // -moz-box-shadow: 0 -10px 10px rgba(0,0,0,0.05); /* 老的 Firefox */
-  // box-shadow: 0 -10px 10px rgba(0,0,0,0.05);  
+  // box-shadow: 0 -10px 10px rgba(0,0,0,0.05);
   &.fixed{
     position: fixed;
     bottom:0;

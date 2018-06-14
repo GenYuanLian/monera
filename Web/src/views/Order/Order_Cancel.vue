@@ -22,7 +22,6 @@
 <script>
 import { mapActions, mapGetters } from "vuex";
 import Header from "@/components/common/Header";
-import { Scroller } from 'vux';
 import { showMsg, loading, readFile, valid } from "@/utils/common.js";
 import apiUrl from "@/config/apiUrl.js";
 export default {

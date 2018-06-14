@@ -1,5 +1,6 @@
 import wx from 'weixin-js-sdk';
 import apiUrl from "@/config/apiUrl.js";
+import { versions } from '@/utils/common.js';
 export default {
   wxChat : ($vue, param) => {
     let appId = "";
@@ -16,13 +17,12 @@ export default {
       localUrl: ""
     };
     options = Object.assign({}, options, param);
-    //
-    //http://10.68.79.42:8091/api/weChat/weChatShare
-    $vue.$httpPost(apiUrl.weChatShare, {shareLink: options.localUrl}).then((res) => {
+    options.localUrl = options.localUrl.split('#')[0];
+    $vue.$httpPost(apiUrl.shareConfig, {url: options.localUrl}, {isLoading:false}).then((res) => {
       if(res.status.code==0&&res.data) {
         wx.config({
           debug: false,
-          appId: res.data.appId, // 和获取Ticke的必须一样------必填，公众号的唯一标识
+          appId: res.data.appId,
           timestamp: res.data.timestamp, // 必填，生成签名的时间戳
           nonceStr: res.data.nonceStr, // 必填，生成签名的随机串
           signature: res.data.signature, // 必填，签名
@@ -31,11 +31,9 @@ export default {
             'onMenuShareQQ', 'onMenuShareQZone'
           ]
         });
-        //处理验证失败的信息
         wx.error(function (res) {
           console.log('验证失败返回的信息:', res);
         });
-        //处理验证成功的信息
         wx.ready(function () {
           //分享到朋友圈
           wx.onMenuShareTimeline({

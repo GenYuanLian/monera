@@ -30,6 +30,10 @@ const Collection = resolve => require(["@/views/Center/Collection"], resolve);
 const ComputingServer = resolve => require(["@/views/Center/Computing_Server"], resolve);
 const ComSerDetail = resolve => require(["@/views/Center/ComSer_Detail"], resolve);
 const MineShare = resolve => require(["@/views/Center/Mine_Share"], resolve);
+const MineInvite = resolve => require(["@/views/Center/Mine_Invite"], resolve);
+const InviteUser = resolve => require(["@/views/Center/Invite_User"], resolve);
+const InviteProduct = resolve => require(["@/views/Center/Invite_Product"], resolve);
+const InviteProDetail = resolve => require(["@/views/Center/InvitePro_Detail"], resolve);
 const PersonalInfor = resolve => require(["@/views/User/Personal_Infor"], resolve);
 const NickName = resolve => require(["@/views/User/Nick_Name"], resolve);
 const UserName = resolve => require(["@/views/User/User_Name"], resolve);
@@ -56,7 +60,7 @@ const MerchantEval = resolve => require(["@/views/Merchant/Merchant_Evaluate"], 
 const ActiveCard = resolve => require(["@/views/Other/Active_Card"], resolve);
 const Download = resolve => require(["@/views/Other/Download"], resolve);
 const ConfirmPay = resolve => require(["@/views/Admin/Confirm_Pay"], resolve);
-const InviteUser = resolve => require(["@/views/Center/Invite_User"], resolve);
+const About = resolve => require(["@/views/SetUp/About"], resolve);
 Vue.use(VueRouter);
 const routes = [{
   path:"*",
@@ -84,7 +88,7 @@ const routes = [{
 },
 {
   path: "/login",
-  name: "Login",
+  name: "login",
   component: Login
 },
 {
@@ -247,7 +251,8 @@ const routes = [{
 {
   path: "/orders",
   name: "orders",
-  component: Orders
+  component: Orders,
+  meta: { keepAlive: false }
 },
 {
   path: "/order_place",
@@ -330,6 +335,26 @@ const routes = [{
   path: "/mine_share",
   name: "mine_share",
   component: MineShare
+},
+{
+  path: "/mine_invite",
+  name: "mine_invite",
+  component: MineInvite
+},
+{
+  path: "/invite_product",
+  name: "invite_product",
+  component: InviteProduct
+},
+{
+  path: "/invitePro_detail",
+  name: "invitePro_detail",
+  component: InviteProDetail
+},
+{
+  path: "/about",
+  name: "about",
+  component: About
 }
 ];
 // 页面刷新时，重新赋值token
@@ -349,7 +374,7 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    //保存当前URL
+  //保存当前URL
   store.commit(types.SET_LOCAL_URL, document.URL);
   if (to.matched.some(r => r.meta.requiresAuth)) {
     if (store.state.token) {
@@ -360,6 +385,11 @@ router.beforeEach((to, from, next) => {
     }
   } else {
     NProgress.start();
+    if(to.name=="order_detail_product"||to.name=="order_detail_card") {
+      from.meta.keepAlive = true;
+    } else {
+      from.meta.keepAlive = false;
+    }
     next();
   }
 });

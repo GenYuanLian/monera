@@ -10,23 +10,23 @@
           <div class="card-amount-box">
             <div class="card-amount fl">
               <p class="card-key">面值</p>
-              <p class="card-val">{{cardMsg.totelValue}}BSTK</p>
+              <p class="card-val">{{cardMsg.totelValue}}源点</p>
             </div>
             <div class="card-amount fr">
               <p class="card-key">余额</p>
-              <p class="card-val">{{cardMsg.balance}}BSTK</p>
+              <p class="card-val">{{cardMsg.balance}}源点</p>
             </div>
           </div>
         </div>
       </div>
       <div class="card-use-list">
-        <div class="card-use-row" v-for="(record, index) in useList" :key="index">
+        <div class="card-use-row" v-for="(record, index) in useList" :key="index" :class="index == useList.length-1 ? 'no-border-bottom' : ''">
           <div class="row-left fl">
             <p class="card-name">{{record.title}}</p>
             <p class="card-time">{{new Date(record.createTime)|dateFormat('YYYY-MM-DD HH:mm')}}</p>
           </div>
           <div class="row-right fr">
-            <p class="card-turnover">{{record.amount<0 ? record.amount : '+' + record.amount}}BSTK</p>
+            <p class="card-turnover" :class="record.amount>=0 ? 'add-amount' : ''">{{record.amount >= 0 ? ('+' + record.amount) : record.amount}}源点</p>
           </div>
         </div>
       </div>
@@ -141,7 +141,7 @@ html,body{
           .card-name{
             height: 50px;
             line-height: 48px;
-            font-size: 26px;
+            font-size: 30px;
             max-width: 100%;
             overflow: hidden;
             text-overflow:ellipsis;
@@ -150,15 +150,18 @@ html,body{
           .card-time{
             height: 38px;
             line-height: 38px;
-            font-size: 20px;
+            font-size: 24px;
             color: #999;
           }
         }
         .card-turnover{
-          height: 50px;
-          line-height: 48px;
-          font-size: 24px;
+          height: 88px;
+          line-height: 88px;
+          font-size: 30px;
           color: #317db9;
+          &.add-amount{
+            color: #ffa936;
+          }
         }
       }
     }

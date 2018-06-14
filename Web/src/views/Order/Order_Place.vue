@@ -53,7 +53,7 @@
             <div class="pro-detail">
               <p class="pro-title" v-text="item.commodityName"></p>
               <p class="pro-price">
-                <span>{{item.commodityType==1?'&yen;':'BSTK'}}{{item.commodityPrice}}</span>
+                <span>{{item.commodityType==1?'&yen;':'源点'}}{{item.commodityPrice}}</span>
                 <span class="pro-num"><inline-x-number :width="'50px'" button-style="round" :min="minNum" :max="item.inventoryQuantity" v-model="item.buyNum"></inline-x-number></span>
               </p>
             </div>
@@ -74,7 +74,7 @@
       </div>
     </section>
     <footer class="foot">
-      <p class="left-btn">待支付<strong>{{merchant.merchantType==2?'&yen;':'BSTK'}}{{totalMoney}}</strong></p>
+      <p class="left-btn">待支付<strong>{{merchant.merchantType==2?'&yen;':'源点'}}{{totalMoney}}</strong></p>
       <input class="buy-btn" type="button" value="去支付" @click="checkBalance">
     </footer>
   </div>
@@ -118,7 +118,8 @@ export default {
       },
       addressList:[],
       userId:"",
-      sumBalance:0
+      sumBalance:0,
+      referraCode:""
     };
   },
   components: {
@@ -217,7 +218,8 @@ export default {
         amount: this.totalMoney,
         remark: this.remark,
         addressId: this.addressId,
-        walletAddress: this.walletAddr
+        walletAddress: this.walletAddr,
+        referraCode: this.referraCode
       };
       this.$httpPost(apiUrl.createOrder, param).then((res) => {
         if(res.status.code==0&&res.data) {
@@ -272,6 +274,7 @@ export default {
     this.productType = this.$route.query.proType||0;
     this.productId = this.$route.query.proId||"";
     this.buyNum = this.$route.query.num||1;
+    this.referraCode = this.$route.query.code||"";
     if(this.userId=="") {
       this.$router.push("login");
       return;

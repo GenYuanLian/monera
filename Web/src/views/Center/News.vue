@@ -3,7 +3,7 @@
     <div v-title>通知中心</div>
     <Header title="通知中心" :border="true"></Header>
     <section class="content" v-show="newList&&newList.length>0">
-      <Scroller lock-x height="100%" @on-pullup-loading="onPullup" ref="scroller" v-model="status" :use-pullup="usePullup" :pullup-config="pullupConfig">
+      <Scroller lock-x height="-40px" @on-pullup-loading="onPullup" ref="scroller" v-model="status" :use-pullup="usePullup" :pullup-config="pullupConfig">
         <div>
           <div class="new-row" :class="i==newList.length-1 ? 'no-bottom' : ''" v-for="(item,i) in newList" v-bind:key="i">
             <div class="title"><span>{{item.title}}</span><span class="new-date">{{new Date(item.createTime)|dateFormat("YYYY-MM-DD HH:mm")}}</span></div>
@@ -13,7 +13,10 @@
       </Scroller>
     </section>
     <section class="content">
-      <div class="no-data">暂无相关消息通知</div>
+      <div class="no-list-show" v-if="newList.length==0">
+        <img src="../../assets/images/Icon/no-news.png">
+        <p>暂无相关消息通知</p>
+      </div>
     </section>
   </div>
 </template>
