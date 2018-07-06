@@ -62,5 +62,6 @@ export default {
   myShares:'/shop/api.go?action=myShares',
   shareConfig:'/shop/api.go?action=shareConfig',
   shareCommodityOrders:'/shop/api.go?action=shareCommodityOrders',
-  buildInvitationCode:'/shop/api.go?action=buildInvitationCode'
+  buildInvitationCode:'/shop/api.go?action=buildInvitationCode',
+  weixinWalletMapSave:'/shop/api.go?action=weixinWalletMapSave'
 };

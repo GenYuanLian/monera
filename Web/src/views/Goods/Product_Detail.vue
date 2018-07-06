@@ -6,11 +6,15 @@
       <swiper class="pro-swiper" :list="proImgs" v-model="proImgIdx" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'pro-dots'"></swiper>
       <div class="pro-detail">
         <p class="pro-name" v-text="commodity.title"></p>
-        <p class="pro-sale">源点 {{commodity.price}}<span class="pro-sale-num">月售{{commodity.saleQuantity}}份</span></p>
+        <p class="pro-sale">{{commodity.price}}源点<span class="pro-sale-num">月售{{commodity.saleQuantity}}份</span></p>
       </div>
       <div class="pro-intro" v-for="(item, i) in introList" :key="i">
         <p>{{item.key}}</p>
         <div class="intro-box" v-html="item.values"></div>
+      </div>
+      <div class="pro-intro" v-if="commodity.traceSource">
+        <p>溯源信息</p>
+        <div class="intro-box"><a class="trace-link" :href="commodity.traceSource">点击查看溯源</a></div>
       </div>
       <div class="pro-evaluate" v-if="evalList.length>0">
         <p>产品评价</p>
@@ -339,6 +343,10 @@ html,body{
       }
       .intro-box,.features-box,.standard-box{
         line-height: 40px;
+      }
+      .intro-box .trace-link{
+        text-decoration: none;
+        color:#317db9;
       }
     }
     .pro-evaluate{

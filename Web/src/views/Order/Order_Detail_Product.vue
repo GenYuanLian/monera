@@ -60,6 +60,13 @@
           <div class="row-val">无需配送</div>
         </div>
       </div>
+      <div class="order-address" v-if="orderMsg.traceSource">
+        <h6>溯源信息</h6>
+        <div class="order-row no-border-bot">
+          <div class="row-key">溯源查看</div>
+          <div class="row-val"><a class="trace-link" :href="orderMsg.traceSource">点击溯源信息</a></div>
+        </div>
+      </div>
       <div class="order-message">
         <h6>订单信息</h6>
         <div class="order-row" v-if="false">
@@ -117,6 +124,7 @@ export default {
         address:""
       },
       payExplain:"",
+      traceSource:"",
       orderMsg:{} // 订单信息
     };
   },
@@ -509,6 +517,10 @@ html,body{
         line-height: 44px;
         color: #555555;
         word-break: break-all;
+      }
+      .trace-link{
+        text-decoration: none;
+        color:#317db9;
       }
     }
   }

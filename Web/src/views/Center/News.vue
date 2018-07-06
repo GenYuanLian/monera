@@ -32,7 +32,7 @@ export default {
       newList: [],
       hasNext: false,
       pageSize: 10,
-      pageIndex: 1,
+      pageIndex: 0,
       scrollTop: 0,
       pullupConfig:{
         content: '上拉加载更多',

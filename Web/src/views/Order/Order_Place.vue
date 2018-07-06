@@ -57,6 +57,10 @@
                 <span class="pro-num"><inline-x-number :width="'50px'" button-style="round" :min="minNum" :max="item.inventoryQuantity" v-model="item.buyNum"></inline-x-number></span>
               </p>
             </div>
+            <div class="pro-trace" v-if="item.traceSource">
+              <span class="lab-title">溯源信息</span>
+              <span class="trace-r"><a class="trace-link" :href="item.traceSource">点击查看溯源</a></span>
+            </div>
           </div>
         </div>
         <div class="order-row">
@@ -436,6 +440,24 @@ html,body{
                 .vux-number-disabled svg{
                   fill:#999;
                 }
+              }
+            }
+          }
+          .pro-trace{
+            height:40px;
+            line-height: 40px;
+            font-size:26px;
+            margin-top:20px;
+            .lab-title{
+              display: inline-block;
+              width:120px;
+            }
+            .trace-r{
+              margin-right:30px;
+              float:right;
+              a{
+                text-decoration: none;
+                color:#317db9;
               }
             }
           }

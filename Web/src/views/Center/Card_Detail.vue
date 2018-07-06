@@ -121,7 +121,10 @@ html,body{
         .card-amount-box{
           overflow: hidden;
           .card-amount{
-            width: 50%;
+            width: 60%;
+            &:nth-child(1){
+              width: 40%;
+            }
           }
         }
       }

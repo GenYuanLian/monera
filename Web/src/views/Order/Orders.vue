@@ -279,6 +279,7 @@ export default {
     this.userId = this.getLoginUser?this.getLoginUser.id:"";
     if(this.userId) {
       this.isLogin = true;
+      this.$route.meta.keepAlive = true;
       this.$nextTick(() => {
         this.getOrderList();
       });

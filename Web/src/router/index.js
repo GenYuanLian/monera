@@ -59,6 +59,8 @@ const MerchantDetail = resolve => require(["@/views/Merchant/Merchant_Detail"], 
 const MerchantEval = resolve => require(["@/views/Merchant/Merchant_Evaluate"], resolve);
 const ActiveCard = resolve => require(["@/views/Other/Active_Card"], resolve);
 const Download = resolve => require(["@/views/Other/Download"], resolve);
+const UserWallet = resolve => require(["@/views/Other/User_Wallet"], resolve);
+const Wallet = resolve => require(["@/views/Other/Wallet"], resolve);
 const ConfirmPay = resolve => require(["@/views/Admin/Confirm_Pay"], resolve);
 const About = resolve => require(["@/views/SetUp/About"], resolve);
 Vue.use(VueRouter);
@@ -355,6 +357,16 @@ const routes = [{
   path: "/about",
   name: "about",
   component: About
+},
+{
+  path: "/user_wallet",
+  name: "user_wallet",
+  component: UserWallet
+},
+{
+  path: "/wallet",
+  name: "wallet",
+  component: Wallet
 }
 ];
 // 页面刷新时，重新赋值token
@@ -385,7 +397,7 @@ router.beforeEach((to, from, next) => {
     }
   } else {
     NProgress.start();
-    if(to.name=="order_detail_product"||to.name=="order_detail_card") {
+    if(from.name=="orders" && (to.name=="order_detail_product"||to.name=="order_detail_card")) {
       from.meta.keepAlive = true;
     } else {
       from.meta.keepAlive = false;
@@ -394,7 +406,7 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-router.afterEach(transition => {
+router.afterEach((to, from) => {
   NProgress.done();
 });
 
