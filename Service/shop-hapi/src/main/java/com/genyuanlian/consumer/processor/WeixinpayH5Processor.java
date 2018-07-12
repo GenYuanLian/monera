@@ -64,7 +64,7 @@ public class WeixinpayH5Processor extends BaseApiProcessor {
 		req.setTotalAmount(order.getAmount());
 		if (StringUtils.isNotBlank(weixinCode)) {
 			//公众号支付,先获取openId
-			ShopMessageVo<Map<String, Object>> openIdMsg = weixinpayApi.getWeixinOpenId(weixinCode);
+			ShopMessageVo<Map<String, Object>> openIdMsg = weixinpayApi.getWeixinOpenId(weixinCode,false);
 			if (!openIdMsg.isResult()) {
 				sender.fail(Integer.valueOf(openIdMsg.getErrorCode()), openIdMsg.getErrorMessage(), response);
 				return;

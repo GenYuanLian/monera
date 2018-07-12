@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
@@ -23,12 +24,14 @@ import com.genyuanlian.consumer.shop.api.ICommodityOrderApi;
 import com.genyuanlian.consumer.shop.api.ISystemApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
+import com.genyuanlian.consumer.shop.model.ShopBstkWalletBill;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopCommodityOrderPay;
 import com.genyuanlian.consumer.shop.model.ShopConfirmPaymentLog;
 import com.genyuanlian.consumer.shop.model.ShopMember;
 import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
 import com.genyuanlian.consumer.shop.model.ShopMemberSecurity;
+import com.genyuanlian.consumer.shop.model.ShopMemberShare;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
 import com.genyuanlian.consumer.shop.model.ShopOrderCalcForce;
@@ -36,6 +39,7 @@ import com.genyuanlian.consumer.shop.model.ShopOrderCalcForceTask;
 import com.genyuanlian.consumer.shop.model.ShopOrderCommoditySnapshot;
 import com.genyuanlian.consumer.shop.model.ShopOrderDelivery;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
+import com.genyuanlian.consumer.shop.model.ShopOrderSplitBill;
 import com.genyuanlian.consumer.shop.model.ShopProductCalcForce;
 import com.genyuanlian.consumer.shop.model.ShopProductChainComputer;
 import com.genyuanlian.consumer.shop.model.ShopProductCommon;
@@ -53,7 +57,7 @@ import com.hnair.consumer.utils.ValidateRegexUtils;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
 @Component("commodityOrderApi")
-public class CommodityOrderApiImpl implements ICommodityOrderApi {
+public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodityOrderApi {
 	private static Logger logger = LoggerFactory.getLogger(CommodityOrderApiImpl.class);
 	private static String systemPublish = ConfigPropertieUtils.getString("system.publish");
 
@@ -75,6 +79,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 	private RedisTemplate slaveRedisTemplate;
 
 	@Override
+	@Transactional(isolation = Isolation.SERIALIZABLE)
 	public ShopMessageVo<String> createOrder(CreateCommodityOrderParamsVo params) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<>();
 		// 查询用户信息
@@ -82,19 +87,9 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (member == null || member.getStatus() != 1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100014.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100014.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
-		}
-
-		// 如果有推荐码参数，验证参数是否正确
-		if (ProUtility.isNotNull(params.getReferraCode())) {
-			List<ShopMember> referras = commonService.getList(ShopMember.class, "referraCode", params.getReferraCode());
-			if (referras == null || referras.size() == 0) {
-				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorCode().toString());
-				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorMessage());
-				return messageVo;
-			}
-
-			params.setReferraId(referras.get(0).getId());
 		}
 
 		// 查询商品
@@ -103,12 +98,16 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (commodity == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100200.getErrorCode().toString());
 			messageVo.setMessage(ShopErrorCodeEnum.ERROR_CODE_100200.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
 		if (commodity.getStatus() != 1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorCode().toString());
 			messageVo.setMessage(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -116,6 +115,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (commodity.getInventoryQuantity() < params.getSaleCount()) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -125,16 +126,20 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (price.multiply(new BigDecimal(params.getSaleCount())).compareTo(params.getAmount()) != 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
 		if (commodity.getPurchaseRestrict() > 0) {
-			// 限够验证（目前只验证算力服务）
+			// 限够验证
 			Integer Purchased = commonService.getBySqlId(ShopOrderDetail.class, "getPurchasedByMember", "memberId",
-					params.getMemberId(), "calcForceOrder", 1, "commodityType", 3);
+					params.getMemberId(), "commodityType", 3, "commodityId", commodity.getId());
 			if (commodity.getPurchaseRestrict().compareTo(Purchased + params.getSaleCount()) < 0) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200012.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200012.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 		}
@@ -144,6 +149,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			if (StringUtils.isBlank(params.getWalletAddress())) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200011.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200011.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 
@@ -151,11 +158,46 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			if (!ValidateRegexUtils.validate(params.getWalletAddress(), ValidateRegexUtils.PUBLIC_KEY_ADDR)) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200013.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200013.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 		}
 
 		Date now = DateUtil.getCurrentDateTime();
+
+		// 如果有推荐码参数，验证参数是否正确
+		if (ProUtility.isNotNull(params.getReferraCode())) {
+			List<ShopMember> referras = commonService.getList(ShopMember.class, "invitationCode",
+					params.getReferraCode());
+			if (referras == null || referras.size() == 0) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
+
+			params.setReferraId(referras.get(0).getId());
+
+			// 当前产品当前推荐码分享记录
+			List<ShopMemberShare> shares = commonService.getList(ShopMemberShare.class, "memberId",
+					params.getReferraId(), "shareType", 1, "commodityId", params.getCommodityId(), "commodityType",
+					params.getCommodityType());
+			if (shares == null || shares.size() == 0) {
+				// 若分享记录不存在，则插入一条
+				ShopMemberShare share = new ShopMemberShare();
+				share.setChannelType(1); // TODO:默认微信，此字段数据不准确
+				share.setCommodityId(params.getCommodityId());
+				share.setCommodityType(params.getCommodityType());
+				share.setCreateTime(now);
+				share.setMemberId(params.getReferraId());
+				share.setShareType(1);
+				share.setStatus(1);
+
+				commonService.save(share);
+			}
+		}
 
 		// 获取商户信息
 		ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
@@ -174,8 +216,11 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		descMap.put("amount", params.getAmount().toString());
 		descMap.put("logo", commodity.getLogo());
 		order.setDescription(JSON.toJSONString(descMap));
-		order.setReferraCode(params.getReferraCode());
-		order.setReferraId(params.getReferraId());
+		// 不能自己推荐自己
+		if (params.getReferraId() > 0 && params.getReferraId() != params.getMemberId()) {
+			order.setReferraCode(params.getReferraCode());
+			order.setReferraId(params.getReferraId());
+		}
 
 		// 持久化订单
 		commonService.save(order);
@@ -199,12 +244,19 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		orderDetail.setAmount(params.getAmount().doubleValue());
 		orderDetail.setStatus(0);
 		orderDetail.setRemark(params.getRemark());
-		orderDetail.setReferraCode(params.getReferraCode());
-		orderDetail.setReferraId(params.getReferraId());
+		// 不能自己推荐自己
+		if (params.getReferraId() > 0 && params.getReferraId() != params.getMemberId()) {
+			orderDetail.setReferraCode(params.getReferraCode());
+			orderDetail.setReferraId(params.getReferraId());
+		}
+		// 是否需要发送快递(1-是;0-否)
+		orderDetail.setIsSendMail(commodity.getIsSendMail());
+		// 是否是算力服务订单
 		if (commodity.getCommodityType() == 3) {
 			orderDetail.setPublicKeyAddr(params.getWalletAddress());
 			orderDetail.setCalcForceOrder(1);
 		}
+		orderDetail.setTraceSource(commodity.getTraceSource());
 		commonService.save(orderDetail);
 
 		// 创建订单产品快照
@@ -262,6 +314,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<String> orderPay(CommodityOrderPayParamsVo params) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
 		logger.info("商品订单支付调用到这里了=================,支付金额:" + params.getTotalAmount() + "用户ID:" + params.getMemberId()
@@ -273,11 +326,15 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (memberSecurity == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800014.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800014.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 		if (!params.getPayPwd().equals(memberSecurity.getPayPwd())) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800015.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800015.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -286,6 +343,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (order == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -295,6 +354,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (orderDetails == null || orderDetails.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		} else {
 			orderDetail = orderDetails.get(0); // 目前只有一个订单明细
@@ -305,6 +366,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 			if (detail.getStatus() != 0) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800011.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800011.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 		}
@@ -315,6 +378,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (payRecords != null && payRecords.size() > 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800001.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800001.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -336,6 +401,8 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (totalBalance.compareTo(totalAmount) == -1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800010.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800010.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -345,12 +412,17 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		if (wallet == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
-		BigDecimal walletBalance = bwsService.walletBalance(wallet.getWalletAddress());
+		String transNo = SnoGerUtil.getUUID();
+		BigDecimal walletBalance = bwsService.walletBalance(transNo, wallet.getWalletAddress());
 		if (walletBalance.compareTo(totalAmount) == -1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -406,19 +478,33 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		}
 
 		// 上传BSTK钱包交易,会员账户扣除
-		String transactionNo = bwsService.walletConsume(order.getId(), params.getMemberId(), 1,
-				wallet.getWalletAddress(), waitPayAmount);
+		String transNo1 = SnoGerUtil.getUUID();
 
-		// 记录提货卡交易日志表
+		// 记录提货卡交易日志表，记录钱包流水记录
 		for (Map.Entry<Long, Double> entry : puCardConsumeMap.entrySet()) {
+			// 记录提货卡交易日志表
 			ShopPuCardTradeRecord tradeRecord = new ShopPuCardTradeRecord();
 			tradeRecord.setMemberId(params.getMemberId());
 			tradeRecord.setPuCardId(entry.getKey());
 			tradeRecord.setTitle(orderDetail.getCommodityName());
 			tradeRecord.setAmount(-entry.getValue());
-			tradeRecord.setTransactionNo(transactionNo);
+			tradeRecord.setTransactionNo(transNo1);
 			tradeRecord.setRemark(order.getOrderNo());
 			commonService.save(tradeRecord);
+
+			// 记录钱包流水记录
+			ShopBstkWalletBill record = new ShopBstkWalletBill();
+			record.setWalletId(wallet.getId());
+			record.setOwnerId(params.getMemberId());
+			record.setOwnerType(1);
+			// 流水类型：1-提货卡激活，2-提货卡购买，3-提货卡支付，4-注册邀请返利，5-商品分享返利，6-代理返利，7-余额支付，8-微信支付，9-支付宝支付，10-销售收入
+			record.setBillType(3);
+			record.setTitle(orderDetail.getCommodityName());
+			record.setAmount(-entry.getValue());
+			record.setTransactionNo(transNo1);
+			record.setBusinessId(orderDetail.getId());
+			record.setRemark("businessId为订单明细Id");
+			commonService.save(record);
 		}
 
 		// 查询商品
@@ -431,45 +517,86 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 		// 目标订单状态，默认为已支付
 		Integer orderStatus = 3;
 
-		if (orderDetail.getCalcForceOrder() == 1) {
-			// 算力服务订单
-			ShopProductCalcForce product = commonService.get(commodity.getProductId(), ShopProductCalcForce.class);
-			if (commodity.getPrice().compareTo(product.getPriceTotal()) == 0) {
-				// 当付全款时，直接将订单置为已收货状态，并向商户账户转账
+		// 创建订单返利记录
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		List<ShopOrderSplitBill> bills = super.CreateOrderSplitBill(orderDetails, member);
+
+		if (commodity.getPrice().compareTo(commodity.getPriceTotal()) == 0) {
+			// 当付全款时，且商品不需要邮寄时，直接将订单置为已收货状态，并向商户账户转账
+			if (commodity.getIsSendMail() == 0) {
 				orderStatus = 6;
+			}
 
-				ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
-				// 检查商户钱包
-				ShopBstkWallet merWallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(),
-						"ownerType", 2);
-				if (merWallet == null) {
-					messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
-					messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
-					// 收到设置当前事物回滚
-					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-					return messageVo;
-				}
+			ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
+			// 检查商户钱包
+			ShopBstkWallet merWallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(), "ownerType",
+					2);
+			if (merWallet == null) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
+				// 收到设置当前事物回滚
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
 
-				// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
-				BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
-				BigDecimal merwaitPayAmount = BigDecimal.valueOf(order.getAmount()).subtract(merchantFee);
+			// 结清，修改订单状态
+			orderDetail.setBalancePayment(new Double(0)); // 所需尾款为0
+			orderDetail.setStatus(orderStatus);
+			commonService.update(orderDetail);
+
+			// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
+			BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
+			BigDecimal merwaitPayAmount = BigDecimal.valueOf(order.getAmount()).subtract(merchantFee);
+
+			// 创建对应的集合任务
+			// 商品类型：1-区块链计算机,2-通用商品,3-算力服务
+			if (commodity.getCommodityType() == 3) {
+				CreateOrderCalcForce(orderDetails);
+			}
+
+			// 买家已收货，分账，商户打款
+			if (orderStatus == 6) {
+				// 平台返利,上传BSTK钱包交易，平台返利发放,会员合并发放
+				super.platformRebate(bills);
 
 				// 上传BSTK钱包交易，商户账户增加
-				bwsService.walletRecharge(order.getId(), merchant.getId(), 2, merWallet.getPublicKeyAddr(),
-						merwaitPayAmount);
+				String transNo2 = SnoGerUtil.getUUID();
+				ShopBstkWalletBill record = new ShopBstkWalletBill();
+				record.setWalletId(merWallet.getId());
+				record.setOwnerId(merchant.getId());
+				record.setOwnerType(2);
+				record.setBillType(10);// 流水类型：1-提货卡激活，2-提货卡购买，3-提货卡支付，4-注册邀请返利，5-商品分享返利，6-代理返利，7-余额支付，8-微信支付，9-支付宝支付，10-销售收入
+				record.setTitle("销售收入");
+				record.setAmount(merwaitPayAmount.doubleValue());
+				record.setTransactionNo(transNo2);
+				record.setBusinessId(orderDetail.getId());
+				record.setCreateTime(new Date());
+				record.setRemark("businessId为订单明细Id");
+				commonService.save(record);
 
-				// 创建对应的集合任务
-				CreateOrderCalcForce(orderDetails);
-			} else {
-				orderDetail.setBalancePayment(BigDecimal.valueOf(product.getPriceTotal())
-						.subtract(BigDecimal.valueOf(commodity.getPrice())).doubleValue());
+				// 更新商户钱包余额
+				BigDecimal amount = BigDecimal.valueOf(merWallet.getTotelAmount()).add(merwaitPayAmount);
+				merWallet.setTotelAmount(amount.doubleValue());
+				BigDecimal merBalance = BigDecimal.valueOf(merWallet.getBalance()).add(merwaitPayAmount);
+				merWallet.setBalance(merBalance.doubleValue());
+				commonService.update(merWallet);
+
+				// 上传BSTK钱包交易，商户账户增加
+				bwsService.walletRecharge(transNo2, orderDetail.getId(), merchant.getId(), 2,
+						merWallet.getPublicKeyAddr(), merwaitPayAmount);
 			}
+		} else {
+			// 未结清 需要线下付款，修改订单状态
+			orderDetail.setBalancePayment(BigDecimal.valueOf(commodity.getPriceTotal())
+					.subtract(BigDecimal.valueOf(commodity.getPrice())).doubleValue());
+			orderDetail.setStatus(orderStatus);
+			commonService.update(orderDetail);
 		}
 
-		// 修改订单状态
-		for (ShopOrderDetail detail : orderDetails) {
-			detail.setStatus(orderStatus);
-			commonService.update(detail);
+		// 上传BSTK钱包交易,会员账户扣除
+		if (waitPayAmount.compareTo(BigDecimal.ZERO) > 0) {
+			bwsService.walletConsume(transNo1, orderDetail.getId(), params.getMemberId(), 1, wallet.getWalletAddress(),
+					waitPayAmount);
 		}
 
 		messageVo.setResult(true);
@@ -615,6 +742,7 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 					task.setOrderCalcForceId(service.getId());
 					task.setPublicKeyAddr(detail.getPublicKeyAddr());
 					task.setMemberId(detail.getMemberId());
+					task.setCommodityId(service.getCommodityId());
 					task.setPlanDate(DateUtil.formatDateByFormat(DateUtil.addDate(now, j), "yyyy-MM-dd"));
 
 					// 降幅因子
@@ -674,84 +802,99 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 	@Override
 	@Transactional
-	public ShopMessageVo<String> confirmPayment(ShopConfirmPaymentLog param) {
+	public ShopMessageVo<String> confirmPayment(ShopConfirmPaymentLog confirmPaymentLog) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<>();
 
 		// 用户
-		List<ShopMember> members = commonService.getList(ShopMember.class, "mobile", param.getMemberMobile());
+		List<ShopMember> members = commonService.getList(ShopMember.class, "mobile",
+				confirmPaymentLog.getMemberMobile());
 		if (members == null || members.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 		ShopMember member = members.get(0);
-		param.setMemberId(member.getId());
+		confirmPaymentLog.setMemberId(member.getId());
 
 		// 指定用户待付尾款的算力服务订单
 		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "memberId", member.getId(),
-				"commodityType", 3, "calcForceOrder", 1, "status", 3);
+				"balancePaymentGreaterThan0", 0);
 		if (orders == null || orders.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800013.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800013.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
-		BigDecimal balance = BigDecimal.valueOf(param.getInputAmount());
-		StringBuffer orderDetailIds = new StringBuffer();
+		// 临时变量
+		BigDecimal balance = BigDecimal.valueOf(confirmPaymentLog.getInputAmount());
+		BigDecimal debtAmount = BigDecimal.ZERO; // 未处理订单，所需总尾款
 
 		// 按下单时间升序排列
 		orders.sort((o1, o2) -> o1.getId().compareTo(o2.getId()));
-		BigDecimal totalAmount = BigDecimal.ZERO; // 本次处理的订单明细所付定金之和，需要转BSTK给商户
-		List<ShopOrderDetail> tasks = new ArrayList<>();
-		BigDecimal debtAmount = BigDecimal.ZERO; // 未处理订单，所需总尾款
+
+		// 付清的订单明细列表
+		List<ShopOrderDetail> orderDetails = new ArrayList<ShopOrderDetail>(); // 临时保存，付清的订单明细列表
+		List<Long> orderDetailidList = new ArrayList<Long>();// 临时保存，付清的订单明细Id集合
+
+		// 需要分账与商户打款的订单明细列表
+		BigDecimal finanTransferAmount = BigDecimal.ZERO; // 本次处理的需要分账与商户打款的订单明细所付定金之和，需要转BSTK给商户
+		List<Long> finanTransferOrderDetailIdList = new ArrayList<Long>(); // 临时保存，需要分账与商户打款的订单明细列表
+
+		// 付清的-算力服务的-订单明细列表
+		List<ShopOrderDetail> calcForceOrderDetails = new ArrayList<ShopOrderDetail>(); // 临时保存，付清的-算力服务的-订单明细列表
+
+		// 接受转账商户
+		Long merchantId = 0l;
 		for (ShopOrderDetail orderDetail : orders) {
 			if (balance.compareTo(BigDecimal.valueOf(orderDetail.getBalancePayment())) >= 0) {
 				balance = balance.subtract(BigDecimal.valueOf(orderDetail.getBalancePayment()));
-				totalAmount = totalAmount.add(BigDecimal.valueOf(orderDetail.getAmount()));
-				orderDetail.setStatus(6);
+
+				// 是否需要发送快递(1-是;0-否)
+				if (orderDetail.getIsSendMail() == 0) {
+					orderDetail.setStatus(6);
+					finanTransferOrderDetailIdList.add(orderDetail.getId());
+					finanTransferAmount = finanTransferAmount.add(BigDecimal.valueOf(orderDetail.getAmount()));
+					merchantId = orderDetail.getMerchantId();
+				}
+				orderDetail.setBalancePayment(0d); // 结清
 				commonService.update(orderDetail);
-				orderDetailIds.append(orderDetail.getId());
-				tasks.add(orderDetail);
+
+				// 临时值
+				orderDetailidList.add(orderDetail.getId());
+				orderDetails.add(orderDetail);
+				// 是否是算力服务订单:0-否，1-是
+				if (orderDetail.getCalcForceOrder() == 1) {
+					calcForceOrderDetails.add(orderDetail);
+				}
 			} else {
 				debtAmount = debtAmount.add(BigDecimal.valueOf(orderDetail.getBalancePayment()));
 			}
 		}
 
-		param.setOrderDetailIds(orderDetailIds.toString());
-		param.setDeductAmount(BigDecimal.valueOf(param.getInputAmount()).subtract(balance).doubleValue());
-		param.setCreateTime(DateUtil.getCurrentDateTime());
-		commonService.save(param);
+		// 保存线下付款记录
+		confirmPaymentLog.setOrderDetailIds(StringUtils.join(orderDetailidList, ","));
+		confirmPaymentLog.setDeductAmount(
+				BigDecimal.valueOf(confirmPaymentLog.getInputAmount()).subtract(balance).doubleValue());
+		confirmPaymentLog.setCreateTime(DateUtil.getCurrentDateTime());
+		commonService.save(confirmPaymentLog);
 
-		if (tasks.size() > 0) {
-			ShopMerchant merchant = commonService.get(orders.get(0).getMerchantId(), ShopMerchant.class);
-			// 检查商户钱包
-			ShopBstkWallet merWallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(), "ownerType",
-					2);
-			if (merWallet == null) {
-				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
-				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
-				// 收到设置当前事物回滚
-				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-				return messageVo;
-			}
-
-			// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
-			BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
-			BigDecimal merwaitPayAmount = totalAmount.subtract(merchantFee);
-
-			// 上传BSTK钱包交易，商户账户增加
-			bwsService.walletRecharge(param.getId(), merchant.getId(), 2, merWallet.getPublicKeyAddr(),
-					merwaitPayAmount);
-
-			// 创建对应的集合任务
-			CreateOrderCalcForce(tasks);
-
+		// 创建对应的集合任务
+		if (calcForceOrderDetails != null && calcForceOrderDetails.size() > 0) {
+			CreateOrderCalcForce(calcForceOrderDetails);
 		}
 
+		// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
+		BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
+		BigDecimal merwaitPayAmount = finanTransferAmount.subtract(merchantFee);
+
 		String message = "";
-		if (tasks.size() == 0) {
+		if (orderDetails.size() == 0) {
 			message = "汇款金额不足，未处理！尾款差额" + debtAmount.subtract(balance).toString() + "元";
-		} else if (tasks.size() == orders.size()) {
+		} else if (orderDetails.size() == orders.size()) {
 			if (balance.compareTo(BigDecimal.ZERO) == 0) {
 				message = "已确认客户线下汇款信息！";
 			} else {
@@ -763,8 +906,105 @@ public class CommodityOrderApiImpl implements ICommodityOrderApi {
 
 		// 发送系统消息
 		systemApi.sendSystemMessage(member.getId(), 1, "线下付款信息确认", message);
+
+		// 上传BSTK钱包交易，商户账户增加
+		if (finanTransferOrderDetailIdList != null && finanTransferOrderDetailIdList.size() > 0
+				&& merwaitPayAmount.compareTo(BigDecimal.ZERO) > 0 && merchantId != 0l) {
+
+			// 平台返利,上传BSTK钱包交易，平台返利发放,会员合并发放
+			List<ShopOrderSplitBill> bills = commonService.getListBySqlId(ShopOrderSplitBill.class,
+					"selectByOrderDetailIds", "list", finanTransferOrderDetailIdList);
+			super.platformRebate(bills);
+
+			// 获取商户信息
+			ShopMerchant merchant = commonService.get(merchantId, ShopMerchant.class);
+
+			// 检查商户钱包
+			ShopBstkWallet merWallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(), "ownerType",
+					2);
+			if (merWallet == null) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
+				// 收到设置当前事物回滚
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
+
+			// 记录商户钱包交易记录
+			String transNo = SnoGerUtil.getUUID();
+			ShopBstkWalletBill record = new ShopBstkWalletBill();
+			record.setWalletId(merWallet.getId());
+			record.setOwnerId(merchant.getId());
+			record.setOwnerType(2);
+			record.setBillType(10);// 流水类型：1-提货卡激活，2-提货卡购买，3-提货卡支付，4-注册邀请返利，5-商品分享返利，6-代理返利，7-余额支付，8-微信支付，9-支付宝支付，10-销售收入
+			record.setTitle("销售收入");
+			record.setAmount(merwaitPayAmount.doubleValue());
+			record.setTransactionNo(transNo);
+			record.setBusinessId(confirmPaymentLog.getId());
+			record.setCreateTime(new Date());
+			record.setRemark("businessId为线下收款记录Id");
+			commonService.save(record);
+
+			// 更新商户钱包余额
+			BigDecimal amount = BigDecimal.valueOf(merWallet.getTotelAmount()).add(merwaitPayAmount);
+			merWallet.setTotelAmount(amount.doubleValue());
+			BigDecimal merBalance = BigDecimal.valueOf(merWallet.getBalance()).add(merwaitPayAmount);
+			merWallet.setBalance(merBalance.doubleValue());
+			commonService.update(merWallet);
+
+			// 上传BSTK商户钱包交易
+			bwsService.walletRecharge(transNo, confirmPaymentLog.getId(), merchant.getId(), 2,
+					merWallet.getPublicKeyAddr(), merwaitPayAmount);
+		}
+
 		messageVo.setT(message);
 		messageVo.setResult(true);
+
+		return messageVo;
+	}
+
+	@Override
+	@Transactional
+	public ShopMessageVo<String> sendDelivery(Long orderDetailId, String expressNo, String expressSupplier) {
+		ShopMessageVo<String> messageVo = new ShopMessageVo<>();
+
+		// 订单明细
+		ShopOrderDetail orderDetail = commonService.get(orderDetailId, ShopOrderDetail.class);
+		if (orderDetail == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorMessage());
+			return messageVo;
+		}
+		if (orderDetail.getIsSendMail() == 0) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800016.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800016.getErrorMessage());
+			return messageVo;
+		}
+		if (orderDetail.getStatus() != 3) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800011.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800011.getErrorMessage());
+			return messageVo;
+		}
+
+		// 订单物流信息
+		ShopOrderDelivery delivery = commonService.get(ShopOrderDelivery.class, "orderDetailId", orderDetailId);
+		if (delivery == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
+
+		// 修改物流休息，保存物流单号和物流公司
+		delivery.setExpressNo(expressNo);
+		delivery.setExpressSupplier(expressSupplier);
+		commonService.update(delivery);
+
+		// 修改订单状态为已发货
+		orderDetail.setStatus(5);
+		commonService.update(orderDetail);
+
+		messageVo.setResult(true);
+		messageVo.setT("物流信息更新成功");
 
 		return messageVo;
 	}

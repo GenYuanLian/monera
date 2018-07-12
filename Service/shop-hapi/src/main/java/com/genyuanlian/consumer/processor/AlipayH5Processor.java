@@ -30,7 +30,7 @@ public class AlipayH5Processor extends BaseApiProcessor {
 	
 	@Resource
 	private IAlipayApi alipayApi;
-
+	
 	@Override
 	protected void process(HttpServletRequest request, HttpServletResponse response, ResultSender sender)
 			throws Exception {

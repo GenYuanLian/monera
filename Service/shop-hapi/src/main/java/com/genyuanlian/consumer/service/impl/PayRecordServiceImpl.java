@@ -2,11 +2,13 @@ package com.genyuanlian.consumer.service.impl;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +26,27 @@ public class PayRecordServiceImpl implements IPayRecordService {
 	private static Logger logger = LoggerFactory.getLogger(PayRecordServiceImpl.class);
 	@Resource
 	private ICommonDao commonDao;
+	@Resource(name = "masterRedisTemplate")
+	private RedisTemplate<String, String> masterRedisTemplate;
 
 	@Override
 	public ShopMessageVo<ShopPayRecord> buildPayRecord(Long memberId, Double totalAmount, String orderNo,
 			String subject, Integer accountType) {
 		ShopMessageVo<ShopPayRecord> result = new ShopMessageVo<>();
+		// 判断是否重复提交
+		String lockKey = "pay_order_num" + orderNo;
+		String now=DateUtil.getCurrentDateTimeToStr2();
+		// 当且仅当 key 不存在，将 key 的值设为 value ，并返回1；若给定的 key 已经存在，则 SETNX 不做任何动作，并返回0
+		if (!masterRedisTemplate.getConnectionFactory().getConnection().setNX(lockKey.getBytes(), now.getBytes())) {
+			byte[] bs = masterRedisTemplate.getConnectionFactory().getConnection().get(lockKey.getBytes());
+			logger.info("存在时间-"+new String(bs));
+			logger.info("当前时间-"+now);
+			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800001.getErrorCode().toString());
+			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800001.getErrorMessage());
+			return result;
+		}
+		// 同一订单3秒内连续支付多次，则视为重复提交
+		masterRedisTemplate.getConnectionFactory().getConnection().expire(lockKey.getBytes(), 3);
 
 		List<ShopPayRecord> records = commonDao.getList(ShopPayRecord.class, "orderNo", orderNo);
 
@@ -89,5 +107,4 @@ public class PayRecordServiceImpl implements IPayRecordService {
 			logger.error("保持支付记录错误：" + e.getMessage());
 		}
 	}
-
 }

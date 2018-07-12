@@ -1,5 +1,6 @@
 package com.genyuanlian.consumer.utils;
 
+import java.util.Date;
 import java.util.Random;
 
 
@@ -16,7 +17,7 @@ public class ShopUtis {
 		// 获得随机数  
 	    double randNum = (1 + rand.nextDouble()) * Math.pow(10, randLen); 
         
-	    return prefix+DateUtil.getCurrentDateTimeToStr()+String.valueOf(randNum).substring(1, randLen+1);
+	    return prefix+DateUtil.formatDateByFormat(new Date(), "yyyyMMddHHmmssSSS")+String.valueOf(randNum).substring(1, randLen+1);
 	}
 	
 	public static void main(String[] args) {

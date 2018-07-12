@@ -14,7 +14,6 @@ import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
 import com.genyuanlian.consumer.shop.model.ShopOrderDelivery;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
-import com.genyuanlian.consumer.shop.model.ShopProductCalcForce;
 import com.hnair.consumer.constant.ErrorCodeEnum;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.processor.BaseApiProcessor;
@@ -88,13 +87,12 @@ public class GetPuCardOrderDetailProcessor extends BaseApiProcessor {
 
 		sender.put("cardOrder", orderDetail);
 		sender.put("delivery", delivery);
-		
-		if (orderDetail.getCalcForceOrder()==1) {
+		// 商品类型：1-提货卡,2-溯源卡,3-零售商品
+		if (orderDetail.getCommodityType() == 3) {
 			ShopCommodity commodity = commonService.get(orderDetail.getCommodityId(), ShopCommodity.class);
-			ShopProductCalcForce product=commonService.get(commodity.getProductId(),ShopProductCalcForce.class);
-			sender.put("payExplain", product.getPayExplain());
+			sender.put("payExplain", commodity.getPayExplain());
 		}
-		
+
 		sender.success(response);
 	}
 

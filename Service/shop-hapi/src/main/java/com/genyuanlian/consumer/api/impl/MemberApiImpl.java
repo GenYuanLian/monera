@@ -9,11 +9,13 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.genyuanlian.consumer.service.IBWSService;
@@ -75,39 +77,56 @@ public class MemberApiImpl implements IMemberApi {
 	private RedisTemplate slaveRedisTemplate;
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> register(MemberRegisterParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
-		logger.info("新会员注册调用到这里了=================,手机号:" + params.getMobile() + "验证码:" + params.getSmsCode() + "短信编码:"
+		logger.info("新会员注册调用到这里了=================,手机号:" + params.getMobile()+",是否第三方登录注册"+params.getIsThirdparty() + ",验证码:" + params.getSmsCode() + "短信编码:"
 				+ params.getSmsNumber() + "推荐码:" + params.getReferraCode());
 
-		// 判断短信验证码是否正确
-		String cacheKeySmsNumber = params.getSmsNumber() + params.getMobile();
-		Object smsNumber = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
-		if (smsNumber != null && ProUtility.isNotNull(smsNumber.toString())
-				&& smsNumber.toString().equals(params.getSmsCode())) {
-			logger.info("短信验证码验证成功=================,手机号:" + params.getMobile() + "验证码:" + params.getSmsCode() + "短信编码:"
-					+ params.getSmsNumber());
-		} else {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
-			return messageVo;
+		
+		if (params.getIsThirdparty()) {
+			logger.info("第三方授权登录注册，不验证验证码");
+		}else {
+			// 判断短信验证码是否正确
+			String cacheKeySmsNumber = params.getSmsNumber() + params.getMobile();
+			Object smsNumber = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
+			if (smsNumber != null && ProUtility.isNotNull(smsNumber.toString())
+					&& smsNumber.toString().equals(params.getSmsCode())) {
+				logger.info("短信验证码验证成功=================,手机号:" + params.getMobile() + "验证码:" + params.getSmsCode() + "短信编码:"
+						+ params.getSmsNumber());
+			} else {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
 		}
+		
 
 		// 判断手机号是否被占用
-		List<ShopMember> members = commonService.getList(ShopMember.class, "mobile", params.getMobile());
-		if (members != null && members.size() > 0) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorMessage());
-			return messageVo;
+		if (StringUtils.isNotBlank(params.getMobile())) {
+			List<ShopMember> members = commonService.getList(ShopMember.class, "mobile", params.getMobile());
+			if (members != null && members.size() > 0) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
 		}
+		
 
 		// 如果有推荐码参数，验证参数是否正确
 		if (ProUtility.isNotNull(params.getReferraCode())) {
-			List<ShopMember> referras = commonService.getList(ShopMember.class, "referraCode", params.getReferraCode());
+			List<ShopMember> referras = commonService.getList(ShopMember.class, "invitationCode",
+					params.getReferraCode());
 			if (referras == null || referras.size() == 0) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100003.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 
@@ -121,6 +140,7 @@ public class MemberApiImpl implements IMemberApi {
 		resultMap.put("memberId", register.getId());
 		resultMap.put("mobile", register.getMobile());
 		resultMap.put("invitationCode", register.getInvitationCode());
+		resultMap.put("member", register);
 
 		messageVo.setResult(true);
 		messageVo.setT(resultMap);
@@ -143,7 +163,9 @@ public class MemberApiImpl implements IMemberApi {
 		// 默认值
 		register.setOwnerType(1);
 		register.setLoginName(params.getMobile());
-		register.setNickName("主人");
+		register.setNickName(StringUtils.isNotBlank(params.getNickName())?params.getNickName():"主人");
+		register.setGender(params.getGender());
+		register.setHeadPortrait(params.getHeadPortrait());
 		register.setIsIdentification(0);
 		register.setInvitationCode(getRandomString());
 		register.setStatus(1);
@@ -153,7 +175,8 @@ public class MemberApiImpl implements IMemberApi {
 		memberService.register(register);
 
 		// 创建轻钱包
-		BWSWalletCreateResponseVo resp = bwsService.walletCreate(register.getId(), 1);
+		String transNo = SnoGerUtil.getUUID();
+		BWSWalletCreateResponseVo resp = bwsService.walletCreate(transNo, register.getId(), 1);
 		if (resp != null) {
 			// 插入 wallet
 			ShopBstkWallet upWallet = new ShopBstkWallet();
@@ -186,6 +209,7 @@ public class MemberApiImpl implements IMemberApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> login(MemberLoginParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -202,6 +226,8 @@ public class MemberApiImpl implements IMemberApi {
 				&& Integer.parseInt(logCount.toString()) >= maxCount) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100007.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100007.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -214,46 +240,17 @@ public class MemberApiImpl implements IMemberApi {
 			if (member.getStatus() != 1) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100012.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100012.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 
 			// 判断密码是否正确
 			if (params.getLoginType().equals("password")) {
 				if (params.getLoginCode().equals(member.getLoginPwd())) {
-					// 获取登陆token值
-					String token = SnoGerUtil.getUUID();
-
-					// Redis存储-登陆token值
-					String cacheKeyLoginToken = "login" + member.getId().toString() + "token";
-					masterRedisTemplate.delete(cacheKeyLoginToken);
-					masterRedisTemplate.opsForValue().set(cacheKeyLoginToken, token);
-					masterRedisTemplate.expire(cacheKeyLoginToken, 8, TimeUnit.HOURS);
-
-					// 记录登陆日志信息
-					ShopLoginLog log = new ShopLoginLog();
-					log.setMemberId(member.getId());
-					log.setMobile(member.getMobile());
-					log.setStatus(1);
-					log.setMembToken(token);
-					Date now = new Date();
-					log.setValidTime(DateUtil.addMinute(now, 480));// token有效期8小时
-					log.setLoginIp(params.getIp());
-					log.setCreateTime(now);
-					commonService.save(log);
-
-					// 返回值
-					String imageDomain = ConfigPropertieUtils.getString("image.server.address");
-					resultMap.put("memberId", member.getId());
-					resultMap.put("mobile", member.getMobile());
-					resultMap.put("nickName", member.getNickName());
-					if (ProUtility.isNotNull(member.getHeadPortrait())) {
-						resultMap.put("headPortrait", imageDomain + member.getHeadPortrait());
-					}
-					resultMap.put("gender", member.getGender()); // 性别：1-女，2-男
-					resultMap.put("referraCode", member.getReferraCode());
-					resultMap.put("invitationCode", member.getInvitationCode());
-					resultMap.put("status", member.getStatus());
-					resultMap.put("token", token);
+					//登录
+					resultMap=login(member, 1, params.getIp());
+					
 					messageVo.setResult(true);
 					messageVo.setT(resultMap);
 					messageVo.setMessage("会员登录成功");
@@ -272,6 +269,8 @@ public class MemberApiImpl implements IMemberApi {
 
 					messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100008.getErrorCode().toString());
 					messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100008.getErrorMessage());
+					// 手动回滚当前事物
+					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 					return messageVo;
 				}
 			} else { // 短信验证码登录
@@ -282,40 +281,9 @@ public class MemberApiImpl implements IMemberApi {
 					logger.info("短信验证登录成功=================,手机号:" + member.getMobile() + "验证码:" + params.getSmsCode()
 							+ "短信编码:" + params.getLoginCode());
 
-					// 获取登陆token值
-					String token = SnoGerUtil.getUUID();
-
-					// Redis存储-登陆token值
-					String cacheKeyLoginToken = "login" + member.getId().toString() + "token";
-					masterRedisTemplate.delete(cacheKeyLoginToken);
-					masterRedisTemplate.opsForValue().set(cacheKeyLoginToken, token);
-					masterRedisTemplate.expire(cacheKeyLoginToken, 8, TimeUnit.HOURS);
-
-					// 记录登陆日志信息
-					ShopLoginLog log = new ShopLoginLog();
-					log.setMemberId(member.getId());
-					log.setMobile(member.getMobile());
-					log.setStatus(1);
-					log.setMembToken(token);
-					Date now = new Date();
-					log.setValidTime(DateUtil.addMinute(now, 480));// token有效期8小时
-					log.setLoginIp(params.getIp());
-					log.setCreateTime(now);
-					commonService.save(log);
-
-					// 返回值
-					String imageDomain = ConfigPropertieUtils.getString("image.server.address");
-					resultMap.put("memberId", member.getId());
-					resultMap.put("mobile", member.getMobile());
-					resultMap.put("nickName", member.getNickName());
-					if (ProUtility.isNotNull(member.getHeadPortrait())) {
-						resultMap.put("headPortrait", imageDomain + member.getHeadPortrait());
-					}
-					resultMap.put("gender", member.getGender()); // 性别：1-女，2-男
-					resultMap.put("referraCode", member.getReferraCode());
-					resultMap.put("invitationCode", member.getInvitationCode());
-					resultMap.put("status", member.getStatus());
-					resultMap.put("token", token);
+					//登录
+					resultMap=login(member, 2, params.getIp());
+					
 					messageVo.setResult(true);
 					messageVo.setT(resultMap);
 					messageVo.setMessage("会员登录成功");
@@ -334,12 +302,16 @@ public class MemberApiImpl implements IMemberApi {
 
 					messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100008.getErrorCode().toString());
 					messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100008.getErrorMessage());
+					// 手动回滚当前事物
+					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 					return messageVo;
 				}
 			}
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100008.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100008.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}
@@ -580,6 +552,7 @@ public class MemberApiImpl implements IMemberApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> uploadHeadPortrait(UploadHeadPortraitParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -598,11 +571,14 @@ public class MemberApiImpl implements IMemberApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> setLoginName(LoginNameParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -621,11 +597,14 @@ public class MemberApiImpl implements IMemberApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> setNickname(NicknameParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -644,6 +623,8 @@ public class MemberApiImpl implements IMemberApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}
@@ -723,6 +704,7 @@ public class MemberApiImpl implements IMemberApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> saveMemberAddress(MemberAddressParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -732,6 +714,8 @@ public class MemberApiImpl implements IMemberApi {
 		if (area == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -786,6 +770,8 @@ public class MemberApiImpl implements IMemberApi {
 			} else {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 		} else // 新增
@@ -843,6 +829,7 @@ public class MemberApiImpl implements IMemberApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> deleteMemberAddress(IdParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -861,6 +848,8 @@ public class MemberApiImpl implements IMemberApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}
@@ -880,6 +869,8 @@ public class MemberApiImpl implements IMemberApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -888,6 +879,8 @@ public class MemberApiImpl implements IMemberApi {
 		if (member == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -910,4 +903,58 @@ public class MemberApiImpl implements IMemberApi {
 		return messageVo;
 	}
 
+	/**
+	 * 登录
+	 * @param member 登录用户对象
+	 * @param loginType 登录类型：1-密码登录；2-短信验证码登录；3-第三方授权登录
+	 * @param loginIp 用户ip
+	 * @return
+	 */
+	@Transactional
+	public Map<String, Object> login(ShopMember member, Integer loginType, String loginIp) {
+		Map<String, Object> resultMap = new HashMap<>();
+		// 获取登陆token值
+		String token = SnoGerUtil.getUUID();
+
+		// Redis存储-登陆token值
+		String cacheKeyLoginToken = "login" + member.getId().toString() + "token";
+		masterRedisTemplate.delete(cacheKeyLoginToken);
+		masterRedisTemplate.opsForValue().set(cacheKeyLoginToken, token);
+		masterRedisTemplate.expire(cacheKeyLoginToken, 8, TimeUnit.HOURS);
+
+		// 记录登陆日志信息
+		ShopLoginLog log = new ShopLoginLog();
+		log.setMemberId(member.getId());
+		log.setMobile(member.getMobile());
+		log.setStatus(1);
+		log.setMembToken(token);
+		Date now = new Date();
+		log.setValidTime(DateUtil.addMinute(now, 480));// token有效期8小时
+		log.setLoginIp(loginIp);
+		log.setLoginType(loginType);
+		log.setCreateTime(now);
+		commonService.save(log);
+
+		// 返回值
+		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
+		resultMap.put("memberId", member.getId());
+		resultMap.put("mobile", member.getMobile());
+		resultMap.put("nickName", member.getNickName());
+		if (ProUtility.isNotNull(member.getHeadPortrait())) {
+			if (member.getHeadPortrait().substring(0, 2).equals("/2")) {
+				// 用户自己上传的头像
+				resultMap.put("headPortrait", imageDomain + member.getHeadPortrait());
+			} else {
+				// 第三方头像
+				resultMap.put("headPortrait", member.getHeadPortrait());
+			}
+		}
+		resultMap.put("gender", member.getGender()); // 性别：1-女，2-男
+		resultMap.put("referraCode", member.getReferraCode());
+		resultMap.put("invitationCode", member.getInvitationCode());
+		resultMap.put("status", member.getStatus());
+		resultMap.put("token", token);
+
+		return resultMap;
+	}
 }

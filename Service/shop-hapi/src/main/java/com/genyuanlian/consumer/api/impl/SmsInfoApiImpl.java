@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.alibaba.fastjson.JSON;
 import com.genyuanlian.consumer.service.ISmsInfoService;
@@ -50,6 +52,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 	private RedisTemplate<String, String> slaveRedisTemplate;
 
 	@Override
+	@Transactional
 	public ShopMessageVo<String> sendSms(SendSmsParamsVo params) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
 		logger.info("短信发送调用到这里了=================,手机号:" + params.getMobile() + "短信类型:" + params.getSmstype());
@@ -60,6 +63,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			if (StringUtils.isBlank(mobiles)) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 			
@@ -68,6 +73,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			if (!ArrayUtils.contains(split, params.getMobile())) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
 		}
@@ -82,6 +89,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 				&& Integer.parseInt(logCount.toString()) >= maxCount && !"confirmPayment".equals(params.getSmstype())) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100004.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100004.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -89,6 +98,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		if (smsInfoService.queryValiditytime(params.getMobile(), 1, 1, params.getSmstype())) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100005.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100005.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -97,6 +108,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		if ("register".equals(params.getSmstype()) && members != null && members.size() > 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 		
@@ -104,18 +117,24 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		if ("login".equals(params.getSmstype()) && (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
 		if ("findPwd".equals(params.getSmstype()) && (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 		
 		if ("resetPayPwd".equals(params.getSmstype()) && (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -190,6 +209,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100009.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100009.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}

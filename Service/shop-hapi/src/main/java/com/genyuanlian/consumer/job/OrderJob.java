@@ -184,7 +184,8 @@ public class OrderJob {
 			String receiverPhoneNumber = ConfigPropertieUtils.getString("bws.walletWarnReceiveMobile");
 
 			// 查询余额
-			BigDecimal walletBalance = bwsService.walletBalance(walletId);
+			String transNo = SnoGerUtil.getUUID();
+			BigDecimal walletBalance = bwsService.walletBalance(transNo, walletId);
 			logger.info("钱包余额：" + walletBalance);
 			logger.info("钱包限定额：" + walletAccount);
 			if (walletBalance.compareTo(walletAccount) < 0) {
@@ -251,7 +252,10 @@ public class OrderJob {
 				if (exist == false) {
 					// 获取配置
 					SaleVolumeConfigVo conf = GetSaleVolumeConfig(c.getId(), 3, c.getCommodityType());
-
+					if ((conf.getOrderCountMin() == 0 && conf.getOrderCountMax() == 0)
+							|| (conf.getSaleCountMin() == 0 && conf.getSaleCountMax() == 0)) {
+						continue;
+					}
 					ShopSaleVolume sv = new ShopSaleVolume();
 					sv.setMerchantId(c.getMerchantId());
 					sv.setCommodityId(c.getId());
@@ -280,7 +284,10 @@ public class OrderJob {
 				if (exist == false) {
 					// 获取配置
 					SaleVolumeConfigVo conf = GetSaleVolumeConfig(c.getId(), 1, 0);
-
+					if ((conf.getOrderCountMin() == 0 && conf.getOrderCountMax() == 0)
+							|| (conf.getSaleCountMin() == 0 && conf.getSaleCountMax() == 0)) {
+						continue;
+					}
 					ShopSaleVolume sv = new ShopSaleVolume();
 					sv.setMerchantId(c.getMerchantId());
 					sv.setCommodityId(c.getId());
@@ -371,16 +378,17 @@ public class OrderJob {
 
 			for (ShopOrderCalcForceTask task : tasks) {
 				// 调用bstk接口
-				BigDecimal income = BigDecimal.ZERO;
+				BigDecimal income = BigDecimal.valueOf(task.getBstkAmount());
+				String transactionNo;
 				if (systemPublish.trim().toLowerCase().equals("dev")
 						|| systemPublish.trim().toLowerCase().equals("test")) {
-					income = new BigDecimal(0.1);
+					transactionNo = "模拟数据不真实发放BSTK";
 				} else {
-					income = BigDecimal.valueOf(task.getBstkAmount());
+					String transNo = SnoGerUtil.getUUID();
+					transactionNo = bwsService.walletRecharge(transNo, task.getId(), task.getMemberId(), 1,
+							task.getPublicKeyAddr(), income);
 				}
 
-				String transactionNo = bwsService.walletRecharge(task.getId(), task.getMemberId(), 1,
-						task.getPublicKeyAddr(), income);
 				// 更新状态：0-待执行，1-执行成功，2-执行失败，3-冻结
 				if (ProUtility.isNotNull(transactionNo)) {
 					// 获取算力服务

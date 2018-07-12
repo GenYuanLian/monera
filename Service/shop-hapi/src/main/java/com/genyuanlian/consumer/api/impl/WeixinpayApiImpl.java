@@ -34,6 +34,7 @@ import com.genyuanlian.consumer.utils.WeixinpayUtils;
 import com.genyuanlian.consumer.vo.WeixinOrderQuery;
 import com.genyuanlian.consumer.vo.WeixinUnifiedOrderVo;
 import com.hnair.consumer.dao.service.ICommonService;
+import com.hnair.consumer.utils.DateUtil;
 import com.hnair.consumer.utils.HttpClientUtils;
 import com.hnair.consumer.utils.Sha1Util;
 import com.hnair.consumer.utils.XMLParser;
@@ -293,40 +294,6 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 		return XMLParser.getMapFromXML(res);
 	}
 
-	@SuppressWarnings("unchecked")
-	private String getToken(String appId, String appSecret) throws Exception {
-		// String requestUrl = WeixinpayProperties.JSAPI_TOKEN +
-		// "?grant_type=client_credential&appid=" + appId
-		// + "&secret=" + appSecret;
-		String requestUrl = null;
-
-		String res = HttpClientUtils.doGet(requestUrl);
-		logger.info(res);
-		Map<String, Object> resultMap = JSONObject.parseObject(res, HashMap.class);
-		if (resultMap.get("access_token") == null) {
-			return null;
-		}
-
-		return resultMap.get("access_token").toString();
-	}
-
-	@SuppressWarnings("unchecked")
-	private String getTicket(String token) throws Exception {
-
-		// String requestUrl = WeixinpayProperties.JSAPI_TICKET + "?access_token=" +
-		// token + "&&type=jsapi";
-		String requestUrl = null;
-
-		String res = HttpClientUtils.doGet(requestUrl);
-		System.out.println(res);
-		Map<String, Object> resultMap = JSONObject.parseObject(res, HashMap.class);
-		if (resultMap.get("ticket") == null) {
-			return null;
-		}
-
-		return resultMap.get("ticket").toString();
-	}
-
 	@Override
 	public ShopMessageVo<String> weixinpayAysnNotify(Map<String, String> map) {
 		ShopMessageVo<String> result = new ShopMessageVo<>();
@@ -429,28 +396,40 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public ShopMessageVo<Map<String, Object>> getWeixinOpenId(String code) throws Exception {
+	public ShopMessageVo<Map<String, Object>> getWeixinOpenId(String code, Boolean isMinProgram) throws Exception {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<>();
+		
+		String appId;
+		String appSecret;
+		String requestUrl;
+		if (isMinProgram) {
+			// 小程序
+			appId = WeixinpayProperties.WEIXIN_APP_ID_MIN_PROGRAM;
+			appSecret = WeixinpayProperties.WEIXIN_APP_SECRET_MIN_PROGRAM;
+			requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appId + "&secret=" + appSecret
+					+ "&js_code=" + code + "&grant_type=authorization_code";
+		} else {
+			appId = WeixinpayProperties.WEIXIN_APP_ID;
+			appSecret = WeixinpayProperties.WEIXIN_APP_SECRET;
+			requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + appId + "&secret=" + appSecret
+					+ "&code=" + code + "&grant_type=authorization_code";
+		}
 
 		String key = "wxcode_" + code;
-		//先取本地缓存
+		// 先取本地缓存
 		String resp = slaveRedisTemplate.opsForValue().get(key);
 		if (StringUtils.isBlank(resp)) {
-			//若本地没有，调微信接口
-			String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="
-					+ WeixinpayProperties.WEIXIN_APP_ID + "&secret=" + WeixinpayProperties.WEIXIN_APP_SECRET + "&code="
-					+ code + "&grant_type=authorization_code";
-
+			// 若本地没有，调微信接口
 			logger.info("请求微信requestUrl=" + requestUrl);
 			resp = HttpClientUtils.doGet(requestUrl);
-			logger.info("微信返回resp="+resp);
+			logger.info("微信返回resp=" + resp);
 			if (StringUtils.isBlank(resp)) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800012.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800012.getErrorMessage());
 				return messageVo;
 			}
-			//微信调用成功，加入缓存
+			// 微信调用成功，加入缓存
 			masterRedisTemplate.delete(key);
 			masterRedisTemplate.opsForValue().set(key, resp);
 			masterRedisTemplate.expire(key, 5, TimeUnit.MINUTES);
@@ -465,9 +444,82 @@ public class WeixinpayApiImpl implements IWeixinpayApi {
 			return messageVo;
 		}
 
+		resultMap.put("appid", appId);
 		messageVo.setT(resultMap);
 		messageVo.setResult(true);
 
 		return messageVo;
 	}
+
+	@Override
+	public ShopMessageVo<Map<String, String>> getWeixinShareConfig(String url) {
+		ShopMessageVo<Map<String, String>> messageVo = new ShopMessageVo<>();
+		Map<String, String> result = new HashMap<>();
+		try {
+			String access_token = getToken(WeixinpayProperties.WEIXIN_APP_ID, WeixinpayProperties.WEIXIN_APP_SECRET);
+			String jsapi_ticket = getTicket(access_token);
+
+			String nonceStr = WeixinpayUtils.getRandomStringByLength(16);
+			result.put("noncestr", nonceStr);
+			result.put("jsapi_ticket", jsapi_ticket);
+			result.put("timestamp", WeixinpayUtils.getTimeStamp());
+			result.put("url", url);
+			String signature = WeixinpayUtils.getsha1Sign(result);
+			result.put("signature", signature);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_999999.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_999999.getErrorMessage());
+			return messageVo;
+		}
+		result.put("appId", WeixinpayProperties.WEIXIN_APP_ID);
+		messageVo.setT(result);
+		messageVo.setResult(true);
+
+		return messageVo;
+	}
+
+	@SuppressWarnings("unchecked")
+	private String getToken(String appId, String appSecret) throws Exception {
+		String cacheKey_token = "Weixin_JSAPI_TOKEN";
+		String access_token = slaveRedisTemplate.opsForValue().get(cacheKey_token);
+		if (StringUtils.isBlank(access_token)) {
+			String requestUrl = WeixinpayProperties.JSAPI_TOKEN + "?grant_type=client_credential&appid=" + appId
+					+ "&secret=" + appSecret;
+
+			String res = HttpClientUtils.doGet(requestUrl);
+			logger.info(res);
+			Map<String, Object> resultMap = JSONObject.parseObject(res, HashMap.class);
+			if (resultMap.get("access_token") == null) {
+				return null;
+			}
+			access_token = resultMap.get("access_token").toString();
+			masterRedisTemplate.opsForValue().set(cacheKey_token, access_token, 7200, TimeUnit.SECONDS);
+		}
+
+		return access_token;
+	}
+
+	@SuppressWarnings("unchecked")
+	private String getTicket(String token) throws Exception {
+
+		String cacheKey_ticket = "Weixin_JSAPI_TICKET";
+		String jsapi_ticket = slaveRedisTemplate.opsForValue().get(cacheKey_ticket);
+		if (StringUtils.isBlank(jsapi_ticket)) {
+			String requestUrl = WeixinpayProperties.JSAPI_TICKET + "?access_token=" + token + "&&type=jsapi";
+
+			String res = HttpClientUtils.doGet(requestUrl);
+			System.out.println(res);
+			Map<String, Object> resultMap = JSONObject.parseObject(res, HashMap.class);
+			if (resultMap.get("ticket") == null) {
+				return null;
+			}
+			jsapi_ticket = resultMap.get("ticket").toString();
+			masterRedisTemplate.opsForValue().set(cacheKey_ticket, jsapi_ticket, 7200, TimeUnit.SECONDS);
+		}
+
+		return jsapi_ticket;
+	}
+
 }

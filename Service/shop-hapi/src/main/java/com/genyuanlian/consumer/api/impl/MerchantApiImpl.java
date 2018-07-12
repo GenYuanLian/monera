@@ -3,7 +3,6 @@ package com.genyuanlian.consumer.api.impl;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +68,7 @@ public class MerchantApiImpl implements IMerchantApi {
 					// 真实
 					if (salesVolumeMap.size() > 0) {
 						for (ShopMerchant map : salesVolumeMap) {
-							if (merch.getId().compareTo(map.getId()) == 0) {
+							if (merch.getId() == map.getId()) {
 								merch.setSalesVolume(map.getSalesVolume());
 								break;
 							}
@@ -79,7 +78,7 @@ public class MerchantApiImpl implements IMerchantApi {
 					// 虚拟
 					if (virtualSalesVolumeMap.size() > 0) {
 						for (ShopSaleVolume map : virtualSalesVolumeMap) {
-							if (merch.getId().compareTo(map.getMerchantId()) == 0) {
+							if (merch.getId() == map.getMerchantId()) {
 								int vol = Integer.valueOf(merch.getSalesVolume()) + map.getOrderCount();
 								merch.setSalesVolume(String.valueOf(vol));
 								break;
@@ -90,7 +89,7 @@ public class MerchantApiImpl implements IMerchantApi {
 					merch.setPraise("5");
 					if (praiseByMerchantMap.size() > 0) {
 						for (ShopMerchant map : praiseByMerchantMap) {
-							if (merch.getId().compareTo(map.getId()) == 0) {
+							if (merch.getId() == map.getId()) {
 								merch.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
 								break;
 							}
@@ -123,6 +122,13 @@ public class MerchantApiImpl implements IMerchantApi {
 		logger.info("获取获取商户详细信息调用到这里了=================");
 		ShopMerchant merchant = commonService.get(params.getId(), ShopMerchant.class);
 		if (merchant != null) {
+			// 状态：1-正常，2-冻结
+			if (merchant.getStatus() != 1) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+				return messageVo;
+			}
+
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 			merchant.setLogoPic(imageDomain + merchant.getLogoPic());
 			merchant.setPraise("5");
@@ -132,7 +138,7 @@ public class MerchantApiImpl implements IMerchantApi {
 						"getPraiseByMerchant");
 				if (praiseByMerchantMap.size() > 0) {
 					for (ShopMerchant map : praiseByMerchantMap) {
-						if (merchant.getId().compareTo(map.getId()) == 0) {
+						if (merchant.getId() == map.getId()) {
 							merchant.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
 							break;
 						}
@@ -184,6 +190,13 @@ public class MerchantApiImpl implements IMerchantApi {
 		logger.info("获取商户上架的商品列表调用到这里了=================");
 		ShopMerchant merchant = commonService.get(params.getId(), ShopMerchant.class);
 		if (merchant != null) {
+			// 状态：1-正常，2-冻结
+			if (merchant.getStatus() != 1) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+				return messageVo;
+			}
+
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 			merchant.setLogoPic(imageDomain + merchant.getLogoPic());
 			merchant.setPraise("5");
@@ -194,7 +207,7 @@ public class MerchantApiImpl implements IMerchantApi {
 						"getPraiseByMerchant");
 				if (praiseByMerchantMap.size() > 0) {
 					for (ShopMerchant map : praiseByMerchantMap) {
-						if (merchant.getId().compareTo(map.getId()) == 0) {
+						if (merchant.getId() == map.getId()) {
 							merchant.setPraise(String.valueOf(Math.round(Double.valueOf(map.getPraise()))));
 							break;
 						}
@@ -239,8 +252,7 @@ public class MerchantApiImpl implements IMerchantApi {
 					// 虚拟
 					if (virtualSalesVolumeMap.size() > 0) {
 						for (ShopSaleVolume map : virtualSalesVolumeMap) {
-							if (com.getId().compareTo(map.getCommodityId()) == 0
-									&& new Integer("3").compareTo(map.getCommodityType()) == 0) {
+							if (com.getId() == map.getCommodityId() && map.getCommodityType() == 3) {
 								int vol = com.getSaleQuantity() + map.getSaleVolume();
 								com.setSaleQuantity(vol);
 								break;
@@ -273,17 +285,30 @@ public class MerchantApiImpl implements IMerchantApi {
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 		ShopCommodity commodity = commonService.get(params.getId(), ShopCommodity.class);
 		ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
+		// 状态：1-正常，2-冻结
+		if (merchant.getStatus() != 1) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
 		merchant.setLogoPic(imageDomain + merchant.getLogoPic());
 		merchant.setPraise("5");
 		resultMap.put("merch", merchant);
 		if (commodity != null) {
+			// 状态：1-上架,2-下架
+			if (commodity.getStatus() != 1) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+				return messageVo;
+			}
+
 			commodity.setLogo(imageDomain + commodity.getLogo());
 			Double price = BigDecimal.valueOf(commodity.getPrice())
 					.multiply(BigDecimal.valueOf(commodity.getDiscount())).doubleValue();
 			commodity.setPrice(price);
 			resultMap.put("commodity", commodity);
-			List<KeyValuesVo> list=new ArrayList<>();
-			if (commodity.getCommodityType() == 1) //// 商品类型：1-区块链计算机,2-通用商品
+			List<KeyValuesVo> list = new ArrayList<>();
+			if (commodity.getCommodityType() == 1) // 商品类型：1-区块链计算机,2-通用商品,3-算力服务
 			{
 				ShopProductChainComputer product = commonService.get(commodity.getProductId(),
 						ShopProductChainComputer.class);
@@ -297,14 +322,15 @@ public class MerchantApiImpl implements IMerchantApi {
 				list.add(new KeyValuesVo("商品简介", product.getDescription()));
 				list.add(new KeyValuesVo("产品特点", product.getFeature()));
 				list.add(new KeyValuesVo("产品规格", product.getSpecification()));
-			} else if (commodity.getCommodityType()==3) {
-				ShopProductCalcForce product=commonService.get(commodity.getProductId(),ShopProductCalcForce.class);
+				list.add(new KeyValuesVo("快递说明", product.getRemark()));
+			} else if (commodity.getCommodityType() == 3) {
+				ShopProductCalcForce product = commonService.get(commodity.getProductId(), ShopProductCalcForce.class);
 				resultMap.put("product", product);
-				list.add(new KeyValuesVo("商品简介",product.getDescription()));
-				list.add(new KeyValuesVo("基本信息",product.getBaseInfo()));
-				list.add(new KeyValuesVo("服务说明",product.getPackageDesc()));
-				list.add(new KeyValuesVo("支付说明",product.getPayExplain()));
+				list.add(new KeyValuesVo("商品简介", product.getDescription()));
+				list.add(new KeyValuesVo("基本信息", product.getBaseInfo()));
+				list.add(new KeyValuesVo("服务说明", product.getPackageDesc()));
 			}
+			list.add(new KeyValuesVo("支付说明", commodity.getPayExplain()));
 			resultMap.put("list", list);
 
 			commodity.setCommodityType(3);
@@ -318,6 +344,24 @@ public class MerchantApiImpl implements IMerchantApi {
 			}
 
 			resultMap.put("pics", pics);
+
+			// 虚拟销量
+			try {
+				List<ShopSaleVolume> virtualSalesVolumeMap = commonService.getListBySqlId(ShopSaleVolume.class,
+						"getSaleVolumeByCommodity");
+				if (virtualSalesVolumeMap.size() > 0) {
+					for (ShopSaleVolume map : virtualSalesVolumeMap) {
+						if (commodity.getId() == map.getCommodityId() && map.getCommodityType() == 3) {
+							int vol = commodity.getSaleQuantity() + map.getSaleVolume();
+							commodity.setSaleQuantity(vol);
+							break;
+						}
+					}
+				}
+
+			} catch (Exception ex) {
+				logger.error("首页获取商户商品列表销量信息异常:" + ex.getMessage());
+			}
 
 			messageVo.setResult(true);
 			messageVo.setT(resultMap);
@@ -337,17 +381,22 @@ public class MerchantApiImpl implements IMerchantApi {
 		logger.info("获取商户商品简要信息调用到这里了=================");
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 		ShopCommodity commodity = commonService.get(params.getCommodityId(), ShopCommodity.class);
-		if (commodity==null) {
+		if (commodity == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 			return messageVo;
 		}
-		if (commodity.getCommodityType()==3) {
-			resp.setWalletAddressRequire(1);
-		}else {
-			resp.setAddressRequire(1);
+		// 状态：1-上架,2-下架
+		if (commodity.getStatus() != 1) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
 		}
-		
+		if (commodity.getCommodityType() == 3) {
+			resp.setWalletAddressRequire(1);
+		}
+		resp.setAddressRequire(commodity.getIsSendMail());
+
 		ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
 		if (merchant != null) {
 			resp.setMerchantId(merchant.getId());
@@ -356,24 +405,25 @@ public class MerchantApiImpl implements IMerchantApi {
 			resp.setMerchantLogo(imageDomain + merchant.getLogoPic());
 		}
 
-			CommodityVo vo = new CommodityVo();
-			vo.setCommodityId(commodity.getId());
-			vo.setCommodityType(3);
-			vo.setCommodityName(commodity.getTitle());
-			vo.setCommodityLogo(imageDomain + commodity.getLogo());
-			vo.setInventoryQuantity(commodity.getInventoryQuantity());
-			Double price = BigDecimal.valueOf(commodity.getPrice())
-					.multiply(BigDecimal.valueOf(commodity.getDiscount())).doubleValue();
-			vo.setCommodityPrice(price);
+		CommodityVo vo = new CommodityVo();
+		vo.setCommodityId(commodity.getId());
+		vo.setCommodityType(3);
+		vo.setCommodityName(commodity.getTitle());
+		vo.setCommodityLogo(imageDomain + commodity.getLogo());
+		vo.setInventoryQuantity(commodity.getInventoryQuantity());
+		Double price = BigDecimal.valueOf(commodity.getPrice()).multiply(BigDecimal.valueOf(commodity.getDiscount()))
+				.doubleValue();
+		vo.setCommodityPrice(price);
+		vo.setTraceSource(commodity.getTraceSource());
 
-			List<CommodityVo> list = new ArrayList<CommodityVo>();
-			list.add(vo);
-			resp.setCommodityList(list);
+		List<CommodityVo> list = new ArrayList<CommodityVo>();
+		list.add(vo);
+		resp.setCommodityList(list);
 
-			messageVo.setResult(true);
-			messageVo.setT(resp);
-			messageVo.setMessage("数据获取成功");
-			return messageVo;
+		messageVo.setResult(true);
+		messageVo.setT(resp);
+		messageVo.setMessage("数据获取成功");
+		return messageVo;
 	}
 
 }

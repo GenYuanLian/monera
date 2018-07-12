@@ -14,11 +14,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
+import com.genyuanlian.consumer.shop.model.ShopBstkWalletBill;
 import com.genyuanlian.consumer.shop.model.ShopComment;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopMerchantPic;
@@ -32,6 +34,7 @@ import com.genyuanlian.consumer.shop.vo.MerchantCommodityResponseVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
+import com.hnair.consumer.utils.SnoGerUtil;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
 @Component("puCardApi")
@@ -178,6 +181,8 @@ public class PuCardApiImpl implements IPuCardApi {
 		if (list == null || list.size() == 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100101.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100101.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -185,6 +190,8 @@ public class PuCardApiImpl implements IPuCardApi {
 		if (card.getStatus() != 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100102.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100102.getErrorMessage());
+			// 手动回滚当前事物
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 
@@ -200,9 +207,7 @@ public class PuCardApiImpl implements IPuCardApi {
 		messageVo.setResult(true);
 
 		ShopBstkWallet bstkWallet = commonService.get(ShopBstkWallet.class, "ownerId", memberId, "ownerType", 1);
-		String transactionNo = bwsService.walletRecharge(0l, memberId, 1, bstkWallet.getPublicKeyAddr(),
-				BigDecimal.valueOf(card.getTotelValue()));
-		logger.info("调用bstk接口返回值：" + transactionNo);
+		String transNo = SnoGerUtil.getUUID();
 
 		// 保存提货卡交易记录
 		ShopPuCardTradeRecord tradeRecord = new ShopPuCardTradeRecord();
@@ -210,9 +215,28 @@ public class PuCardApiImpl implements IPuCardApi {
 		tradeRecord.setCreateTime(now);
 		tradeRecord.setMemberId(memberId);
 		tradeRecord.setPuCardId(card.getId());
-		tradeRecord.setTitle(card.getTitle());
-		tradeRecord.setTransactionNo(transactionNo);
+		tradeRecord.setTitle(card.getTitle() + " 激活");
+		tradeRecord.setTransactionNo(transNo);
 		commonService.save(tradeRecord);
+
+		// 记录钱包流水记录
+		ShopBstkWalletBill record = new ShopBstkWalletBill();
+		record.setWalletId(bstkWallet.getId());
+		record.setOwnerId(memberId);
+		record.setOwnerType(1);
+		// 流水类型：1-提货卡激活，2-提货卡购买，3-提货卡支付，4-注册邀请返利，5-商品分享返利，6-代理返利，7-余额支付，8-微信支付，9-支付宝支付，10-销售收入
+		record.setBillType(1);
+		record.setTitle(card.getTitle() + " 激活");
+		record.setAmount(card.getTotelValue());
+		record.setTransactionNo(transNo);
+		record.setBusinessId(card.getId());
+		record.setRemark("businessId为提货卡Id");
+		record.setCreateTime(now);
+		commonService.save(record);
+
+		// 上传BSTK钱包交易
+		bwsService.walletRecharge(transNo, card.getId(), memberId, 1, bstkWallet.getPublicKeyAddr(),
+				BigDecimal.valueOf(card.getTotelValue()));
 
 		return messageVo;
 	}

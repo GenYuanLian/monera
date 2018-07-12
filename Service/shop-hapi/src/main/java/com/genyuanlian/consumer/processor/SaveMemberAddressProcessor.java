@@ -17,7 +17,7 @@ import com.hnair.consumer.utils.LoginCheck;
 import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.ResultSender;
 
-//@LoginCheck
+@LoginCheck
 @Component("hapisaveMemberAddressprocessor")
 public class SaveMemberAddressProcessor extends BaseApiProcessor {
 	@Resource
