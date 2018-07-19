@@ -81,6 +81,7 @@
       <p class="left-btn">待支付<strong>{{merchant.merchantType==2?'&yen;':'源点'}}{{totalMoney}}</strong></p>
       <input class="buy-btn" type="button" value="去支付" @click="checkBalance">
     </footer>
+    <Popup ref="popWin" :popObj="popObj"></Popup>
   </div>
 </template>
 <script>
@@ -89,6 +90,7 @@ import { dateFormat, InlineXNumber } from "vux";
 import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 import Header from '@/components/common/Header';
+import Popup from '@/components/popup';
 var moment = require('moment');
 export default {
   data() {
@@ -123,11 +125,18 @@ export default {
       addressList:[],
       userId:"",
       sumBalance:0,
-      referraCode:""
+      referraCode:"",
+      merchId:"",
+      popObj:{
+        popTitle:'提示',
+        popText:'提货卡余额不足，请点确定去购买',
+        popIndex:2,
+        popSure:this.buyCardPath
+      }
     };
   },
   components: {
-    Header, InlineXNumber
+    Header, InlineXNumber, Popup
   },
   computed:{
     ...mapGetters(["getLoginUser", "getUserInfo"])
@@ -168,9 +177,9 @@ export default {
         this.totalMoney += parseFloat(item.commodityPrice*Number(item.buyNum));
       });
       if(this.productType==1) {
-        this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(2);
+        this.totalMoney = parseFloat(this.totalMoney + this.express.distFee);
       }else {
-        this.totalMoney = parseFloat(this.totalMoney + this.express.distFee).toFixed(8);
+        this.totalMoney = parseFloat(this.totalMoney + this.express.distFee);
       }
     },
     getProductDetail: function(flag) {
@@ -258,12 +267,15 @@ export default {
       this.$httpPost(apiUrl.getPucardBalance, param).then((res) => {
         if(res.status.code==0&&res.data) {
           this.sumBalance = res.data.sumBalance;
-          let merchId = res.data.puCardMerchId;
-          if(this.sumBalance>0 || this.productType == 1) {
+          this.merchId = res.data.puCardMerchId;
+          if(this.productType == 1) {
             this.placeOrder();
           } else {
-            showMsg("请先购买提货卡");
-            this.$router.push({name:"merchant_info", query:{id:merchId, type:2}});
+            if(this.totalMoney > this.sumBalance) {
+              this.$refs.popWin.openWin();
+            } else {
+              this.placeOrder();
+            }
           }
         } else {
           showMsg(res.status.message);
@@ -271,6 +283,12 @@ export default {
       }).catch((err) => {
         console.log(err);
       });
+    },
+    buyCardPath: function() {
+      //TODO 购买提货卡页面
+      if(this.merchId) {
+        this.$router.push({name:"merchant_info", query:{id:this.merchId, type:2}});
+      }
     }
   },
   mounted() {
@@ -298,9 +316,9 @@ export default {
           }
         }
         if(this.productType==1) {
-          this.totalMoney = parseFloat(this.totalMoney).toFixed(2);
+          this.totalMoney = parseFloat(this.totalMoney);
         }else {
-          this.totalMoney = parseFloat(this.totalMoney).toFixed(8);
+          this.totalMoney = parseFloat(this.totalMoney);
         }
       },
       deep: true

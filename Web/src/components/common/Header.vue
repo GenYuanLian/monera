@@ -92,20 +92,6 @@ export default {
 };
 </script>
 <style lang="less" scoped>
-.ico-back{
-  display: inline-block;
-  background-image: url('../../assets/images/Svg/ico-back.svg');
-  background-size:cover;
-  width:20px;
-  height:36px;
-}
-.ico-back-white{
-  display: inline-block;
-  background-image: url('../../assets/images/Svg/ico-back-white.svg');
-  background-size:cover;
-  width:20px;
-  height:36px;
-}
 .gyl-header {
   width: 100%;
   &.white{
@@ -158,6 +144,8 @@ export default {
       }
       i {
         font-size: 0;
+        width:20px;
+        height:36px;
         margin-bottom: -8px;
       }
       a {

@@ -3,7 +3,7 @@
     <div v-title>我的</div>
     <div class="gyl-mine">
       <div class="assets">
-        <header class="head bg-col">
+        <header class="head">
           <div class="head-l">
             <span class=""></span>
             <a href="javascript:;"></a>
@@ -28,11 +28,25 @@
               <p v-text="userPhone"></p>
             </span>
           </div>
+          <div class="mine-card">
+            <div class="card-num" @click="cardClick">
+              <p class="nav-title"><span>提货卡({{cardCount}})张</span><span class="card"><i class="ico-arrow-r"></i></span></p>
+              <p class="acc-total">{{cardBalance}} 源点</p>
+            </div>
+            <div class="card-acc">
+              <p class="nav-title"><span>钱包</span><span class="card-account"><i class="ico-arrow-r"></i></span></p>
+              <p class="acc-total">{{cardBalance}} BSTK</p>
+            </div>
+          </div>
         </div>
-        <div class="mine-card">
-          <div class="card-row" @click="cardClick">
-            <div class="card-num"><span class="card"><i class="ico-card"></i></span><span class="nav-title">提货卡</span><span class="num">{{cardCount}}张</span></div>
-            <div class="card-acc"><span class="card-account"><i class="ico-balances"></i></span><span class="nav-title">余额合计</span><span class="total">{{cardBalance}}源点</span></div>
+        <div class="mine-active">
+          <div class="block-l" @click="snatchClick">
+            <span class="snatch"><i class="ico-snatch"></i></span>
+            <span class="sna-title">我的抢购</span>
+          </div>
+          <div class="block-r" @click="auctionClick">
+            <span class="auction"><i class="ico-auction"></i></span>
+            <span class="auc-title">我的竞拍</span>
           </div>
         </div>
         <div class="mine-block">
@@ -122,6 +136,22 @@ export default {
       //TODO 提货卡
       if(this.isLogin) {
         this.$router.push("card");
+      } else {
+        showMsg("请先登录");
+      }
+    },
+    auctionClick: function() {
+      //TODO 竞拍活动
+      if(this.isLogin) {
+        this.$router.push({name:"auction_home", query:{memberId:this.userId}});
+      } else {
+        showMsg("请先登录");
+      }
+    },
+    snatchClick: function() {
+      //TODO 抢购活动
+      if(this.isLogin) {
+        this.$router.push({name:"snatch_home", query:{memberId:this.userId}});
       } else {
         showMsg("请先登录");
       }
@@ -233,6 +263,7 @@ html,body{
     z-index: 2;
   }
   .head {
+    position: absolute;
     display: box;
     display: -webkit-box;
     display: -moz-box;
@@ -257,17 +288,9 @@ html,body{
     font-size: 36px;
     color: #FFFFFF ;
     box-sizing: border-box;
-    &.fixed {
-      position: fixed;
-    }
-    &.border-b {
-      border-bottom: 1px solid #efefef;/*no*/
-    }
+    margin-top:10px;
     &.bg-col{
       background-color: #317db9;
-    }
-    &.bg{
-      background-color:rgba(0,0,0,0)
     }
     .head-l {
       width: 130px;
@@ -280,13 +303,6 @@ html,body{
         height: 88px;
         line-height: 88px;
         float: left;
-      }
-      img {
-        font-size: 0;
-        margin-bottom: -22px;
-        width:66px;
-        height:66px;
-        border-radius: 100px;
       }
       a {
         display: inline-block;
@@ -342,24 +358,25 @@ html,body{
       }
     }
   }
-  .assets{
-    padding-top:10px;
-    background-color: #317db9;
-  }
   .content{
     width:100%;
     .mine-top{
       background-color: #317db9;
-      height:340px;
+      background-image: url("../../assets/images/Bg/mine-bg.png");
+      background-repeat: no-repeat;
+      background-size: 100% auto;
+      padding-top:100px;
+      padding-bottom:40px;
       .headinfo{
-        padding:40px 30px 0;
+        padding:0px 30px;
+        text-align: center;
         .head-img{
           display: block;
           width:130px;
           height:130px;
           border-radius: 100%;
           border:5px solid #5a97c7;
-          float:left;
+          margin:0 auto;
           img{
             width:130px;
             height:130px;
@@ -369,9 +386,8 @@ html,body{
         }
         .user-info{
           display: inline-block;
-          height:130px;
-          margin-left:20px;
-          margin-top:20px;
+          height:120px;
+          margin: 0 auto;
           p{
             line-height: 50px;
             color:#fff;
@@ -380,72 +396,117 @@ html,body{
         }
         .user-noinfo{
           display: inline-block;
-          height:130px;
-          line-height: 130px;
-          margin-left:20px;
+          height:120px;
+          line-height: 120px;
+          margin: 0 auto;
           color:#fff;
             font-size:30px;
         }
       }
     }
     .mine-card{
-      margin:-60px 30px 0;
-      padding:30px 0;
-      border-radius:10px;
-      background-color: #fff;
-      .card-row{
-        padding:0 40px;
-        .nav-title{
+      display: flex;
+      margin-top:40px;
+      .nav-title{
+        font-size:32px;
+        color:#fff;
+        height:50px;
+        line-height: 50px;
+        text-align: center;
+      }
+      .card-num{
+        flex:1;
+        color:#fff;
+        p{
+          text-align: center;
+          font-size:32px;
+        }
+        .card{
+          display: inline-block;
+          width:32px;
+          height:50px;
           margin-left:20px;
-          font-size:30px;
-          color:#333333;
-        }
-        .card-num{
-          height:60px;
-          line-height: 60px;
-          overflow: hidden;
-          .card{
-            display: inline-block;
-            width:60px;
-            height:60px;
-            i{
-              width:52px;
-              height:40px;
-              margin-bottom:-10px;
-            }
-          }
-          .num{
-            color:#ffa936;
-            font-size:30px;
-            float:right;
+          i{
+            width:32px;
+            height:20px;
+            margin-bottom:2px;
           }
         }
-        .card-acc{
-          height:60px;
-          line-height:60px;
+        .acc-total{
           margin-top:20px;
-          overflow: hidden;
-          .card-account{
-            display: inline-block;
-            height:60px;
-            line-height: 60px;
-            font-size:30px;
-            i{
-              width:52px;
-              height:40px;
-              margin-bottom:-8px;
-            }
-          }
-          .total{
-            color:#ffa936;
-            float:right;
-            font-size:30px;
-          }
-          strong{
-            color:#ffa936;
-            margin-left:10px;
+        }
+      }
+      .card-acc{
+        flex:1;
+        color:#fff;
+        p{
+          text-align: center;
+          font-size:32px;
+        }
+        .card-account{
+          display: inline-block;
+          width:32px;
+          height:50px;
+          margin-left:20px;
+          i{
+            width:32px;
+            height:20px;
+            margin-bottom:2px;
           }
         }
+        .acc-total{
+          margin-top:20px;
+        }
+      }
+    }
+    .mine-active{
+      display: flex;
+      height:60px;
+      line-height: 60px;
+      padding:30px 0px;
+      background-color: #fff;
+      overflow: hidden;
+      text-align: center;
+      .block-l,.block-r{
+        flex:1;
+        height:60px;
+        line-height: 60px;
+        text-align: center;
+        float:left;
+        font-size:30px;
+      }
+      .block-l{
+        border-right:1px solid #e8e8e8;/*no*/
+      }
+      .snatch{
+        display: inline-block;
+        width:40px;
+        height:60px;
+        line-height: 60px;
+        i{
+          width:40px;
+          height:40px;
+          margin-bottom:-8px;
+        }
+      }
+      .auction{
+        display: inline-block;
+        width:40px;
+        height:60px;
+        line-height: 60px;
+        i{
+          width:40px;
+          height:40px;
+          margin-bottom:-8px;
+        }
+      }
+      .sna-title{
+        color:#ffa936;
+        margin-left:20px;
+      }
+      .auc-title{
+        color:#317db9;
+        margin-left:20px;
       }
     }
     .mine-block{
@@ -487,6 +548,21 @@ html,body{
         }
       }
     }
+  }
+  .ico-auction{
+    display: inline-block;
+    background: url('../../assets/images/Icon/ico-auction@2x.png') center no-repeat;
+    background-size:auto 100%;
+  }
+  .ico-snatch{
+    display: inline-block;
+    background: url('../../assets/images/Icon/ico-snatch@2x.png') center no-repeat;
+    background-size:auto 100%;
+  }
+  .ico-arrow-r{
+    display: inline-block;
+    background: url('../../assets/images/Icon/ico-arrow-r@2x.png') center no-repeat;
+    background-size:auto 100%;
   }
 }
 </style>

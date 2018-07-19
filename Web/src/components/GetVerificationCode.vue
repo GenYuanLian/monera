@@ -4,7 +4,6 @@
   </div>
 </template>
 <script>
-import { mapActions, mapGetters } from "vuex";
 import { showMsg, valid } from '@/utils/common.js';
 import apiUrl from '@/config/apiUrl.js';
 export default {

@@ -25,6 +25,12 @@
         <div>合并图片</div>
         <canvas id="imgCanvas"></canvas>
         <img :src="shareImg" crossOrigin="anonymous" alt="">
+        <br>
+        <br>
+        <br>
+        <div>此处为倒计时：<timeOut :overTime="overTime" :overFnc="overFnc"></timeOut></div>
+        <br>
+        <br>
     </div>
 </template>
 
@@ -35,6 +41,7 @@
   import apiUrl from '@/config/apiUrl.js';
   import msgScroll from '@/components/messageScroll/index';
   import QrCode from '@/components/common/QrCode';
+  import timeOut from '@/components/timeOut/index';
   export default {
     data() {
       return {
@@ -73,7 +80,8 @@
           menu2: "公司",
           menu3: "学校"
         },
-        shareImg:""
+        shareImg:"",
+        overTime:'200'
       };
     },
     components: {
@@ -83,7 +91,8 @@
       Picker,
       msgScroll,
       Actionsheet,
-      QrCode
+      QrCode,
+      timeOut
     },
     methods: {
       uploadImage(formData) {
@@ -185,6 +194,9 @@
           ctx.drawImage(imgQr, 50, 50, 60, 60);
           var base64 = cvs.toDataURL("image/jpg");
         };
+      },
+      overFnc:function() {
+        alert("倒计时结束！");
       }
     },
     mounted:function() {

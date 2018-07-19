@@ -2,21 +2,21 @@
   <div class="gyl-home">
       <div v-title>买卖大集</div>
       <header class="head fixed border-b">
-        <!-- <div class="head-l" @click="showService">
-          <span><i class="ico-service"></i></span>
-          <a href="javascript:;"></a>
-        </div> -->
         <div class="head-title"><a href="https://www.genyuanlian.com/"><i class="ico-logo"></i></a>买卖大集</div>
-        <!-- <div class="head-r" @click="newsClick">
-          <a href="javascript:;"></a>
-          <span><i class="ico-news"></i></span>
-        </div> -->
       </header>
       <homeSkeleton v-if="!init"></homeSkeleton>
       <section v-else class="content">
         <swiper class="home-swiper" :list="shopImgs" v-model="shopImgIdx" @on-index-change="shopImgOnIndexChange" :interval="5000" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'home-dots'"></swiper>
+        <div class="activity">
+          <div class="act-title"><i class="ico-title-l m-r10"></i><span>好货</span><i class="ico-title-r m-l10"></i></div>
+          <div class="act-panic" @click="goSnatch"><img src="../assets/images/Bg/panic-buying.png" alt=""><span>抢购专区</span></div>
+          <div class="act-auction" @click="goAuction"><img src="../assets/images/Bg/auction.png" alt=""><span>拍卖专场</span></div>
+        </div>
         <div class="merchants">
           <p class="title hide"><i class="ico-supplier"></i>附近商家</p>
+          <div class="mer-act">
+            <div class="act-title"><i class="ico-title-l m-r10"></i><span>商家</span><i class="ico-title-r m-l10"></i></div>
+          </div>
           <div class="mer-box" v-for="(mer,index) in merchantsList" :key="index" @click="jumpProDetail(mer.id,mer.merchType)">
             <img class="mer-img" :src="mer.logoPic" alt="">
             <div class="mer-detail">
@@ -33,8 +33,6 @@
         </div>
       </section>
       <NavBar :isShow="true" :isLogin="isLogin"></NavBar>
-      <!-- <PopWin ref="service" :isShow="false" :datas="serviceData"></PopWin> -->
-      <!-- <CommingSon ref="comson" :imgUrl="imgurl"></CommingSon> -->
   </div>
 </template>
 <script>
@@ -132,6 +130,14 @@ export default {
       }).catch((err) => {
         console.log(err);
       });
+    },
+    goSnatch:function(id, type) {
+      // TODO 跳转抢购
+      this.$router.push({name:'snatch_block'});
+    },
+    goAuction:function(id, type) {
+      // TODO 跳转拍卖
+      this.$router.push({name:'auction_block'});
     }
   },
   mounted() {
@@ -294,8 +300,71 @@ html,body{
         }
       }
     }
+    .activity{
+      background-color: #fff;
+      margin-top:20px;
+      text-align: center;
+      overflow: hidden;
+      padding:20px 30px 40px;
+      .act-title{
+        height:60px;
+        margin-bottom:20px;
+        span{
+          display: inline-block;
+          height:60px;
+          line-height: 60px;
+          color:#555;
+          font-size:34px;
+          width:80px;
+          margin: 0 auto;
+        }
+        i{
+          width:50px;
+          height:10px;
+          margin-bottom:4px;
+        }
+      }
+      .act-panic{
+        width:335px;
+        height:260px;
+        float:left;
+        img{
+          width:100%;
+          height:100%;
+          float:left;
+        }
+        span{
+          display: block;
+          position: absolute;
+          color:#fff;
+          font-size:30px;
+          margin-top:20px;
+          margin-left:20px;
+        }
+      }
+      .act-auction{
+        width:335px;
+        height:260px;
+        margin-left:355px;
+        img{
+          width:100%;
+          height:100%;
+          float:left;
+        }
+        span{
+          display: block;
+          position: absolute;
+          color:#fff;
+          font-size:30px;
+          margin-top:20px;
+          margin-left:20px;
+        }
+      }
+    }
     .merchants{
-      padding: 20px 30px 10px 30px;
+      padding: 20px 30px 10px;
+      background-color: #fff;
+      margin-top:20px;
       .title{
         flex:1;
         overflow: hidden;
@@ -312,12 +381,54 @@ html,body{
           margin-top: -5px;
         }
       }
+      .mer-act{
+        background-color: #fff;
+        text-align: center;
+        overflow: hidden;
+        .act-title{
+          height:60px;
+          margin-bottom:20px;
+          span{
+            display: inline-block;
+            height:60px;
+            line-height: 60px;
+            color:#555;
+            font-size:34px;
+            width:80px;
+            margin: 0 auto;
+          }
+          i{
+            width:50px;
+            height:10px;
+            margin-bottom:4px;
+          }
+        }
+        .act-auction{
+          width:335px;
+          height:260px;
+          float:left;
+          img{
+            width:100%;
+            height:100%;
+          }
+        }
+        .act-panic{
+          width:335px;
+          height:260px;
+          margin-left:355px;
+          img{
+            width:100%;
+            height:100%;
+          }
+        }
+      }
       .mer-box{
         padding: 30px 20px;
         overflow: hidden;
         background-color: #fff;
         margin-bottom: 20px;
         border-radius: 10px;
+        border:1px solid #e8e8e8;/*no*/
         .mer-img{
           width: 120px;
           height: 120px;
@@ -370,6 +481,16 @@ html,body{
         margin-top: 20px;
       }
     }
+  }
+  .ico-title-l{
+    display: inline-block;
+    background: url('../assets/images/Icon/ico-title-l@2x.png') center no-repeat;
+    background-size:auto 100%;
+  }
+  .ico-title-r{
+    display: inline-block;
+    background: url('../assets/images/Icon/ico-title-r@2x.png') center no-repeat;
+    background-size:auto 100%;
   }
 }
 </style>

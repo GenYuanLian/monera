@@ -63,6 +63,27 @@ const UserWallet = resolve => require(["@/views/Other/User_Wallet"], resolve);
 const Wallet = resolve => require(["@/views/Other/Wallet"], resolve);
 const ConfirmPay = resolve => require(["@/views/Admin/Confirm_Pay"], resolve);
 const About = resolve => require(["@/views/SetUp/About"], resolve);
+const AuctionBlock = resolve => require(["@/views/Auction/Auction_Block"], resolve);
+const AuctionHome = resolve => require(["@/views/Auction/Auction_Home"], resolve);
+const AuctionList = resolve => require(["@/views/Auction/Auction_List"], resolve);
+const AuctionBail = resolve => require(["@/views/Auction/Auction_Bail"], resolve);
+const AuctionRemind = resolve => require(["@/views/Auction/Auction_Remind"], resolve);
+const AuctionPayBail = resolve => require(["@/views/Auction/Auction_Pay_Bail"], resolve);
+const AuctionPay = resolve => require(["@/views/Auction/Auction_Pay"], resolve);
+const AuctionProduct = resolve => require(["@/views/Auction/Auction_Product"], resolve);
+const SnatchBlock = resolve => require(["@/views/Snatch/Snatch_Block"], resolve);
+const SnatchHome = resolve => require(["@/views/Snatch/Snatch_Home"], resolve);
+const SnatchList = resolve => require(["@/views/Snatch/Snatch_List"], resolve);
+const SnatchBail = resolve => require(["@/views/Snatch/Snatch_Bail"], resolve);
+const SnatchRemind = resolve => require(["@/views/Snatch/Snatch_Remind"], resolve);
+const SnatchPayBail = resolve => require(["@/views/Snatch/Snatch_Pay_Bail"], resolve);
+const SnatchPay = resolve => require(["@/views/Snatch/Snatch_Pay"], resolve);
+const SnatchProduct = resolve => require(["@/views/Snatch/Snatch_Product"], resolve);
+const WalletMine = resolve => require(["@/views/Wallet/Wallet_Mine"], resolve);
+const WalletReceive = resolve => require(["@/views/Wallet/Wallet_Receive"], resolve);
+const WalletRecordDetail = resolve => require(["@/views/Wallet/Wallet_Record_Detail"], resolve);
+const WalletRecord = resolve => require(["@/views/Wallet/Wallet_Record"], resolve);
+const WalletSend = resolve => require(["@/views/Wallet/Wallet_Send"], resolve);
 Vue.use(VueRouter);
 const routes = [{
   path:"*",
@@ -367,6 +388,111 @@ const routes = [{
   path: "/wallet",
   name: "wallet",
   component: Wallet
+},
+{
+  path: "/auction_block",
+  name: "auction_block",
+  component: AuctionBlock
+},
+{
+  path: "/auction_home",
+  name: "auction_home",
+  component: AuctionHome
+},
+{
+  path: "/auction_list",
+  name: "auction_list",
+  component: AuctionList
+},
+{
+  path: "/auction_bail",
+  name: "auction_bail",
+  component: AuctionBail
+},
+{
+  path: "/auction_remind",
+  name: "auction_remind",
+  component: AuctionRemind
+},
+{
+  path: "/auction_product",
+  name: "auction_product",
+  component: AuctionProduct
+},
+{
+  path: "/auction_pay",
+  name: "auction_pay",
+  component: AuctionPay
+},
+{
+  path: "/auction_pay_bail",
+  name: "auction_pay_bail",
+  component: AuctionPayBail
+},
+{
+  path: "/snatch_block",
+  name: "snatch_block",
+  component: SnatchBlock
+},
+{
+  path: "/snatch_home",
+  name: "snatch_home",
+  component: SnatchHome
+},
+{
+  path: "/snatch_list",
+  name: "snatch_list",
+  component: SnatchList
+},
+{
+  path: "/snatch_bail",
+  name: "snatch_bail",
+  component: SnatchBail
+},
+{
+  path: "/snatch_remind",
+  name: "snatch_remind",
+  component: SnatchRemind
+},
+{
+  path: "/snatch_product",
+  name: "snatch_product",
+  component: SnatchProduct
+},
+{
+  path: "/snatch_pay",
+  name: "snatch_pay",
+  component: SnatchPay
+},
+{
+  path: "/snatch_pay_bail",
+  name: "snatch_pay_bail",
+  component: SnatchPayBail
+},
+{
+  path: "/wallet_mine",
+  name: "wallet_mine",
+  component: WalletMine
+},
+{
+  path: "/wallet_receive",
+  name: "wallet_receive",
+  component: WalletReceive
+},
+{
+  path: "/wallet_record_detail",
+  name: "wallet_record_detail",
+  component: WalletRecordDetail
+},
+{
+  path: "/wallet_record",
+  name: "wallet_record",
+  component: WalletRecord
+},
+{
+  path: "/wallet_send",
+  name: "wallet_send",
+  component: WalletSend
 }
 ];
 // 页面刷新时，重新赋值token
