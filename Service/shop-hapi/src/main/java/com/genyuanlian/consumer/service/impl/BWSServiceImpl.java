@@ -176,6 +176,7 @@ public class BWSServiceImpl implements IBWSService {
 			reocrd.setCallType(4);
 			reocrd.setCreateTime(DateUtil.getCurrentDateTime());
 			reocrd.setCallUrl(BWSProperties.bswWalletTransferMultiAPI);
+			reocrd.setRemark(remark);
 
 			try {
 				// 将amount 单独处理
@@ -268,14 +269,69 @@ public class BWSServiceImpl implements IBWSService {
 			logger.error("保存充值任务失败.", ex);
 		}
 		return null;
+	}
 
+	/**
+	 * 钱包转账
+	 * 
+	 * @param walletId
+	 * @param amount
+	 * @return
+	 */
+	@Override
+	public String walletTransfer(String transactionNo, Long businessId, Long ownerId, int ownerType, String walletId,
+			String receiverAddress, BigDecimal amount) {
+		try {
+			String resultVo = null;
+			// 保存数据到库
+			ShopBstkRecord reocrd = new ShopBstkRecord();
+			reocrd.setTransactionNo(transactionNo);
+			reocrd.setBusinessId(businessId);
+			reocrd.setOwnerId(ownerId);
+			reocrd.setOwnerType(ownerType);
+			reocrd.setCallType(5);
+			reocrd.setCreateTime(DateUtil.getCurrentDateTime());
+			reocrd.setCallUrl(BWSProperties.bswWalletTransferAPI);
+
+			try {
+				/**
+				 * 模拟提交，返回值
+				 */
+				JSONObject params = new JSONObject();
+				params.put("senderWallet", walletId);
+				params.put("receiverAddress", receiverAddress);
+				params.put("amount", amount.multiply(new BigDecimal(100000000)));
+				reocrd.setCallReq(params.toJSONString());
+				String response = HttpClientUtils.bwsPost(BWSProperties.bswWalletTransferAPI, params);
+				reocrd.setCallResp(response);
+				reocrd.setStatus(1);
+				BWSWalletResponse result = JSONObject.parseObject(response, BWSWalletResponse.class);
+				BWSWalletTransferResponseVo voResult = JSONObject.parseObject(result.getData(),
+						BWSWalletTransferResponseVo.class);
+				resultVo = voResult.getTxid();
+
+			} catch (Exception ex) {
+				logger.error("调用bws接口充值失败.", ex);
+				reocrd.setStatus(2);
+
+			}
+			commonDao.save(reocrd);
+			return resultVo;
+
+		} catch (Exception ex) {
+			logger.error("保存转账任务失败.", ex);
+		}
+		return null;
 	}
 
 	public static void main(String[] args) {
 		try {
+<<<<<<< .mine
 //			String[] arr = "1,0.2".trim().split(",");
 //			System.out.print(arr);
 
+=======
+>>>>>>> .r1690
 			// String response =
 			// HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/create",
 			// null);
@@ -287,6 +343,7 @@ public class BWSServiceImpl implements IBWSService {
 			// BWSWalletCreateResponseVo.class);
 			// System.out.print(voResult);
 
+<<<<<<< .mine
 //			 JSONObject params=new JSONObject();
 //			 params.put("wallet","{\"coin\":\"btc\",\"network\":\"livenet\",\"xPrivKey\":\"xprv9s21ZrQH143K2DX8JhwhKEq2Qq9he3D6sU5t1sAmvyiPNxv41fLWJDUsamP21Svz7xX9oLPEB33XHez5yJ86pnrKrKbCzSB1BMpki7F6yXo\",\"xPubKey\":\"xpub6DBj9cJ1AJfph1mKnHzsLHt5dczNwZfBRgpVMufJEn6Mhz6WjuVTLy8ysJBZuWgjXQ4tD1VVnR1ciNwEgyEzSyX3dhZxRhbuyYWh3Yaqip3\",\"requestPrivKey\":\"a35c1831aee6f8c948529f6c5df8a86904598aefc67009d63b860a4ce11b5b40\",\"requestPubKey\":\"032ceeb71892eda43ed29390ef5dfc189889e98e7e5b489f09b7869ab32ede7160\",\"copayerId\":\"95e9fe994653a2d3101a94eb915544d67cef192d073e1fe14ca087a8dc5f350a\",\"publicKeyRing\":[{\"xPubKey\":\"xpub6DBj9cJ1AJfph1mKnHzsLHt5dczNwZfBRgpVMufJEn6Mhz6WjuVTLy8ysJBZuWgjXQ4tD1VVnR1ciNwEgyEzSyX3dhZxRhbuyYWh3Yaqip3\",\"requestPubKey\":\"032ceeb71892eda43ed29390ef5dfc189889e98e7e5b489f09b7869ab32ede7160\"}],\"walletId\":\"7e4e2205-53dc-4c5c-943d-3893d44e41b0\",\"walletName\":\"BSTK Wallet\",\"m\":1,\"n\":1,\"walletPrivKey\":\"a2ce06e727fc62dab1ec83e010a0476dddb3cf5b852ecb415b0aed467bb2bfcf\",\"personalEncryptingKey\":\"hcaEz1cvXHs6FF+hxAlIZQ==\",\"sharedEncryptingKey\":\"uqMJbO6XFhsz7Exxn74AuA==\",\"mnemonic\":\"哀 寄 蒋 染 奴 发 师 坝 料 平 美 师\",\"entropySource\":\"c743c246ee6146747a322d2a9b3148c50717e5cb77b5f2302558d292f5b12df9\",\"mnemonicHasPassphrase\":false,\"derivationStrategy\":\"BIP44\",\"account\":0,\"compliantDerivation\":true,\"addressType\":\"P2PKH\"}");
 //			 String response =
@@ -294,7 +351,17 @@ public class BWSServiceImpl implements IBWSService {
 //			 BWSWalletResponse result =
 //			 JSONObject.parseObject(response,BWSWalletResponse.class);
 //			 System.out.println(result.getData());
+=======
+			// JSONObject params=new JSONObject();
+			// params.put("wallet","");
+			// String response =
+			// HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/balance",params);
+			// BWSWalletResponse result =
+			// JSONObject.parseObject(response,BWSWalletResponse.class);
+			// System.out.println(result.getData());
+>>>>>>> .r1690
 
+<<<<<<< .mine
 //			/**
 //			 * 模拟提交，返回值
 //			 */
@@ -306,6 +373,20 @@ public class BWSServiceImpl implements IBWSService {
 			 HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/transfer",
 			 params);
 			 System.out.print(response);
+=======
+			/**
+			 * 模拟提交，返回值
+			 */
+			// JSONObject params = new JSONObject();
+			// params.put("senderWallet","");
+			// params.put("receiverAddress",
+			// "15LzQP7ofCCFSf2neBAFPvz8Mu4dpCnnUb");
+			// params.put("amount", 1000011000l);
+			// String response =
+			// HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/transfer",
+			// params);
+			// System.out.print(response);
+>>>>>>> .r1690
 			// BWSWalletResponse result = JSONObject.parseObject(response,
 			// BWSWalletResponse.class);
 			//

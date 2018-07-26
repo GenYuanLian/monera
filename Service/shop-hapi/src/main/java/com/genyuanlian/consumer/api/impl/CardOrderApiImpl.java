@@ -33,12 +33,12 @@ import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopOrderSplitBill;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
+import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.utils.ShopUtis;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
-import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.SnoGerUtil;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
@@ -59,12 +59,11 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 	// 事物隔离级别为最高，不可脏读，后期改未异步锁
 	@Transactional(isolation = Isolation.SERIALIZABLE)
 	@Override
-	public ShopMessageVo<String> createPuCardOrder(Long puCardTypeId, Integer payCount, Integer cardType,
-			BigDecimal amount, Long memberId, String remark, String addressId) {
+	public ShopMessageVo<String> createPuCardOrder(CreateCommodityOrderParamsVo req) {
 		ShopMessageVo<String> result = new ShopMessageVo<>();
 
 		// 查询提货卡类型
-		ShopPuCardType puCardType = commonService.get(ShopPuCardType.class, "id", puCardTypeId);
+		ShopPuCardType puCardType = commonService.get(ShopPuCardType.class, "id", req.getCommodityId());
 		if (puCardType == null) {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100100.getErrorCode().toString());
 			result.setMessage(ShopErrorCodeEnum.ERROR_CODE_100100.getErrorMessage());
@@ -74,28 +73,31 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		}
 
 		// 查询该类型未售提货卡
-		List<ShopPuCard> puCards = puCardApi.getPuCardsByTypeId(puCardTypeId, 0, 2, 6);
+		List<ShopPuCard> puCards = puCardApi.getPuCardsByTypeId(req.getCommodityId(), 0, 2, 6);
 
-		// 库存验证
-		if (puCards == null || puCards.size() < payCount) {
-			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorCode().toString());
-			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return result;
+		if (req.getOrderType().intValue()==1) {
+			//普通订单验证，活动订单不验证库存和价格
+			// 库存验证
+			if (puCards == null || puCards.size() < req.getSaleCount()) {
+				result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorCode().toString());
+				result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return result;
+			}
+
+			// 价格验证
+			BigDecimal price = BigDecimal.valueOf(puCardType.getPrice());
+			BigDecimal discount = BigDecimal.valueOf(puCardType.getDiscount());
+			if (price.multiply(discount).multiply(new BigDecimal(req.getSaleCount())).compareTo(req.getAmount()) != 0) {
+				result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
+				result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return result;
+			}
 		}
-
-		// 价格验证
-		BigDecimal price = BigDecimal.valueOf(puCardType.getPrice());
-		BigDecimal discount = BigDecimal.valueOf(puCardType.getDiscount());
-		if (price.multiply(discount).multiply(new BigDecimal(payCount)).compareTo(amount) != 0) {
-			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
-			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return result;
-		}
-
+		
 		Date now = DateUtil.getCurrentDateTime();
 
 		// 获取提货卡商户信息
@@ -103,15 +105,15 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 
 		// 创建订单
 		ShopOrder order = new ShopOrder();
-		order.setAmount(amount.doubleValue());
+		order.setAmount(req.getAmount().doubleValue());
 		order.setCreateTime(now);
-		order.setMemberId(memberId);
+		order.setMemberId(req.getMemberId());
 		order.setOrderNo(ShopUtis.buildOrderNo("puc"));
-		order.setRemark(remark);
+		order.setRemark(req.getRemark());
 		Map<String, String> descMap = new HashMap<>();
 		descMap.put("commodityName", puCardType.getTitle());
-		descMap.put("saleCount", payCount.toString());
-		descMap.put("amount", amount.toString());
+		descMap.put("saleCount", req.getSaleCount().toString());
+		descMap.put("amount", req.getAmount().toString());
 		descMap.put("logo", puCardType.getPic());
 		order.setDescription(JSON.toJSONString(descMap));
 
@@ -120,7 +122,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		// 创建订单明细
 		ShopOrderDetail orderDetail = new ShopOrderDetail();
 		orderDetail.setCreateTime(now);
-		orderDetail.setMemberId(memberId);
+		orderDetail.setMemberId(req.getMemberId());
 		orderDetail.setOrderId(order.getId());
 		orderDetail.setOrderNo(order.getOrderNo());
 		orderDetail.setMerchantId(puCards.get(0).getMerchantId());
@@ -129,24 +131,34 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			orderDetail.setDescription(merchant.getLogoPic());
 		}
 		orderDetail.setCommodityId(puCards.get(0).getCardTypeId()); // 提货卡存提货卡类型Id
-		orderDetail.setCommodityName(puCards.get(0).getTitle());
 		orderDetail.setCommodityType(puCards.get(0).getCommodityType());
 		orderDetail.setPrice(puCards.get(0).getPrice());
-		orderDetail.setSaleCount(payCount);
-		orderDetail.setAmount(amount.doubleValue());
+		orderDetail.setSaleCount(req.getSaleCount());
+		orderDetail.setAmount(req.getAmount().doubleValue());
 		// 是否需要发送快递(1-是;0-否)
 		orderDetail.setIsSendMail(0);
 		orderDetail.setStatus(0);
-		orderDetail.setRemark(remark);
+		orderDetail.setRemark(req.getRemark());
+		if (req.getOrderType().intValue()!=1) {
+			orderDetail.setActivityId(req.getActivityId());
+			orderDetail.setOrderType(req.getOrderType());
+			orderDetail.setTotalAmount(req.getTotalAmount());
+			orderDetail.setPrice(req.getTotalAmount().doubleValue());
+			orderDetail.setCommodityName(req.getActivityTitel());
+		}else {
+			orderDetail.setTotalAmount(req.getAmount());
+			orderDetail.setOrderType(1);
+			orderDetail.setCommodityName(puCards.get(0).getTitle());
+		}
 		commonService.save(orderDetail);
 
 		// 配送信息
-		if (ProUtility.isNotNull(addressId) && Long.parseLong(addressId) > 0) {
-			ShopMemberAddress address = commonService.get(Long.parseLong(addressId), ShopMemberAddress.class);
-			if (address != null && address.getMemberId() == memberId) // 是当前用户地址
+		if (req.getAddressId()!=null && req.getAddressId().longValue() > 0) {
+			ShopMemberAddress address = commonService.get(req.getAddressId(), ShopMemberAddress.class);
+			if (address != null && address.getMemberId() == req.getMemberId()) // 是当前用户地址
 			{
 				ShopOrderDelivery delivery = new ShopOrderDelivery();
-				delivery.setMemberId(memberId);
+				delivery.setMemberId(req.getMemberId());
 				delivery.setOrderId(order.getId());
 				delivery.setOrderDetailId(orderDetail.getId());
 				delivery.setReceiver(address.getReceiver());
@@ -164,7 +176,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			}
 		}
 
-		for (int i = 0; i < payCount; i++) {
+		for (int i = 0; i < req.getSaleCount(); i++) {
 			// 锁定提货卡
 			ShopPuCard puCard = puCards.get(i);
 			puCard.setStatus(1); // 提货卡状态变为已锁定

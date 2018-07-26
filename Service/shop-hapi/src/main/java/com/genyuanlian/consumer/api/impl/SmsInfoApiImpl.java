@@ -56,9 +56,9 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 	public ShopMessageVo<String> sendSms(SendSmsParamsVo params) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
 		logger.info("短信发送调用到这里了=================,手机号:" + params.getMobile() + "短信类型:" + params.getSmstype());
-		//财务确认付款
+		// 财务确认付款
 		if ("confirmPayment".equals(params.getSmstype())) {
-			//允许发送此类验证码的手机号集合
+			// 允许发送此类验证码的手机号集合
 			String mobiles = ConfigPropertieUtils.getString("confirm_payment_mobiles");
 			if (StringUtils.isBlank(mobiles)) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorCode().toString());
@@ -67,9 +67,9 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
-			
+
 			String[] split = mobiles.split(",");
-			//验证当前手机号是否有发送此类验证码的权限
+			// 验证当前手机号是否有发送此类验证码的权限
 			if (!ArrayUtils.contains(split, params.getMobile())) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_888888.getErrorMessage());
@@ -78,7 +78,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 				return messageVo;
 			}
 		}
-		
+
 		// 缓存短信发送的次数
 		String cacheKeySmsHourCount = "sendSms" + params.getMobile() + "key";
 
@@ -112,7 +112,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
-		
+
 		// 会员未注册，登录或者找回密码，返回会员未注册错误
 		if ("login".equals(params.getSmstype()) && (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
@@ -129,7 +129,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
-		
+
 		if ("resetPayPwd".equals(params.getSmstype()) && (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
@@ -209,28 +209,26 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		} else {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100009.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100009.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return messageVo;
 		}
 	}
 
 	@Override
 	public ShopMessageVo<Boolean> checkVerificationCode(String smsNumber, String mobile, String verificationCode) {
-		ShopMessageVo<Boolean> messageVo=new ShopMessageVo<>();
-		
+		ShopMessageVo<Boolean> messageVo = new ShopMessageVo<>();
+
 		// 判断短信验证码是否正确
-				String cacheKeySmsNumber = smsNumber + mobile;
-				String code = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
-				if (StringUtils.isNotBlank(code) && code.equals(verificationCode)) {
-					masterRedisTemplate.delete(cacheKeySmsNumber);
-					messageVo.setResult(true);
-					messageVo.setT(true);
-				} else {
-					messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
-					messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
-				}
-		
+		String cacheKeySmsNumber = smsNumber + mobile;
+		String code = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
+		if (StringUtils.isNotBlank(code) && code.equals(verificationCode)) {
+			masterRedisTemplate.delete(cacheKeySmsNumber);
+			messageVo.setResult(true);
+			messageVo.setT(true);
+		} else {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
+		}
+
 		return messageVo;
 	}
 

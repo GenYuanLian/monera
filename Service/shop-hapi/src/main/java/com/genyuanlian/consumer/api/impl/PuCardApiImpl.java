@@ -28,6 +28,8 @@ import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
+import com.genyuanlian.consumer.shop.model.ShopWallet;
+import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
 import com.genyuanlian.consumer.shop.vo.CommodityIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.CommodityVo;
 import com.genyuanlian.consumer.shop.vo.MerchantCommodityResponseVo;
@@ -49,6 +51,7 @@ public class PuCardApiImpl implements IPuCardApi {
 	private IBWSService bwsService;
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> getPuCardTypes(Long merchantId) {
 		ShopMessageVo<Map<String, Object>> result = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<>();
@@ -59,6 +62,26 @@ public class PuCardApiImpl implements IPuCardApi {
 			result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 			result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 			return result;
+		}
+
+		// 创建商户bstk钱包
+		ShopWallet wallet = commonService.get(ShopWallet.class, "ownerId", merchantId, "ownerType", 2);
+		if (wallet == null) {
+			// 创建轻钱包（对应BSTK）
+			BWSWalletCreateResponseVo resp1 = bwsService.walletCreate(SnoGerUtil.getUUID(), merchantId, 2);
+			if (resp1 != null) {
+				// 插入 wallet
+				wallet = new ShopWallet();
+				wallet.setOwnerId(merchantId);
+				wallet.setOwnerType(2);
+				wallet.setWalletAddress(resp1.getWallet());
+				wallet.setPublicKeyAddr(resp1.getMainAddr());
+				wallet.setTotalIncome(0d);
+				wallet.setTotalExpend(0d);
+				wallet.setBalance(0d);
+				wallet.setCreateTime(DateUtil.getCurrentDateTime());
+				commonService.save(wallet);
+			}
 		}
 
 		try {

@@ -28,6 +28,7 @@ import com.genyuanlian.consumer.shop.model.ShopOrderCalcForceTask;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
+import com.genyuanlian.consumer.shop.vo.ReceiverVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.vo.SaleVolumeConfigVo;
 import com.hnair.consumer.dao.service.ICommonService;
@@ -80,9 +81,12 @@ public class OrderJob {
 
 		Date lastCreateTime = DateUtil.addMinute(new Date(), 0 - time);
 
-		// 提货卡订单
+		// 超时未支付订单
+		List<Integer> existOrderTypes=new ArrayList<>();
+		existOrderTypes.add(1);
+		existOrderTypes.add(2);
 		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "lastCreateTime", lastCreateTime,
-				"status", 0);
+				"status", 0,"existOrderTypes",existOrderTypes);
 		if (orders != null && orders.size() > 0) {
 			ShopMessageVo<String> result = cardOrderApi.cancelPuCardOrder(orders, 2, "过期未支付");
 			if (!result.isResult()) {
@@ -202,7 +206,7 @@ public class OrderJob {
 		// 重试次数告警
 		try {
 			Integer retryCount = Integer.parseInt(ConfigPropertieUtils.getString("bws.retryCount"));
-			List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class, "status", 2, "retry_count",
+			List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class, "status", 2, "retryCount",
 					retryCount);
 			logger.debug("重试任务：" + JSONObject.toJSONString(tasks));
 			if (tasks != null && tasks.size() > 0) {
@@ -367,6 +371,9 @@ public class OrderJob {
 			// 状态:0-待执行，1-执行成功，2-执行失败，3-冻结
 			List<ShopOrderCalcForceTask> tasks = commonService.getList(ShopOrderCalcForceTask.class, "planDate",
 					taskDate, "status", 0);
+			if (tasks == null || tasks.size() == 0) {
+				return;
+			}
 
 			// 下一个收益日任务集合
 			List<ShopOrderCalcForceTask> nextTasks = commonService.getList(ShopOrderCalcForceTask.class, "planDate",
@@ -376,19 +383,29 @@ public class OrderJob {
 				nextTasksMap.put(t.getOrderCalcForceId(), t);
 			}
 
+			// 批量发放收益
+			List<ReceiverVo> receivers = new ArrayList<ReceiverVo>();
+			String transactionNo;
+			String taskIds = "";
 			for (ShopOrderCalcForceTask task : tasks) {
-				// 调用bstk接口
 				BigDecimal income = BigDecimal.valueOf(task.getBstkAmount());
-				String transactionNo;
-				if (systemPublish.trim().toLowerCase().equals("dev")
-						|| systemPublish.trim().toLowerCase().equals("test")) {
-					transactionNo = "模拟数据不真实发放BSTK";
-				} else {
-					String transNo = SnoGerUtil.getUUID();
-					transactionNo = bwsService.walletRecharge(transNo, task.getId(), task.getMemberId(), 1,
-							task.getPublicKeyAddr(), income);
-				}
+				ReceiverVo vo = new ReceiverVo();
+				vo.setAmount(income);
+				vo.setRecvAddr(task.getPublicKeyAddr());
+				receivers.add(vo);
 
+				taskIds = taskIds + task.getId().toString() + ",";
+			}
+
+			// 调用钱包接口
+			if (systemPublish.trim().toLowerCase().equals("dev") || systemPublish.trim().toLowerCase().equals("test")) {
+				transactionNo = "模拟数据不真实发放BSTK";
+			} else {
+				// 上传BSTK钱包交易，合并发放收益
+				transactionNo = bwsService.walletRecharge(SnoGerUtil.getUUID(), receivers, "taskId集合：" + taskIds);
+			}
+
+			for (ShopOrderCalcForceTask task : tasks) {
 				// 更新状态：0-待执行，1-执行成功，2-执行失败，3-冻结
 				if (ProUtility.isNotNull(transactionNo)) {
 					// 获取算力服务
@@ -433,7 +450,6 @@ public class OrderJob {
 					task.setExecutionTime(new Date());
 					task.setStatus(2);
 					commonService.update(task);
-
 				}
 			}
 

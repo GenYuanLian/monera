@@ -55,4 +55,14 @@ public interface IBWSService {
 	public String walletConsume(String transactionNo, Long businessId, Long ownerId, int ownerType, String walletId,
 			BigDecimal amount);
 
+	/**
+	 * 钱包消费
+	 * 
+	 * @param walletId
+	 * @param amount
+	 * @return
+	 */
+	public String walletTransfer(String transactionNo, Long businessId, Long ownerId, int ownerType, String walletId,
+			String receiverAddress, BigDecimal amount);
+
 }

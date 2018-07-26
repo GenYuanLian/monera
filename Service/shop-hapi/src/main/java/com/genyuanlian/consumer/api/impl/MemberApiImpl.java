@@ -1,8 +1,10 @@
 package com.genyuanlian.consumer.api.impl;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -30,19 +32,24 @@ import com.genyuanlian.consumer.shop.model.ShopMember;
 import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
 import com.genyuanlian.consumer.shop.model.ShopMemberSecurity;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
+import com.genyuanlian.consumer.shop.model.ShopWallet;
+import com.genyuanlian.consumer.shop.model.ShopWalletBill;
 import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
 import com.genyuanlian.consumer.shop.vo.IdParamsVo;
 import com.genyuanlian.consumer.shop.vo.LoginNameParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberAddressParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberFindPwdParamsVo;
+import com.genyuanlian.consumer.shop.vo.MemberIdBusinessIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberIdPagedParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberInvitationVo;
 import com.genyuanlian.consumer.shop.vo.MemberLoginParamsVo;
 import com.genyuanlian.consumer.shop.vo.MemberRegisterParamsVo;
 import com.genyuanlian.consumer.shop.vo.NicknameParamsVo;
+import com.genyuanlian.consumer.shop.vo.SendWalletBstkParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.shop.vo.UploadHeadPortraitParamsVo;
+import com.genyuanlian.consumer.shop.vo.WalletBillVo;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
 import com.hnair.consumer.utils.FileResponse;
@@ -81,20 +88,19 @@ public class MemberApiImpl implements IMemberApi {
 	public ShopMessageVo<Map<String, Object>> register(MemberRegisterParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
-		logger.info("新会员注册调用到这里了=================,手机号:" + params.getMobile()+",是否第三方登录注册"+params.getIsThirdparty() + ",验证码:" + params.getSmsCode() + "短信编码:"
-				+ params.getSmsNumber() + "推荐码:" + params.getReferraCode());
+		logger.info("新会员注册调用到这里了=================,手机号:" + params.getMobile() + ",是否第三方登录注册" + params.getIsThirdparty()
+				+ ",验证码:" + params.getSmsCode() + "短信编码:" + params.getSmsNumber() + "推荐码:" + params.getReferraCode());
 
-		
 		if (params.getIsThirdparty()) {
 			logger.info("第三方授权登录注册，不验证验证码");
-		}else {
+		} else {
 			// 判断短信验证码是否正确
 			String cacheKeySmsNumber = params.getSmsNumber() + params.getMobile();
 			Object smsNumber = masterRedisTemplate.opsForValue().get(cacheKeySmsNumber);
 			if (smsNumber != null && ProUtility.isNotNull(smsNumber.toString())
 					&& smsNumber.toString().equals(params.getSmsCode())) {
-				logger.info("短信验证码验证成功=================,手机号:" + params.getMobile() + "验证码:" + params.getSmsCode() + "短信编码:"
-						+ params.getSmsNumber());
+				logger.info("短信验证码验证成功=================,手机号:" + params.getMobile() + "验证码:" + params.getSmsCode()
+						+ "短信编码:" + params.getSmsNumber());
 			} else {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100006.getErrorMessage());
@@ -103,7 +109,6 @@ public class MemberApiImpl implements IMemberApi {
 				return messageVo;
 			}
 		}
-		
 
 		// 判断手机号是否被占用
 		if (StringUtils.isNotBlank(params.getMobile())) {
@@ -116,7 +121,6 @@ public class MemberApiImpl implements IMemberApi {
 				return messageVo;
 			}
 		}
-		
 
 		// 如果有推荐码参数，验证参数是否正确
 		if (ProUtility.isNotNull(params.getReferraCode())) {
@@ -163,7 +167,7 @@ public class MemberApiImpl implements IMemberApi {
 		// 默认值
 		register.setOwnerType(1);
 		register.setLoginName(params.getMobile());
-		register.setNickName(StringUtils.isNotBlank(params.getNickName())?params.getNickName():"主人");
+		register.setNickName(StringUtils.isNotBlank(params.getNickName()) ? params.getNickName() : "主人");
 		register.setGender(params.getGender());
 		register.setHeadPortrait(params.getHeadPortrait());
 		register.setIsIdentification(0);
@@ -174,7 +178,7 @@ public class MemberApiImpl implements IMemberApi {
 		// 持久化
 		memberService.register(register);
 
-		// 创建轻钱包
+		// 创建轻钱包（对应源点）
 		String transNo = SnoGerUtil.getUUID();
 		BWSWalletCreateResponseVo resp = bwsService.walletCreate(transNo, register.getId(), 1);
 		if (resp != null) {
@@ -188,6 +192,24 @@ public class MemberApiImpl implements IMemberApi {
 			upWallet.setCreateTime(DateUtil.getCurrentDateTime());
 			commonService.save(upWallet);
 		}
+
+		// 创建轻钱包（对应BSTK）
+		String transNo1 = SnoGerUtil.getUUID();
+		BWSWalletCreateResponseVo resp1 = bwsService.walletCreate(transNo1, register.getId(), 1);
+		if (resp1 != null) {
+			// 插入 wallet
+			ShopWallet wallet = new ShopWallet();
+			wallet.setOwnerId(register.getId());
+			wallet.setOwnerType(1);
+			wallet.setWalletAddress(resp1.getWallet());
+			wallet.setPublicKeyAddr(resp1.getMainAddr());
+			wallet.setTotalIncome(0d);
+			wallet.setTotalExpend(0d);
+			wallet.setBalance(0d);
+			wallet.setCreateTime(DateUtil.getCurrentDateTime());
+			commonService.save(wallet);
+		}
+
 		return register;
 	}
 
@@ -248,9 +270,9 @@ public class MemberApiImpl implements IMemberApi {
 			// 判断密码是否正确
 			if (params.getLoginType().equals("password")) {
 				if (params.getLoginCode().equals(member.getLoginPwd())) {
-					//登录
-					resultMap=login(member, 1, params.getIp());
-					
+					// 登录
+					resultMap = login(member, 1, params.getIp());
+
 					messageVo.setResult(true);
 					messageVo.setT(resultMap);
 					messageVo.setMessage("会员登录成功");
@@ -281,9 +303,9 @@ public class MemberApiImpl implements IMemberApi {
 					logger.info("短信验证登录成功=================,手机号:" + member.getMobile() + "验证码:" + params.getSmsCode()
 							+ "短信编码:" + params.getLoginCode());
 
-					//登录
-					resultMap=login(member, 2, params.getIp());
-					
+					// 登录
+					resultMap = login(member, 2, params.getIp());
+
 					messageVo.setResult(true);
 					messageVo.setT(resultMap);
 					messageVo.setMessage("会员登录成功");
@@ -332,6 +354,7 @@ public class MemberApiImpl implements IMemberApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> getMemberInfo(MemberIdParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -380,6 +403,30 @@ public class MemberApiImpl implements IMemberApi {
 
 		resultMap.put("cardCount", statistics.get("count") == null ? 0 : statistics.get("count"));
 		resultMap.put("sumBalance", statistics.get("sumBalance") == null ? 0 : statistics.get("sumBalance"));
+
+		// 用户bstk钱包
+		ShopWallet wallet = commonService.get(ShopWallet.class, "ownerId", params.getMemberId(), "ownerType", 1);
+		if (wallet != null) {
+			BigDecimal walletBalance = bwsService.walletBalance(SnoGerUtil.getUUID(), wallet.getWalletAddress());
+			resultMap.put("bstkBalance", walletBalance);
+		} else {
+			// 创建轻钱包（对应BSTK）
+			BWSWalletCreateResponseVo resp1 = bwsService.walletCreate(SnoGerUtil.getUUID(), params.getMemberId(), 1);
+			if (resp1 != null) {
+				// 插入 wallet
+				wallet = new ShopWallet();
+				wallet.setOwnerId(params.getMemberId());
+				wallet.setOwnerType(1);
+				wallet.setWalletAddress(resp1.getWallet());
+				wallet.setPublicKeyAddr(resp1.getMainAddr());
+				wallet.setTotalIncome(0d);
+				wallet.setTotalExpend(0d);
+				wallet.setBalance(0d);
+				wallet.setCreateTime(DateUtil.getCurrentDateTime());
+				commonService.save(wallet);
+			}
+			resultMap.put("bstkBalance", 0);
+		}
 
 		messageVo.setResult(true);
 		messageVo.setT(resultMap);
@@ -448,7 +495,6 @@ public class MemberApiImpl implements IMemberApi {
 				list.remove(listCount - 1);
 			} else {
 				resultMap.put("hasNext", 0);
-
 			}
 
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
@@ -905,9 +951,13 @@ public class MemberApiImpl implements IMemberApi {
 
 	/**
 	 * 登录
-	 * @param member 登录用户对象
-	 * @param loginType 登录类型：1-密码登录；2-短信验证码登录；3-第三方授权登录
-	 * @param loginIp 用户ip
+	 * 
+	 * @param member
+	 *            登录用户对象
+	 * @param loginType
+	 *            登录类型：1-密码登录；2-短信验证码登录；3-第三方授权登录
+	 * @param loginIp
+	 *            用户ip
 	 * @return
 	 */
 	@Transactional
@@ -956,5 +1006,219 @@ public class MemberApiImpl implements IMemberApi {
 		resultMap.put("token", token);
 
 		return resultMap;
+	}
+
+	@Override
+	public ShopMessageVo<Map<String, Object>> getWalletAddress(MemberIdParamsVo params) {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		logger.info("获取会员钱包收款地址调用到这里了=================,会员Id:" + params.getMemberId());
+
+		// 查询用户信息
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		// 用户bstk钱包
+		ShopWallet wallet = commonService.get(ShopWallet.class, "ownerId", params.getMemberId(), "ownerType", 1);
+		if (wallet == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
+
+		resultMap.put("walletAddress", wallet.getPublicKeyAddr());
+		messageVo.setResult(true);
+		messageVo.setT(resultMap);
+		messageVo.setMessage("数据获取成功");
+		return messageVo;
+	}
+
+	@Override
+	@Transactional
+	public ShopMessageVo<Map<String, Object>> sendWalletBstk(SendWalletBstkParamsVo params) {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		logger.info("会员发送bstk到对方钱包地址调用到这里了=================,会员Id:" + params.getMemberId());
+
+		// 查询用户信息
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		// 用户bstk钱包
+		ShopWallet wallet = commonService.get(ShopWallet.class, "ownerId", params.getMemberId(), "ownerType", 1);
+		if (wallet == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
+
+		// 判断钱包余额
+		BigDecimal walletBalance = bwsService.walletBalance(SnoGerUtil.getUUID(), wallet.getWalletAddress());
+		if (walletBalance.compareTo(params.getAmount()) < 0) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200005.getErrorMessage());
+			return messageVo;
+		}
+
+		// 转账
+		String transNo = bwsService.walletTransfer(SnoGerUtil.getUUID(), 0L, params.getMemberId(), 1,
+				wallet.getWalletAddress(), params.getWalletAddress(), params.getAmount());
+		if (ProUtility.isNull(transNo)) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
+			return messageVo;
+		}
+
+		// 记录钱包流水记录
+		ShopWalletBill walletBill = new ShopWalletBill();
+		walletBill.setWalletId(wallet.getId());
+		// 收支类型：1-收入；2-支出
+		walletBill.setInOutType(2);
+		walletBill.setAmount(-params.getAmount().doubleValue());
+		walletBill.setBalance(bwsService.walletBalance(SnoGerUtil.getUUID(), wallet.getWalletAddress()).doubleValue());
+		walletBill.setTransactionNo(transNo);
+		walletBill.setBusinessId(0L);
+		walletBill.setRemark("");
+		walletBill.setCreateTime(new Date());
+		// 操作类型：1-充值；2-提现；3-保证金；4-消费；
+		walletBill.setBusinessType(2);
+		walletBill.setBusinessTitle("转出");
+		walletBill.setOwnerId(params.getMemberId());
+		walletBill.setOwnerType(1);
+		commonService.save(walletBill);
+
+		messageVo.setResult(true);
+		messageVo.setT(resultMap);
+		messageVo.setMessage("发送成功");
+		return messageVo;
+	}
+
+	@Override
+	public ShopMessageVo<Map<String, Object>> getWalletBill(MemberIdPagedParamsVo params) {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		logger.info("获取会员btsk钱包流水分页数据调用到这里了=================");
+
+		// 查询用户信息
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		if (params.getPageIndex() == null) {
+			params.setPageIndex(0);
+		}
+
+		if (params.getPageSize() == null) {
+			params.setPageSize(20);
+		}
+
+		List<ShopWalletBill> list = commonService.getListBySqlId(ShopWalletBill.class, "pageData", "ownerId",
+				params.getMemberId(), "ownerType", 1, "pageIndex", params.getPageIndex() * params.getPageSize(),
+				"pageSize", params.getPageSize() + 1);
+
+		Integer totalCount = commonService.getBySqlId(ShopWalletBill.class, "pageCount", "ownerId",
+				params.getMemberId(), "ownerType", 1);
+		resultMap.put("totalCount", totalCount);
+
+		List<WalletBillVo> vos = new ArrayList<WalletBillVo>();
+		if (list == null || list.size() == 0) {
+			resultMap.put("hasNext", 0);
+		} else {
+			int listCount = list.size();
+			if (listCount > params.getPageSize()) {
+				resultMap.put("hasNext", 1);
+				list.remove(listCount - 1);
+			} else {
+				resultMap.put("hasNext", 0);
+			}
+
+			for (ShopWalletBill bill : list) {
+				WalletBillVo vo = new WalletBillVo();
+				vo.setId(bill.getId());
+				vo.setBusinessTitle(bill.getBusinessTitle());
+				vo.setCreateTime(bill.getCreateTime());
+				vo.setBalance(bill.getBalance());
+				vo.setAmount(bill.getAmount());
+
+				vos.add(vo);
+			}
+		}
+
+		resultMap.put("list", vos);
+		messageVo.setT(resultMap);
+		messageVo.setMessage("数据获取成功");
+		messageVo.setResult(true);
+
+		return messageVo;
+	}
+
+	@Override
+	public ShopMessageVo<Map<String, Object>> getWalletBillDetail(MemberIdBusinessIdParamsVo params) {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
+		LinkedHashMap<String, Object> resultMap = new LinkedHashMap<String, Object>();
+		Map<String, Object> resultMap1 = new HashMap<String, Object>();
+		logger.info("获取会员btsk钱包流水详情调用到这里了=================,会员Id:" + params.getMemberId());
+
+		// 查询用户信息
+		ShopMember member = commonService.get(params.getMemberId(), ShopMember.class);
+		if (member == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
+			return messageVo;
+		}
+
+		// 钱包明细详情
+		ShopWalletBill bill = commonService.get(params.getBusinessId(), ShopWalletBill.class);
+		if (bill == null) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
+		resultMap.put("流水号", bill.getTransactionNo());
+		// 操作类型：1-充值；2-提现；3-保证金；4-消费；
+		switch (bill.getBusinessType()) {
+		case 1:
+			resultMap.put("类型", "转入");
+			break;
+		case 2:
+			resultMap.put("类型", "转出");
+			break;
+		case 3:
+			resultMap.put("类型", "支付保证金");
+			break;
+		case 4:
+			resultMap.put("类型", "消费");
+			break;
+		}
+
+		resultMap.put("余额", bill.getBalance());
+		resultMap.put("备注", bill.getRemark());
+		resultMap.put("时间", DateUtil.getDateTime(bill.getCreateTime()));
+		resultMap1.put("list", resultMap);
+
+		// 收支类型：1-收入；2-支出
+		if (bill.getInOutType() == 1) {
+			resultMap1.put("title", "收入");
+
+		} else {
+			resultMap1.put("title", "支出");
+		}
+		resultMap1.put("amount", bill.getAmount());
+
+		messageVo.setResult(true);
+		messageVo.setT(resultMap1);
+		messageVo.setMessage("数据获取成功");
+		return messageVo;
 	}
 }

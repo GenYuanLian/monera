@@ -1,5 +1,8 @@
 package com.genyuanlian.consumer.api.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.annotation.Resource;
 
 import org.springframework.stereotype.Component;
@@ -11,6 +14,7 @@ import com.genyuanlian.consumer.shop.api.IPayRecordApi;
 import com.genyuanlian.consumer.shop.model.ShopPayRecord;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.dao.service.ICommonService;
+import com.hnair.consumer.dao.utils.Page;
 
 @Component("payRecordApi")
 public class PayRecordApiImpl implements IPayRecordApi {
@@ -42,6 +46,29 @@ public class PayRecordApiImpl implements IPayRecordApi {
 		result.setT(payRecord.getPayNum());
 
 		return result;
+	}
+
+
+	@Override
+	public Map<String, Object> getList(String startDate, String endDate, String orderNo, String mobile,Integer pageIndex,Integer pageSize) {
+		Map<String, Object>resultMap=new HashMap<>();
+		
+		Page<ShopPayRecord>page=new Page<>(pageIndex, pageSize);
+		Map<String,Object>params=new HashMap<>();
+		params.put("startDate", startDate);
+		params.put("endDate", endDate);
+		params.put("orderNo", orderNo);
+		params.put("mobile", mobile);
+		page.setParams(params);
+		page.setIsAsc(false);
+		page.setOrderField("r.create_time");
+		page=commonService.getPageFinderObjs(ShopPayRecord.class, "getList", page);
+		
+		resultMap.put("totalPage", page.getTotalPage());
+		resultMap.put("totalRecord", page.getTotalRecord());
+		resultMap.put("list", page.getResults());
+		
+		return resultMap;
 	}
 
 }

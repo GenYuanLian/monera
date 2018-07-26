@@ -103,46 +103,53 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			return messageVo;
 		}
 
-		if (commodity.getStatus() != 1) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorCode().toString());
-			messageVo.setMessage(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return messageVo;
-		}
-
-		// 库存验证
-		if (commodity.getInventoryQuantity() < params.getSaleCount()) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return messageVo;
-		}
-
-		// 价格验证
-		BigDecimal price = BigDecimal.valueOf(commodity.getPrice())
-				.multiply(BigDecimal.valueOf(commodity.getDiscount()));
-		if (price.multiply(new BigDecimal(params.getSaleCount())).compareTo(params.getAmount()) != 0) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return messageVo;
-		}
-
-		if (commodity.getPurchaseRestrict() > 0) {
-			// 限够验证
-			Integer Purchased = commonService.getBySqlId(ShopOrderDetail.class, "getPurchasedByMember", "memberId",
-					params.getMemberId(), "commodityType", 3, "commodityId", commodity.getId());
-			if (commodity.getPurchaseRestrict().compareTo(Purchased + params.getSaleCount()) < 0) {
-				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200012.getErrorCode().toString());
-				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200012.getErrorMessage());
+		BigDecimal price=BigDecimal.ZERO;
+		
+		if (params.getOrderType()==1) {
+			if (commodity.getStatus() != 1) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorCode().toString());
+				messageVo.setMessage(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorMessage());
 				// 手动回滚当前事物
 				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return messageVo;
 			}
+
+			// 库存验证
+			if (commodity.getInventoryQuantity() < params.getSaleCount()) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
+
+			// 价格验证
+			price = BigDecimal.valueOf(commodity.getPrice())
+					.multiply(BigDecimal.valueOf(commodity.getDiscount()));
+			if (price.multiply(new BigDecimal(params.getSaleCount())).compareTo(params.getAmount()) != 0) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
+
+			if (commodity.getPurchaseRestrict() > 0) {
+				// 限够验证
+				Integer Purchased = commonService.getBySqlId(ShopOrderDetail.class, "getPurchasedByMember", "memberId",
+						params.getMemberId(), "commodityType", 3, "commodityId", commodity.getId());
+				if (commodity.getPurchaseRestrict().compareTo(Purchased + params.getSaleCount()) < 0) {
+					messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200012.getErrorCode().toString());
+					messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200012.getErrorMessage());
+					// 手动回滚当前事物
+					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+					return messageVo;
+				}
+			}
+		}else {
+			price=params.getTotalAmount();
 		}
+		
 
 		if (commodity.getCommodityType() == 3) {
 			// 若购买产品为算力服务，则钱包公钥地址必填
@@ -237,7 +244,6 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			orderDetail.setDescription(merchant.getLogoPic());
 		}
 		orderDetail.setCommodityId(commodity.getId());
-		orderDetail.setCommodityName(commodity.getTitle());
 		orderDetail.setCommodityType(3);
 		orderDetail.setPrice(price.doubleValue());
 		orderDetail.setSaleCount(params.getSaleCount());
@@ -257,6 +263,17 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			orderDetail.setCalcForceOrder(1);
 		}
 		orderDetail.setTraceSource(commodity.getTraceSource());
+		if (params.getOrderType()!=1) {
+			orderDetail.setActivityId(params.getActivityId());
+			orderDetail.setOrderType(params.getOrderType());
+			orderDetail.setTotalAmount(params.getTotalAmount());
+			orderDetail.setCommodityName(params.getActivityTitel());
+		}else {
+			orderDetail.setTotalAmount(params.getAmount());
+			orderDetail.setOrderType(1);
+			orderDetail.setCommodityName(commodity.getTitle());
+		}
+		
 		commonService.save(orderDetail);
 
 		// 创建订单产品快照
@@ -587,8 +604,9 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			}
 		} else {
 			// 未结清 需要线下付款，修改订单状态
-			orderDetail.setBalancePayment(BigDecimal.valueOf(commodity.getPriceTotal())
-					.subtract(BigDecimal.valueOf(commodity.getPrice())).doubleValue());
+			orderDetail.setBalancePayment(
+					(BigDecimal.valueOf(commodity.getPriceTotal()).subtract(BigDecimal.valueOf(commodity.getPrice()))
+							.multiply(BigDecimal.valueOf(orderDetail.getSaleCount()))).doubleValue());
 			orderDetail.setStatus(orderStatus);
 			commonService.update(orderDetail);
 		}

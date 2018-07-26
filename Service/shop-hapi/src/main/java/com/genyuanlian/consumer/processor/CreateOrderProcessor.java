@@ -14,20 +14,13 @@ import com.genyuanlian.consumer.shop.api.ICommodityOrderApi;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.constant.ErrorCodeEnum;
-import com.hnair.consumer.processor.BaseApiProcessor;
 import com.hnair.consumer.utils.LoginCheck;
 import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.ResultSender;
 
 @LoginCheck
 @Component("hapicreateOrderprocessor")
-public class CreateOrderProcessor extends BaseApiProcessor {
-
-	@Resource
-	private ICardOrderApi cardOrderApi;
-
-	@Resource
-	private ICommodityOrderApi commodityOrderApi;
+public class CreateOrderProcessor extends BaseCreateOrderProcessor {
 
 	@Override
 	protected void process(HttpServletRequest request, HttpServletResponse response, ResultSender sender)
@@ -59,6 +52,7 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 
 		// 推荐码
 		String referraCode = request.getParameter("referraCode");
+		
 
 		if (!checkParams(commodityType, commodityId, saleCount, amount) || Integer.valueOf(saleCount) <= 0) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
@@ -66,31 +60,26 @@ public class CreateOrderProcessor extends BaseApiProcessor {
 			return;
 		}
 
-		ShopMessageVo<String> messageVo = null;
-		// 提货卡订单
-		if (commodityType.equals("1")) {
-			messageVo = cardOrderApi.createPuCardOrder(Long.valueOf(commodityId), Integer.valueOf(saleCount),
-					Integer.valueOf(commodityType), new BigDecimal(amount), Long.valueOf(memberId), remark, addressId);
-		} else if (commodityType.equals("3")) {
-			// 零售商品订单
-			CreateCommodityOrderParamsVo params = new CreateCommodityOrderParamsVo();
-			params.setCommodityType(Integer.valueOf(commodityType));
-			params.setCommodityId(Long.parseLong(commodityId));
-			params.setSaleCount(Integer.valueOf(saleCount));
-			params.setAmount(new BigDecimal(amount));
-			params.setMemberId(Long.parseLong(memberId));
-			params.setRemark(remark);
-			if (ProUtility.isNotNull(addressId)) {
-				params.setAddressId(Long.parseLong(addressId));
-			}
-			if (StringUtils.isNotBlank(walletAddress)) {
-				params.setWalletAddress(walletAddress);
-			}
-			if (StringUtils.isNotBlank(referraCode)) {
-				params.setReferraCode(referraCode);
-			}
-			messageVo = commodityOrderApi.createOrder(params);
+		//参数
+		CreateCommodityOrderParamsVo params = new CreateCommodityOrderParamsVo();
+		params.setCommodityType(Integer.valueOf(commodityType));
+		params.setCommodityId(Long.parseLong(commodityId));
+		params.setSaleCount(Integer.valueOf(saleCount));
+		params.setAmount(new BigDecimal(amount));
+		params.setMemberId(Long.parseLong(memberId));
+		params.setOrderType(1);
+		params.setRemark(remark);
+		if (ProUtility.isNotNull(addressId)) {
+			params.setAddressId(Long.parseLong(addressId));
 		}
+		if (StringUtils.isNotBlank(walletAddress)) {
+			params.setWalletAddress(walletAddress);
+		}
+		if (StringUtils.isNotBlank(referraCode)) {
+			params.setReferraCode(referraCode);
+		}
+		
+		ShopMessageVo<String> messageVo = super.createOrderMain(params);
 
 		if (messageVo != null && messageVo.isResult()) {
 			sender.put("orderNo", messageVo.getT());

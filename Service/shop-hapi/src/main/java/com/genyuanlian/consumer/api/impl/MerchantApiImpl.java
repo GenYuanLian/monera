@@ -11,7 +11,9 @@ import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.IMerchantApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopComment;
@@ -24,6 +26,8 @@ import com.genyuanlian.consumer.shop.model.ShopProductCalcForce;
 import com.genyuanlian.consumer.shop.model.ShopProductChainComputer;
 import com.genyuanlian.consumer.shop.model.ShopProductCommon;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
+import com.genyuanlian.consumer.shop.model.ShopWallet;
+import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
 import com.genyuanlian.consumer.shop.vo.CommodityIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.CommodityVo;
 import com.genyuanlian.consumer.shop.vo.IdParamsVo;
@@ -31,6 +35,8 @@ import com.genyuanlian.consumer.shop.vo.MerchantCommodityResponseVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.vo.KeyValuesVo;
 import com.hnair.consumer.dao.service.ICommonService;
+import com.hnair.consumer.utils.DateUtil;
+import com.hnair.consumer.utils.SnoGerUtil;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
 @Component("merchantApi")
@@ -39,6 +45,9 @@ public class MerchantApiImpl implements IMerchantApi {
 
 	@Resource
 	private ICommonService commonService;
+
+	@Resource
+	private IBWSService bwsService;
 
 	@Override
 	public ShopMessageVo<List<ShopMerchant>> getMerchantList(List<Long> ids) {
@@ -184,6 +193,7 @@ public class MerchantApiImpl implements IMerchantApi {
 	}
 
 	@Override
+	@Transactional
 	public ShopMessageVo<Map<String, Object>> getCommodityList(IdParamsVo params) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -195,6 +205,26 @@ public class MerchantApiImpl implements IMerchantApi {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 				return messageVo;
+			}
+
+			// 创建商户bstk钱包
+			ShopWallet wallet = commonService.get(ShopWallet.class, "ownerId", merchant.getId(), "ownerType", 2);
+			if (wallet == null) {
+				// 创建轻钱包（对应BSTK）
+				BWSWalletCreateResponseVo resp1 = bwsService.walletCreate(SnoGerUtil.getUUID(), merchant.getId(), 2);
+				if (resp1 != null) {
+					// 插入 wallet
+					wallet = new ShopWallet();
+					wallet.setOwnerId(merchant.getId());
+					wallet.setOwnerType(2);
+					wallet.setWalletAddress(resp1.getWallet());
+					wallet.setPublicKeyAddr(resp1.getMainAddr());
+					wallet.setTotalIncome(0d);
+					wallet.setTotalExpend(0d);
+					wallet.setBalance(0d);
+					wallet.setCreateTime(DateUtil.getCurrentDateTime());
+					commonService.save(wallet);
+				}
 			}
 
 			String imageDomain = ConfigPropertieUtils.getString("image.server.address");
