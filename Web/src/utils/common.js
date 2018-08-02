@@ -270,6 +270,11 @@ export const valid = {
     const reg = /^([0-9]*)+(.[0-9]{1,2})?$/;
     return reg.test(val);
   },
+  bstkMoney: function(val) {
+    // 金额，最多八位小数
+    const reg = /^([0-9]*)+(.[0-9]{1,8})?$/;
+    return reg.test(val);
+  },
   number: function(val) {
     // 整数数字
     const reg = /^[0-9]*$/;

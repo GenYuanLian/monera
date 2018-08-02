@@ -21,7 +21,7 @@
         <div class="row-key">收货地址</div>
         <div class="row-val">
           <div class="row-val-top">
-            <input type="text" v-model="cityName" @click="clickCity" placeholder="请选择地址省市区/县">
+            <input type="text" v-model="cityName" @click="clickCity" readonly placeholder="请选择地址省市区/县">
           </div>
         </div>
       </div>
@@ -29,7 +29,7 @@
         <div class="row-key">街道信息</div>
         <div class="row-val">
           <div class="row-val-top">
-            <input type="text" v-model="streetName" @click="clickStreet" placeholder="请选择地址街道">
+            <input type="text" v-model="streetName" @click="clickStreet" readonly placeholder="请选择地址街道">
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@
         <div class="row-key">标签</div>
         <div class="row-val">
           <div class="row-val-top">
-            <input type="text" v-model="selectValue" @click="clickSign" placeholder="请选择标签">
+            <input type="text" v-model="selectValue" @click="clickSign" readonly placeholder="请选择标签">
           </div>
         </div>
       </div>
@@ -307,7 +307,7 @@ html,body{
     width:100%;
     height:calc(~"100% - 88px");
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     background-color: #F3F4F6;
     .addr-edit-row{

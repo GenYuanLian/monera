@@ -28,20 +28,32 @@
         <br>
         <br>
         <br>
-        <div>此处为倒计时：<timeOut :overTime="overTime" :overFnc="overFnc"></timeOut></div>
+        <div>此处为倒计时：<timeOut :overTime="overTime" @overFnc="overFnc"></timeOut></div>
+        <br>
+        <div class="height:40px;">提醒弹窗：<input type="button" value="提醒" @click="remaind" /><reminder ref="remind" :remindType="remindType" :remindSth="remindSth" ></reminder></div>
         <br>
         <br>
+        <div class="module-content">
+          <div class="box">
+            <div style="position: relative;">
+              <input id="btn_camera" type="file" accept="image/*" capture="camera" @change="onTake()" value="点击扫描"/>
+            </div>
+          </div>
+        </div>
     </div>
 </template>
 
 <script type="text/ECMAScript-6">
   import Util from '../../assets/js/app-global';
+  import {getUrl} from '../../assets/js/analyticCode';
+  // import llqrcode from '../../assets/js/llqrcode';
   import Uploader from "vue-upload-component";
   import { Clocker, XAddress, ChinaAddressV4Data, Picker, Actionsheet } from 'vux';
   import apiUrl from '@/config/apiUrl.js';
   import msgScroll from '@/components/messageScroll/index';
   import QrCode from '@/components/common/QrCode';
-  import timeOut from '@/components/timeOut/index';
+  import timeOut from '@/components/timeOut';
+  import reminder from '@/components/reminder';
   export default {
     data() {
       return {
@@ -81,7 +93,13 @@
           menu3: "学校"
         },
         shareImg:"",
-        overTime:'200'
+        overTime:1500,
+        remindType:1,
+        remindSth: {
+          phone:"1355261305",
+          activeId:"1",
+          dateArr:["2018-07-20 15:30", "2018-07-20 15:30"]
+        }
       };
     },
     components: {
@@ -92,7 +110,8 @@
       msgScroll,
       Actionsheet,
       QrCode,
-      timeOut
+      timeOut,
+      reminder
     },
     methods: {
       uploadImage(formData) {
@@ -197,6 +216,21 @@
       },
       overFnc:function() {
         alert("倒计时结束！");
+      },
+      remaind:function() {
+        this.$refs.remind.openReminder();
+      },
+      onTake() {
+        var regex = /^http(s)?:\/\/([\w-]+\.)+[\w-]+(\/[\w- ./?%&=]*)?$/;
+        var file = document.getElementById("btn_camera").files[0];
+        getUrl(file, function(url1) {
+          console.log(url1);
+          if(!regex.test(url1)) {
+            alert('识别错误，请重新拍照');
+          } else {
+            window.location.href = url1;
+          }
+        });
       }
     },
     mounted:function() {

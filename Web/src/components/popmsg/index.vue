@@ -215,7 +215,7 @@ import {Hi} from "assets/js/ddbase";
     background-color: #fff;
     font-size:15px;
     color:#333333;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
   }
 

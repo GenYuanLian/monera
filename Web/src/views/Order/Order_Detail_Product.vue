@@ -4,7 +4,7 @@
     <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content" :class="isHaveFooter ? '' : 'no-footer'">
       <div class="order-status" :class="orderStatusBg">
-        <p class="order-detail-status">{{orderStatusHandle(orderMsg.status)}}</p>
+        <p class="order-detail-status">{{orderStatusHandle()}}</p>
         <p class="order-tip">{{orderMsg.status==0 ? '逾期未支付订单将自动取消' : (orderMsg.status==2 ? '30分钟内未完成支付，订单已自动取消' : '')}}</p>
       </div>
       <div class="order-schedule">
@@ -21,15 +21,16 @@
         <div class="paied-top">
           <img class="or-img" :src="orderMsg.description" alt="">
           <div class="or-pro">
-            <p class="pro-detail"><span class="pro-name">{{orderMsg.merchantName}}</span><span class="pro-price fr">{{orderMsg.price}}源点</span></p>
+            <p class="pro-detail"><span class="pro-name">{{orderMsg.merchantName}}</span><span class="pro-price fr">{{orderMsg.price}}{{orderType==1 ? '源点' : 'BSTK'}}</span></p>
             <p class="pro-paied"><span class="paied-card">{{orderMsg.commodityName}}</span><span class="paied-num fr">x{{orderMsg.saleCount}}</span></p>
           </div>
         </div>
         <div class="paied-bot">
           <span>送货费  0</span>
-          <span class="paied-price">实付：{{orderMsg.amount}}源点</span>
+          <span class="paied-price" v-if="orderType==1">实付：{{orderMsg.amount}}源点</span>
+          <span class="paied-price" v-else>{{orderMsg.status < 3 ? ('应付：'+ orderMsg.amount) : ('总付：' + orderMsg.totalAmount)}}BSTK</span>
         </div>
-        <div class="pay-bank" v-if="payExplain||payExplain!=''">
+        <div class="pay-bank" v-if="(payExplain||payExplain!='') && orderType==1">
           <div class="pay-tip"><i class="ico-pay-info"></i>支付提示</div>
           <div class="pay-content" v-html="payExplain"></div>
         </div>
@@ -69,6 +70,10 @@
       </div>
       <div class="order-message">
         <h6>订单信息</h6>
+        <div class="order-row" v-if="orderType != 1">
+          <div class="row-key">保证金</div>
+          <div class="row-val">{{orderMsg.totalAmount - orderMsg.amount}} BSTK</div>
+        </div>
         <div class="order-row" v-if="false">
           <div class="row-key">发送时间</div>
           <div class="row-val">{{new Date(orderMsg.arriveTime)|dateFormat('YYYY-MM-DD HH:mm')}}</div>
@@ -87,7 +92,7 @@
         </div>
       </div>
     </section>
-    <footer class="foot" v-if="orderMsg.status!=4 && orderMsg.status!=7 && orderMsg.status!=8">
+    <footer class="foot" v-if="orderMsg.status!=4 && orderMsg.status!=7 && orderMsg.status!=8&&orderType==1">
       <input v-if="orderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancleOrder">
       <input v-if="orderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="payOrder">
       <input v-if="orderMsg.status==3" class="one-btn" type="button" value="再来一单" @click="buyAgain">
@@ -96,6 +101,12 @@
       <input v-if="orderMsg.status==5" class="one-btn" type="button" value="确认收货" @click="confirmReceipt">
       <input v-if="orderMsg.status==6" class="cancle-btn" type="button" value="去评价" @click="evaluateOrder">
       <input v-if="orderMsg.status==6" class="buy-btn" type="button" value="再来一单" @click="buyAgain">
+    </footer>
+    <footer class="foot" v-if="orderType!=1&&(orderMsg.status==0 || orderMsg.status==1 || orderMsg.status==2||orderMsg.status==5)">
+      <input v-if="orderMsg.status==0" class="cancle-btn" type="button" value="取消订单" @click="cancleOrder">
+      <input v-if="orderMsg.status==0" class="buy-btn" type="button" :value="payTimeOut" @click="saPay">
+      <input v-if="orderMsg.status==1 || orderMsg.status==2" class="one-btn" type="button" value="删除订单" @click="deleteOrder">
+      <input v-if="orderMsg.status==5" class="one-btn" type="button" value="确认收货" @click="confirmReceipt">
     </footer>
   </div>
 </template>
@@ -114,6 +125,7 @@ export default {
         className: "ico-back"
       },
       orderNo:"",
+      orderType:null, // 2-抢购订单  3-竞拍订单
       timerProduct:null,
       payTimeOut:'去支付',
       addressMsg:{
@@ -146,7 +158,9 @@ export default {
     isHaveFooter:function() {
       // TODO 计算content内容高度（当前页是否有button）
       let status = this.orderMsg.status;
-      if(status==0 || status==1 || status==2 || status==3 || status==6) {
+      if((status==0 || status==1 || status==2 || status==3 || status==6) && this.orderType==1) {
+        return true;
+      } else if((status==0 || status==1 || status==2) && this.orderType!=1) {
         return true;
       } else {
         return false;
@@ -168,6 +182,7 @@ export default {
           this.orderMsg = data.cardOrder;
           this.addressMsg = data.delivery;
           this.payExplain = data.payExplain||"";
+          this.orderType = data.cardOrder.orderType;
           this.orderStatusHandle();
           if(this.orderMsg.status == 0) {
             // 待支付
@@ -180,10 +195,10 @@ export default {
         console.log(err);
       });
     },
-    orderStatusHandle:function(status) {
+    orderStatusHandle:function() {
       // TODO 订单状态处理
       // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成，9-用户已删除
-      let _status = Number(status);
+      let _status = Number(this.orderMsg.status);
       let text = '';
       switch (_status) {
       case 0:
@@ -201,7 +216,10 @@ export default {
         text = '已申请退单';
         break;
       case 6:
-        text = '待评价';
+        text = this.orderType!=1 ? '已完成' : '待评价';
+        break;
+      case 9:
+        text = '已退款';
         break;
       case 8:
       default:
@@ -213,7 +231,9 @@ export default {
     payType:function(type) {
       // TODO 支付方式
       let text = '';
-      if(type==1) {
+      if(this.orderType!=1) {
+        text = '钱包';
+      } else if(type==1) {
         text = '微信';
       } else if(type==2) {
         text = '支付宝';
@@ -252,6 +272,16 @@ export default {
       // TODO 去支付
       if(this.orderMsg.surplusPayTime>0) {
         this.$router.push({name:'pay_order', query:{orderNo:this.orderNo}});
+      }
+    },
+    saPay:function() {
+      // TODO 去支付
+      if(this.orderMsg.surplusPayTime>0) {
+        if(this.orderType==2) {
+          this.$router.push({name:'snatch_pay', query:{orderNo:this.orderNo, amount:this.orderMsg.amount}});
+        } else {
+          this.$router.push({name:'auction_pay', query:{orderNo:this.orderNo, amount:this.orderMsg.amount}});
+        }
       }
     },
     cancleOrder: function(orderNo) {
@@ -326,7 +356,7 @@ html,body{
     width:100%;
     height:calc(~"100% - 186px");
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     background-color: #F3F4F6;
     &.no-footer{

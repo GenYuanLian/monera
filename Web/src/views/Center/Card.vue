@@ -196,7 +196,7 @@ html,body{
     }
     .card-box{
       // height: calc(~"100% - 280px");
-      overflow-y: auto;
+      overflow-y: scroll;
       -webkit-overflow-scrolling: touch;
       .card-row{
         width: calc(~"100% - 104px");

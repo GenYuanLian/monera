@@ -180,7 +180,7 @@ html,body{
     width:100%;
     height:100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     background-color: #f3f4f6;
     padding-bottom:90px;
     -webkit-overflow-scrolling: touch;
@@ -274,7 +274,7 @@ html,body{
         height:185px;
         line-height:185px;
         overflow-y: hidden;
-        overflow-x: auto;
+        overflow-x: scroll;
         box-sizing: border-box;
         -webkit-overflow-scrolling: touch;
         .scene-con{

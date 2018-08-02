@@ -122,7 +122,7 @@ export default {
     box-sizing:border-box;
     width:100%;
     height:100%;
-    overflow-y:auto;
+    overflow-y:scroll;
     -webkit-overflow-scrolling: touch;
     padding-bottom:110px;
     .new-row{

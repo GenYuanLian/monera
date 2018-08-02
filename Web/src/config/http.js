@@ -28,7 +28,7 @@ axios.defaults.baseURL = env.API_SERVER;
 // POST传参序列化
 axios.interceptors.request.use((config) => {
   let oldParams = config.data;
-  let device = {type: '', deviceModel: '', deviceName: ''};
+  let device = {type: '0', deviceModel: '', deviceName: ''};
   if(config.data&&config.data["formFile"]) {
     let param = new FormData();
     param.append('file', config.data["formFile"]);

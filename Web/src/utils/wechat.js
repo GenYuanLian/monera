@@ -1,6 +1,6 @@
 import wx from 'weixin-js-sdk';
 import apiUrl from "@/config/apiUrl.js";
-import { versions } from '@/utils/common.js';
+import { showMsg } from '@/utils/common.js';
 export default {
   wxChat : ($vue, param) => {
     let appId = "";
@@ -28,7 +28,7 @@ export default {
           signature: res.data.signature, // 必填，签名
           jsApiList: [
             'onMenuShareAppMessage', 'onMenuShareTimeline',
-            'onMenuShareQQ', 'onMenuShareQZone'
+            'onMenuShareQQ', 'onMenuShareQZone', 'scanQRCode'
           ]
         });
         wx.error(function (res) {
@@ -61,7 +61,7 @@ export default {
             success: function (res) {
               // 用户确认分享后执行的回调函数
               console.log("分享给朋友成功返回的信息为:", res);
-              showMsg(JSON.stringify(options));
+              showMsg("分享成功!");
             },
             cancel: function (res) {
               // 用户取消分享后执行的回调函数
@@ -77,6 +77,7 @@ export default {
             success: function (res) {
               // 用户确认分享后执行的回调函数
               console.log("分享到QQ好友成功返回的信息为:", res);
+              showMsg("分享成功!");
             },
             cancel: function (res) {
               // 用户取消分享后执行的回调函数
@@ -92,6 +93,7 @@ export default {
             success: function (res) {
               // 用户确认分享后执行的回调函数
               console.log("分享到QQ空间成功返回的信息为:", res);
+              showMsg("分享成功!");
             },
             cancel: function (res) {
               // 用户取消分享后执行的回调函数
@@ -104,6 +106,17 @@ export default {
       }
     }).catch((err) => {
       console.log(err);
+    });
+  },
+  wxScanQr: function(callFun) {
+    wx.scanQRCode({
+      needResult: 1, // 默认为0，扫描结果由微信处理，1则直接返回扫描结果，
+      scanType: ["qrCode"], // 可以指定扫二维码还是一维码，默认二者都有
+      success: function (res) {
+        var result = res.resultStr;
+        console.log("扫描结果："+result);
+        if(callFun) callFun(result);
+      }
     });
   },
   wxJsPay: function($vue, param = {}, success, fail) {

@@ -33,9 +33,9 @@
               <p class="nav-title"><span>提货卡({{cardCount}})张</span><span class="card"><i class="ico-arrow-r"></i></span></p>
               <p class="acc-total">{{cardBalance}} 源点</p>
             </div>
-            <div class="card-acc">
+            <div class="card-acc" @click="walletClick">
               <p class="nav-title"><span>钱包</span><span class="card-account"><i class="ico-arrow-r"></i></span></p>
-              <p class="acc-total">{{cardBalance}} BSTK</p>
+              <p class="acc-total">{{bstkBalance}} BSTK</p>
             </div>
           </div>
         </div>
@@ -103,6 +103,7 @@ export default {
       userPhone: "",
       cardCount: 0,
       cardBalance: 0.00,
+      bstkBalance: 0.00,
       isLogin: false
     };
   },
@@ -136,6 +137,14 @@ export default {
       //TODO 提货卡
       if(this.isLogin) {
         this.$router.push("card");
+      } else {
+        showMsg("请先登录");
+      }
+    },
+    walletClick: function() {
+      //TODO 我的钱包
+      if(this.isLogin) {
+        this.$router.push("wallet_mine");
       } else {
         showMsg("请先登录");
       }
@@ -211,6 +220,7 @@ export default {
           this.userPhone = res.data.info.mobile;
           this.cardCount = res.data.info.cardCount;
           this.cardBalance = res.data.info.sumBalance;
+          this.bstkBalance = res.data.info.bstkBalance;
           this.saveUserInfo(res.data.info);
           this.initWxChat();
         } else {

@@ -250,8 +250,7 @@ html,body{
     box-sizing:border-box;
     width:100%;
     height:100%;
-    overflow-x: hidden;
-    overflow-y: hidden;
+    overflow: hidden;
     background-color: #f3f4f6;
     padding-bottom:90px;
     .merchant-bg{
@@ -336,7 +335,7 @@ html,body{
       width:100%;
       height:100%;
       overflow-x: hidden;
-      overflow-y: auto;
+      overflow-y: scroll;
       -webkit-overflow-scrolling: touch;
       padding-bottom:400px;
     }

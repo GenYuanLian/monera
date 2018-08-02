@@ -293,7 +293,7 @@ html,body{
     width:100%;
     height:100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     background-color: #f3f4f6;
     padding-bottom:180px;
     -webkit-overflow-scrolling: touch;

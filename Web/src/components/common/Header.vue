@@ -6,7 +6,7 @@
         <a href="javascript:;" v-text="left.label"></a>
       </div>
       <div class="head-title" v-text="title"></div>
-      <div class="head-r" @click="rightFn">
+      <div id="btnRight" class="head-r" @click="rightFn">
         <a href="javascript:;" v-text="right.label"></a>
         <span v-if="right.className!=''"><i :class="right.className"></i></span>
       </div>

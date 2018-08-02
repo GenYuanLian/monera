@@ -231,7 +231,7 @@ html,body{
     width:100%;
     height:calc(~"100% - 186px");
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     background-color: #F3F4F6;
     &.no-footer{

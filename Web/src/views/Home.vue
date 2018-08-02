@@ -280,12 +280,15 @@ html,body{
     height: 100%;
     padding-bottom:118px;
     background-color: #F3F4F6;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     .home-swiper{
       margin-top: 86px;
       width: 100%;
       height: 360px;
+      .vux-swiper{
+        height: 360px !important;
+      }
     }
     .home-dots{
       a{
@@ -325,7 +328,7 @@ html,body{
         }
       }
       .act-panic{
-        width:335px;
+        width:48%;
         height:260px;
         float:left;
         img{
@@ -343,9 +346,9 @@ html,body{
         }
       }
       .act-auction{
-        width:335px;
+        width:48%;
         height:260px;
-        margin-left:355px;
+        float:right;
         img{
           width:100%;
           height:100%;
@@ -404,18 +407,20 @@ html,body{
           }
         }
         .act-auction{
-          width:335px;
+          width:48%;
           height:260px;
           float:left;
+          border-radius: 10px;
           img{
             width:100%;
             height:100%;
           }
         }
         .act-panic{
-          width:335px;
+          width:48%;
           height:260px;
-          margin-left:355px;
+          float:right;
+          border-radius: 10px;
           img{
             width:100%;
             height:100%;

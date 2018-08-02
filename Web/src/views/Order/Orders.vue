@@ -4,20 +4,23 @@
     <Header :border="true" :title="headTitle" :left="headLeft" ></Header>
     <section class="content" v-show="ordersList&&ordersList.length>0">
       <Scroller ref="scroller" height="-92px" lock-x :scrollbar-y=false v-model="status" :pullup-config="pullupConfig" @on-pullup-loading="onPullup" :use-pullup="usePullup">
+        <!-- 当时抢购商品时 或是竞拍商品时  第一行需要加上  待支付： -->
         <div class="order-row-box">
           <div class="order-row" v-for="(order,index) in ordersList" :key="index">
             <div class="or-top">
               <span class="or-time">{{new Date(order.createTime)|dateFormat('YYYY-MM-DD HH:mm')}}</span>
-              <span class="or-status">{{orderStatusHandle(order.status)}}</span>
+              <span class="or-status">{{orderStatusHandle(order.status, order.orderType)}}</span>
             </div>
-            <div class="or-center" @click="jumpOrderDetail(order.commodityType, order.orderNo)">
+            <div class="or-center" @click="jumpOrderDetail(order.commodityType, order.orderNo, order.orderType)">
               <img class="or-img" :src="order.description" alt="">
               <div class="or-pro">
-                <p class="pro-detail"><span class="pro-name">{{order.merchantName}}</span><span v-if="order.commodityType==1" class="pro-price fr">&yen;{{order.amount}}</span><span v-else class="pro-price fr">{{order.amount}}源点</span></p>
-                <p class="pro-paied"><span class="paied-card">{{order.commodityName}}</span><span class="paied-num fr">x{{order.saleCount}}</span></p>
+                <p class="pro-detail"><span v-if="order.orderType==1" class="pro-name">{{order.merchantName}}</span><span v-if="order.orderType!==1">{{order.orderType==2 ? '抢购' : '竞拍'}}</span>
+                <span v-if="order.orderType==1 && order.commodityType==1" class="pro-price fr">&yen;{{order.amount}}</span><span v-if="order.orderType==1 && order.commodityType!=1" class="pro-price fr">{{order.amount}}源点</span><span v-if="order.orderType!=1 && order.status==0" class="pro-price fr">待支付：{{order.amount}}BSTK</span></p>
+                <p class="pro-amount" v-if="order.orderType!==1"><span class="pro-price fr">总金额：{{order.totalAmount}}BSTK</span></p>
+                <p class="pro-paied"><span class="paied-card fl">{{order.commodityName}}</span><span class="paied-num fr">x{{order.saleCount}}</span></p>
               </div>
             </div>
-            <div class="or-btn" v-if="order.commodityType==1">
+            <div class="or-btn" v-if="order.orderType==1 && order.commodityType==1">
               <span v-if="order.status==0" class="or-tip" @timeOut="timeOut(order.surplusPayTime, order.timer)">{{order.timer}}</span>
               <input v-if="order.status==0" type="button" value="去支付" @click="goPay(order.orderNo)">
               <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
@@ -27,7 +30,7 @@
               <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
               <!-- <input v-if="order.commodityType!=1&&order.status==3" type="button" value="申请退单"> -->
             </div>
-            <div class="or-btn" v-else>
+            <div class="or-btn"  v-if="order.orderType==1 && order.commodityType!=1">
               <span v-if="order.status==0" class="or-tip" @timeOut="timeOut(order.surplusPayTime, order.timer)">{{order.timer}}</span>
               <input v-if="order.status==0" type="button" value="去支付" @click="goPay(order.orderNo)">
               <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
@@ -37,6 +40,17 @@
               <input v-if="order.status==2" type="button" value="重新下单" @click="reorderClick(order.merchantId,order.merchType)">
               <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
               <!-- <input v-if="order.commodityType!=1&&order.status==3" type="button" value="申请退单"> -->
+              <input v-if="order.status==5" class="btn-primary"  type="button" value="确认收货" @click="confirmReceipt(order.orderNo)">
+            </div>
+            <div class="or-btn"  v-if="order.orderType==2 && (order.status==0 || order.status==1||order.status==2||order.status==5)">
+              <input v-if="order.status==0" type="button" value="去支付" @click="snatchPay(order.orderNo, order.amount)">
+              <input v-if="order.status==0" type="button" value="取消订单" @click="cancelOrder(order.orderNo)">
+              <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
+              <input v-if="order.status==5" class="btn-primary"  type="button" value="确认收货" @click="confirmReceipt(order.orderNo)">
+            </div>
+            <div class="or-btn"  v-if="order.orderType==3 && (order.status==0 || order.status==1||order.status==2||order.status==5)">
+              <input v-if="order.status==0" type="button" value="去支付" @click="auctionPay(order.orderNo, order.amount)">
+              <input v-if="order.status==1||order.status==2" class="evalue-btn" type="button" value="删除订单" @click="deleteOrder(order.orderNo)">
               <input v-if="order.status==5" class="btn-primary"  type="button" value="确认收货" @click="confirmReceipt(order.orderNo)">
             </div>
           </div>
@@ -114,7 +128,7 @@ export default {
         this.$refs.scroller.disablePullup();
       }
     },
-    orderStatusHandle:function(status) {
+    orderStatusHandle:function(status, orderType) {
       // TODO 订单状态处理
       // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成，9-用户已删除
       let _status = Number(status);
@@ -138,7 +152,10 @@ export default {
         text = '已发货';
         break;
       case 6:
-        text = '待评价';
+        text = orderType!=1 ? '已完成' : '待评价';
+        break;
+      case 9:
+        text = '已退款';
         break;
       case 8:
       default:
@@ -202,13 +219,21 @@ export default {
         time--;
       }, 1000);
     },
-    jumpOrderDetail:function(commodityType, orderNo) {
+    jumpOrderDetail:function(commodityType, orderNo, orderType) {
       // TODO 跳转至订单详情页面
-      if(commodityType == 1) {
+      if(orderType == 1 && commodityType == 1) {
         this.$router.push({name:'order_detail_card', query:{orderNo:orderNo}});
       } else {
         this.$router.push({name:'order_detail_product', query:{orderNo:orderNo}});
       }
+    },
+    snatchPay: function(orderNo, amount) {
+      //TODO 抢购订单去支付
+      this.$router.push({name:'snatch_pay', query:{orderNo:orderNo, amount:amount}});
+    },
+    auctionPay: function(orderNo) {
+      //TODO 竞拍订单去支付
+      this.$router.push({name:'auction_pay', query:{orderNo:orderNo, amount:amount}});
     },
     goPay: function(orderNo) {
       //TODO 去支付
@@ -305,7 +330,7 @@ html,body{
     width:100%;
     height: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     background-color: #f3f4f6;
     padding-bottom:180px;
@@ -336,7 +361,6 @@ html,body{
         }
         .or-center{
           padding: 20px 0 20px 0;
-          border-bottom: 1px solid #efefef; /*no*/
           overflow: hidden;
           .or-img{
             display: block;
@@ -357,15 +381,33 @@ html,body{
               font-size: 30px;
               color: #333;
             }
+            .pro-amount{
+              height: 24px;
+              line-height: 24px;
+              font-size: 24px;
+              color: #999;
+              margin-bottom: 12px;
+            }
             .pro-paied{
-              height: 45px;
-              line-height: 45px;
+              height: 30px;
+              line-height: 30px;
               font-size: 26px;
               color: #999999;
+              margin-top: 6px;
+              .paied-card{
+                display: block;
+                width: 380px;
+                height: 30px;
+                line-height: 30px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
             }
           }
         }
         .or-btn{
+          border-top: 1px solid #efefef; /*no*/
           height: 100px;
           line-height: 100px;
           .or-tip{

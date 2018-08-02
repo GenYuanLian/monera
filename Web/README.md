@@ -20,5 +20,7 @@ npm run prod
 # build for production with minification
 npm run build
 
+# build for test with minification
+npm run build:test
 
 ```

@@ -95,7 +95,7 @@ html,body{
   background-color: #F3F4F6;
   .content{
     height: calc(~"100% - 90px");
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     .card-box{
       padding: 50px 50px 0;

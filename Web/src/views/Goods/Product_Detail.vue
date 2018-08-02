@@ -275,7 +275,7 @@ html,body{
     width:100%;
     height: calc(~"100% - 180px");
     background-color: #F3F4F6;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     .pro-swiper{
       width: 100%;

@@ -136,7 +136,7 @@ html,body{
     height: calc(~"100% - 90px");
     .card-box{
       height: 100%;
-      overflow-y: auto;
+      overflow-y: scroll;
       -webkit-overflow-scrolling: touch;
       &>div:first-child{
         margin-top: 40px;
