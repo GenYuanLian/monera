@@ -2,15 +2,12 @@ package com.genyuanlian.consumer.processor;
 
 import java.math.BigDecimal;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
-import com.genyuanlian.consumer.shop.api.ICardOrderApi;
-import com.genyuanlian.consumer.shop.api.ICommodityOrderApi;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.constant.ErrorCodeEnum;

@@ -1,1 +1,10 @@
-${name}
+<html>
+<head>
+  <title>Welcome!</title>
+</head>
+<body>
+  <p>${userId}</p>
+  <p>${userName}</p>
+  <p>${age}</p>
+</body>
+</html>

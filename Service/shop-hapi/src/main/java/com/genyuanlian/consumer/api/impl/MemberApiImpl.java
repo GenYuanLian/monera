@@ -1186,7 +1186,7 @@ public class MemberApiImpl implements IMemberApi {
 			return messageVo;
 		}
 		resultMap.put("流水号", bill.getTransactionNo());
-		// 操作类型：1-充值；2-提现；3-保证金；4-消费；
+		// 操作类型：1-充值；2-提现；3-保证金；4-消费；5-算力包收益
 		switch (bill.getBusinessType()) {
 		case 1:
 			resultMap.put("类型", "转入");
@@ -1200,9 +1200,12 @@ public class MemberApiImpl implements IMemberApi {
 		case 4:
 			resultMap.put("类型", "消费");
 			break;
+		case 5:
+			resultMap.put("类型", "算力包收益");
+			break;
 		}
 
-		resultMap.put("余额", bill.getBalance());
+		resultMap.put("余额", bill.getBalance().toString() + " BSTK");
 		resultMap.put("备注", bill.getRemark());
 		resultMap.put("时间", DateUtil.getDateTime(bill.getCreateTime()));
 		resultMap1.put("list", resultMap);

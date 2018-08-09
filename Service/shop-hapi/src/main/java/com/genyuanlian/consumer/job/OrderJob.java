@@ -7,18 +7,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.genyuanlian.consumer.service.IBWSService;
+import com.genyuanlian.consumer.shop.api.IAuctionApi;
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
 import com.genyuanlian.consumer.shop.api.ISystemApi;
 import com.genyuanlian.consumer.shop.model.ShopBstkRecord;
@@ -28,6 +29,10 @@ import com.genyuanlian.consumer.shop.model.ShopOrderCalcForceTask;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
+import com.genyuanlian.consumer.shop.model.ShopWallet;
+import com.genyuanlian.consumer.shop.model.ShopWalletBill;
+import com.genyuanlian.consumer.shop.utils.BWSProperties;
+import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
 import com.genyuanlian.consumer.shop.vo.ReceiverVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.vo.SaleVolumeConfigVo;
@@ -39,7 +44,6 @@ import com.hnair.consumer.utils.SnoGerUtil;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
 
 @Component
-@EnableScheduling
 @Lazy(false)
 public class OrderJob {
 
@@ -65,6 +69,9 @@ public class OrderJob {
 	@Resource
 	private ICardOrderApi cardOrderApi;
 
+	@Resource
+	private IAuctionApi auctionApi;
+
 	/**
 	 * 过期未支付
 	 */
@@ -76,21 +83,34 @@ public class OrderJob {
 
 		logger.info("取消过期未支付订单任务-开始");
 
+		// 超时半小时未支付即过期的订单
 		// 等待时长，单位分钟
 		Integer time = ConfigPropertieUtils.getLong("wait_pay_time", 30l).intValue();
 
 		Date lastCreateTime = DateUtil.addMinute(new Date(), 0 - time);
 
-		// 超时未支付订单
-		List<Integer> existOrderTypes=new ArrayList<>();
+		List<Integer> existOrderTypes = new ArrayList<>();
 		existOrderTypes.add(1);
 		existOrderTypes.add(2);
 		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "lastCreateTime", lastCreateTime,
-				"status", 0,"existOrderTypes",existOrderTypes);
+				"status", 0, "existOrderTypes", existOrderTypes);
+
 		if (orders != null && orders.size() > 0) {
 			ShopMessageVo<String> result = cardOrderApi.cancelPuCardOrder(orders, 2, "过期未支付");
 			if (!result.isResult()) {
-				logger.error("取消过期微支付订单失败，原因：" + result.getErrorMessage());
+				logger.error("取消过期未支付订单失败，原因：" + result.getErrorMessage());
+			}
+		}
+
+		// 超时72小时未支付即过期的订单
+		lastCreateTime = DateUtil.addMinute(new Date(), -1 * 72 * 60);
+		orders = null;
+		orders = commonService.getList(ShopOrderDetail.class, "lastCreateTime", lastCreateTime, "status", 0,
+				"orderType", 3);
+		if (orders != null && orders.size() > 0) {
+			ShopMessageVo<String> result = auctionApi.cancelAuctionOrder(orders);
+			if (!result.isResult()) {
+				logger.error("取消过期未支付竞拍订单失败，原因：" + result.getErrorMessage());
 			}
 		}
 
@@ -184,21 +204,35 @@ public class OrderJob {
 		try {
 			// 从配置文件读取钱包告警余额
 			BigDecimal walletAccount = new BigDecimal(ConfigPropertieUtils.getString("bws.walletAccount"));
-			String walletId = ConfigPropertieUtils.getString("bws.serverwallet");
+			String calcForceWalletId = ConfigPropertieUtils.getString("cal.force.serverwallet");
+			String yuandianWalletId = ConfigPropertieUtils.getString("bws.serverwallet");
+			String bstkWalletId = ConfigPropertieUtils.getString("bstk.serverwallet");
 			String receiverPhoneNumber = ConfigPropertieUtils.getString("bws.walletWarnReceiveMobile");
 
 			// 查询余额
 			String transNo = SnoGerUtil.getUUID();
-			BigDecimal walletBalance = bwsService.walletBalance(transNo, walletId);
-			logger.info("钱包余额：" + walletBalance);
-			logger.info("钱包限定额：" + walletAccount);
-			if (walletBalance.compareTo(walletAccount) < 0) {
-				// 发送短信
-				ArrayList<String> params = new ArrayList<>();
-				params.add(walletBalance.toString());
-				QCloudSMSUtils.sendSMS("walletBalanceAlert", receiverPhoneNumber, params);
+			BigDecimal calcForceWalletBalance = bwsService.walletBalance(transNo, calcForceWalletId);
+			BigDecimal yuandianWalletBalance = bwsService.walletBalance(transNo, yuandianWalletId);
+			BigDecimal bstkWalletBalance = bwsService.walletBalance(transNo, bstkWalletId);
+			logger.info("算力包钱包余额：" + calcForceWalletBalance);
+			logger.info("源点钱包余额：" + yuandianWalletBalance);
+			logger.info("BSTK钱包余额：" + bstkWalletBalance);
+			// 商户BSTK钱包余额
+			List<ShopWallet> wallets = commonService.getList(ShopWallet.class, "ownerType", 2);
+			BigDecimal totalBalance = BigDecimal.ZERO;
+			for (ShopWallet w : wallets) {
+				BigDecimal balan = bwsService.walletBalance(SnoGerUtil.getUUID(), w.getWalletAddress());
+				totalBalance = totalBalance.add(balan);
 			}
 
+			logger.info("合计商户BSTK钱包余额：" + totalBalance);
+			logger.info("算力包钱包限定额：" + walletAccount);
+			if (calcForceWalletBalance.compareTo(walletAccount) < 0) {
+				// 发送短信
+				ArrayList<String> params = new ArrayList<>();
+				params.add(calcForceWalletBalance.toString());
+				QCloudSMSUtils.sendSMS("walletBalanceAlert", receiverPhoneNumber, params);
+			}
 		} catch (Exception ex) {
 			logger.error("查询钱包余额告警失败", ex);
 		}
@@ -375,6 +409,19 @@ public class OrderJob {
 				return;
 			}
 
+			// bstk钱包集合
+			List<Long> existOwnerIds = new ArrayList<>();
+			existOwnerIds = tasks.stream().map(i -> i.getMemberId()).distinct().collect(Collectors.toList());
+			List<ShopWallet> bstkWallets = commonService.getList(ShopWallet.class, "ownerType", 1, "existOwnerIds",
+					existOwnerIds);
+			Map<Long, ShopWallet> bstkWalletMap = new HashMap<Long, ShopWallet>();
+			for (ShopWallet w : bstkWallets) {
+				bstkWalletMap.put(w.getOwnerId(), w);
+			}
+
+			// 钱包余额map
+			HashMap<Long, BigDecimal> balancesMap = new HashMap<Long, BigDecimal>();
+
 			// 下一个收益日任务集合
 			List<ShopOrderCalcForceTask> nextTasks = commonService.getList(ShopOrderCalcForceTask.class, "planDate",
 					taskNextDate);
@@ -388,6 +435,7 @@ public class OrderJob {
 			String transactionNo;
 			String taskIds = "";
 			for (ShopOrderCalcForceTask task : tasks) {
+				Long key = task.getMemberId();
 				BigDecimal income = BigDecimal.valueOf(task.getBstkAmount());
 				ReceiverVo vo = new ReceiverVo();
 				vo.setAmount(income);
@@ -395,6 +443,38 @@ public class OrderJob {
 				receivers.add(vo);
 
 				taskIds = taskIds + task.getId().toString() + ",";
+
+				BigDecimal curBalance = BigDecimal.ZERO;
+				if (balancesMap.containsKey(key)) {
+					curBalance = balancesMap.get(key);
+				} else {
+					if (bstkWalletMap.containsKey(key)) {
+						ShopWallet wallet = bstkWalletMap.get(key);
+						curBalance = bwsService.walletBalance(SnoGerUtil.getUUID(), wallet.getWalletAddress());
+					} else {
+						// 创建轻钱包（对应BSTK）
+						BWSWalletCreateResponseVo resp1 = bwsService.walletCreate(SnoGerUtil.getUUID(), key, 1);
+						if (resp1 != null) {
+							// 插入 wallet
+							ShopWallet wallet = new ShopWallet();
+							wallet.setOwnerId(key);
+							wallet.setOwnerType(1);
+							wallet.setWalletAddress(resp1.getWallet());
+							wallet.setPublicKeyAddr(resp1.getMainAddr());
+							wallet.setTotalIncome(0d);
+							wallet.setTotalExpend(0d);
+							wallet.setBalance(0d);
+							wallet.setCreateTime(DateUtil.getCurrentDateTime());
+							commonService.save(wallet);
+							bstkWalletMap.put(key, wallet);
+						}
+						curBalance = BigDecimal.ZERO;
+					}
+				}
+
+				BigDecimal newBalance = curBalance.add(income);
+				task.setBalance(newBalance);
+				balancesMap.put(key, newBalance);
 			}
 
 			// 调用钱包接口
@@ -402,7 +482,8 @@ public class OrderJob {
 				transactionNo = "模拟数据不真实发放BSTK";
 			} else {
 				// 上传BSTK钱包交易，合并发放收益
-				transactionNo = bwsService.walletRecharge(SnoGerUtil.getUUID(), receivers, "taskId集合：" + taskIds);
+				transactionNo = bwsService.walletRecharge(BWSProperties.P_CALCFORCE, SnoGerUtil.getUUID(), receivers,
+						"taskId集合：" + taskIds);
 			}
 
 			for (ShopOrderCalcForceTask task : tasks) {
@@ -441,6 +522,28 @@ public class OrderJob {
 
 					// 注意对象默认值的问题
 					commonService.update(upService);
+
+					ShopWallet wallet = bstkWalletMap.get(task.getMemberId());
+					if (task.getPublicKeyAddr().equals(wallet.getPublicKeyAddr())) // 收益地址是bstk钱包地址
+					{
+						// 保存钱包明细记录
+						ShopWalletBill bill = new ShopWalletBill();
+						// 收入
+						bill.setAmount(task.getBstkAmount());
+						bill.setBalance(task.getBalance().doubleValue());
+						bill.setBusinessId(task.getId());
+						bill.setBusinessType(5);
+						bill.setBusinessTitle("算力包收益");
+						bill.setCreateTime(DateUtil.getCurrentDateTime());
+						bill.setInOutType(1); // 收支类型：1-收入；2-支出
+						bill.setOwnerId(task.getMemberId());
+						bill.setOwnerType(1);
+						bill.setRemark(service.getCommodityName());
+						bill.setTransactionNo(transactionNo);
+						bill.setWalletId(wallet.getId());
+
+						commonService.save(bill);
+					}
 
 					// 发送消息
 					systemApi.sendSystemMessage(task.getMemberId(), 1, "收益通知", "算力包" + service.getPackageNo() + "-"

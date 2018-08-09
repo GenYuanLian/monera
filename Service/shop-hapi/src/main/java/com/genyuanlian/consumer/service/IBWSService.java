@@ -29,31 +29,34 @@ public interface IBWSService {
 	/**
 	 * 钱包充值
 	 * 
+	 * @param 平台钱包类型:p_yuandian,p_bstk,p_calcforce
 	 * @param walletMainAddress
 	 * @param amount
 	 * @return
 	 */
-	public String walletRecharge(String transactionNo, Long businessId, Long ownerId, int ownerType,
+	public String walletRecharge(String p_type, String transactionNo, Long businessId, Long ownerId, int ownerType,
 			String walletMainAddress, BigDecimal amount);
 
 	/**
 	 * 同时将多个地址进行充值或者发放收益
 	 * 
+	 * @param 平台钱包类型:p_yuandian,p_bstk,p_calcforce
 	 * @param receivers
 	 * @param remark
 	 * @return
 	 */
-	public String walletRecharge(String transactionNo, List<ReceiverVo> receivers, String remark);
+	public String walletRecharge(String p_type, String transactionNo, List<ReceiverVo> receivers, String remark);
 
 	/**
 	 * 钱包消费
 	 * 
+	 * @param 平台钱包类型:p_yuandian,p_bstk,p_calcforce
 	 * @param walletId
 	 * @param amount
 	 * @return
 	 */
-	public String walletConsume(String transactionNo, Long businessId, Long ownerId, int ownerType, String walletId,
-			BigDecimal amount);
+	public String walletConsume(String p_type, String transactionNo, Long businessId, Long ownerId, int ownerType,
+			String walletId, BigDecimal amount);
 
 	/**
 	 * 钱包消费

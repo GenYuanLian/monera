@@ -20,6 +20,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.alibaba.fastjson.JSON;
 import com.genyuanlian.consumer.service.IBWSService;
+import com.genyuanlian.consumer.service.IMemberSecurityService;
 import com.genyuanlian.consumer.shop.api.ICommodityOrderApi;
 import com.genyuanlian.consumer.shop.api.ISystemApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
@@ -45,6 +46,7 @@ import com.genyuanlian.consumer.shop.model.ShopProductChainComputer;
 import com.genyuanlian.consumer.shop.model.ShopProductCommon;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
+import com.genyuanlian.consumer.shop.utils.BWSProperties;
 import com.genyuanlian.consumer.shop.vo.CommodityOrderPayParamsVo;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
@@ -66,6 +68,9 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 
 	@Resource
 	private IBWSService bwsService;
+
+	@Resource
+	private IMemberSecurityService memberSecurityService;
 
 	@Resource
 	private ISystemApi systemApi;
@@ -103,9 +108,9 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			return messageVo;
 		}
 
-		BigDecimal price=BigDecimal.ZERO;
-		
-		if (params.getOrderType()==1) {
+		BigDecimal price = BigDecimal.ZERO;
+
+		if (params.getOrderType() == 1) {
 			if (commodity.getStatus() != 1) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorCode().toString());
 				messageVo.setMessage(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorMessage());
@@ -124,8 +129,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			}
 
 			// 价格验证
-			price = BigDecimal.valueOf(commodity.getPrice())
-					.multiply(BigDecimal.valueOf(commodity.getDiscount()));
+			price = BigDecimal.valueOf(commodity.getPrice()).multiply(BigDecimal.valueOf(commodity.getDiscount()));
 			if (price.multiply(new BigDecimal(params.getSaleCount())).compareTo(params.getAmount()) != 0) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
@@ -146,10 +150,9 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 					return messageVo;
 				}
 			}
-		}else {
-			price=params.getTotalAmount();
+		} else {
+			price = params.getTotalAmount().divide(BigDecimal.valueOf(params.getSaleCount().longValue()));
 		}
-		
 
 		if (commodity.getCommodityType() == 3) {
 			// 若购买产品为算力服务，则钱包公钥地址必填
@@ -212,6 +215,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		// 创建订单
 		ShopOrder order = new ShopOrder();
 		order.setAmount(params.getAmount().doubleValue());
+		order.setTotalAmount(params.getTotalAmount()!=null?params.getTotalAmount():params.getAmount());
 		order.setCreateTime(now);
 		order.setMemberId(params.getMemberId());
 		order.setOrderNo(ShopUtis.buildOrderNo("com"));
@@ -221,6 +225,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		descMap.put("commodityName", commodity.getTitle());
 		descMap.put("saleCount", params.getSaleCount().toString());
 		descMap.put("amount", params.getAmount().toString());
+		descMap.put("totalAmount", (params.getTotalAmount()!=null?params.getTotalAmount():params.getAmount()).toString());
 		descMap.put("logo", commodity.getLogo());
 		order.setDescription(JSON.toJSONString(descMap));
 		// 不能自己推荐自己
@@ -250,6 +255,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		orderDetail.setAmount(params.getAmount().doubleValue());
 		orderDetail.setStatus(0);
 		orderDetail.setRemark(params.getRemark());
+		orderDetail.setPresentCount(commodity.getPresentRate() * params.getSaleCount()); // 计算赠送数量
 		// 不能自己推荐自己
 		if (params.getReferraId() > 0 && params.getReferraId() != params.getMemberId()) {
 			orderDetail.setReferraCode(params.getReferraCode());
@@ -263,17 +269,17 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			orderDetail.setCalcForceOrder(1);
 		}
 		orderDetail.setTraceSource(commodity.getTraceSource());
-		if (params.getOrderType()!=1) {
+		if (params.getOrderType() != 1) {
 			orderDetail.setActivityId(params.getActivityId());
 			orderDetail.setOrderType(params.getOrderType());
 			orderDetail.setTotalAmount(params.getTotalAmount());
 			orderDetail.setCommodityName(params.getActivityTitel());
-		}else {
+		} else {
 			orderDetail.setTotalAmount(params.getAmount());
 			orderDetail.setOrderType(1);
 			orderDetail.setCommodityName(commodity.getTitle());
 		}
-		
+
 		commonService.save(orderDetail);
 
 		// 创建订单产品快照
@@ -338,25 +344,14 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 				+ "订单编号:" + params.getOrderNo() + "商品名称:" + params.getSubject());
 
 		// 检查支付密码
-		ShopMemberSecurity memberSecurity = commonService.get(ShopMemberSecurity.class, "memberId",
-				params.getMemberId());
-		if (memberSecurity == null) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800014.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800014.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return messageVo;
-		}
-		if (!params.getPayPwd().equals(memberSecurity.getPayPwd())) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800015.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800015.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+		ShopMessageVo<String> verifyMsg = memberSecurityService.payPwdVerify(params.getMemberId(), params.getPayPwd());
+		if (!verifyMsg.isResult()) {
+			messageVo = verifyMsg;
 			return messageVo;
 		}
 
 		// 检查订单
-		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", params.getOrderNo());
+		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", params.getOrderNo(),"memberId",params.getMemberId());
 		if (order == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorMessage());
@@ -559,6 +554,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			// 结清，修改订单状态
 			orderDetail.setBalancePayment(new Double(0)); // 所需尾款为0
 			orderDetail.setStatus(orderStatus);
+			orderDetail.setPayTime(DateUtil.getCurrentDateTime());
 			commonService.update(orderDetail);
 
 			// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
@@ -599,7 +595,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 				commonService.update(merWallet);
 
 				// 上传BSTK钱包交易，商户账户增加
-				bwsService.walletRecharge(transNo2, orderDetail.getId(), merchant.getId(), 2,
+				bwsService.walletRecharge(BWSProperties.P_YUANDIAN, transNo2, orderDetail.getId(), merchant.getId(), 2,
 						merWallet.getPublicKeyAddr(), merwaitPayAmount);
 			}
 		} else {
@@ -608,13 +604,14 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 					(BigDecimal.valueOf(commodity.getPriceTotal()).subtract(BigDecimal.valueOf(commodity.getPrice()))
 							.multiply(BigDecimal.valueOf(orderDetail.getSaleCount()))).doubleValue());
 			orderDetail.setStatus(orderStatus);
+			orderDetail.setPayTime(DateUtil.getCurrentDateTime());
 			commonService.update(orderDetail);
 		}
 
 		// 上传BSTK钱包交易,会员账户扣除
 		if (waitPayAmount.compareTo(BigDecimal.ZERO) > 0) {
-			bwsService.walletConsume(transNo1, orderDetail.getId(), params.getMemberId(), 1, wallet.getWalletAddress(),
-					waitPayAmount);
+			bwsService.walletConsume(BWSProperties.P_YUANDIAN, transNo1, orderDetail.getId(), params.getMemberId(), 1,
+					wallet.getWalletAddress(), waitPayAmount);
 		}
 
 		messageVo.setResult(true);
@@ -628,7 +625,8 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 	 * 
 	 * @param orderDetails
 	 */
-	private void CreateOrderCalcForce(List<ShopOrderDetail> orderDetails) {
+	@Override
+	public void CreateOrderCalcForce(List<ShopOrderDetail> orderDetails) {
 		if (orderDetails == null || orderDetails.size() == 0) {
 			return;
 		}
@@ -649,8 +647,8 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			ShopProductCalcForce product = commonService.get(commodity.getProductId(), ShopProductCalcForce.class);
 			Date now = new Date();
 
-			// 按购买商品数量循环
-			for (int i = 0; i < detail.getSaleCount(); i++) {
+			// 按购买商品数量+赠送数量循环
+			for (int i = 0; i < detail.getSaleCount() + detail.getPresentCount(); i++) {
 				// 保存算力包
 				ShopOrderCalcForce service = new ShopOrderCalcForce();
 				String prefix = DateUtil.getCurrentSimpleDate2();
@@ -971,7 +969,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			commonService.update(merWallet);
 
 			// 上传BSTK商户钱包交易
-			bwsService.walletRecharge(transNo, confirmPaymentLog.getId(), merchant.getId(), 2,
+			bwsService.walletRecharge(BWSProperties.P_YUANDIAN, transNo, confirmPaymentLog.getId(), merchant.getId(), 2,
 					merWallet.getPublicKeyAddr(), merwaitPayAmount);
 		}
 

@@ -21,7 +21,9 @@ import com.alibaba.fastjson.JSON;
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
 import com.genyuanlian.consumer.shop.api.IPuCardApi;
+import com.genyuanlian.consumer.shop.api.IWalletApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
+import com.genyuanlian.consumer.shop.model.ShopAuction;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopBstkWalletBill;
 import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
@@ -33,9 +35,12 @@ import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopOrderSplitBill;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
+import com.genyuanlian.consumer.shop.utils.BWSProperties;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
+import com.genyuanlian.consumer.shop.vo.WalletIncomeReq;
+import com.genyuanlian.consumer.shop.vo.WalletIncomeVo;
 import com.genyuanlian.consumer.utils.ShopUtis;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
@@ -49,6 +54,9 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 
 	@Resource
 	private ICommonService commonService;
+
+	@Resource
+	private IWalletApi walletApi;
 
 	@Resource
 	private IPuCardApi puCardApi;
@@ -72,11 +80,14 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			return result;
 		}
 
+		//价格
+		BigDecimal price=BigDecimal.ZERO;
+		
 		// 查询该类型未售提货卡
 		List<ShopPuCard> puCards = puCardApi.getPuCardsByTypeId(req.getCommodityId(), 0, 2, 6);
 
-		if (req.getOrderType().intValue()==1) {
-			//普通订单验证，活动订单不验证库存和价格
+		if (req.getOrderType().intValue() == 1) {
+			// 普通订单验证，活动订单不验证库存和价格
 			// 库存验证
 			if (puCards == null || puCards.size() < req.getSaleCount()) {
 				result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200000.getErrorCode().toString());
@@ -87,7 +98,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			}
 
 			// 价格验证
-			BigDecimal price = BigDecimal.valueOf(puCardType.getPrice());
+			price = BigDecimal.valueOf(puCardType.getPrice());
 			BigDecimal discount = BigDecimal.valueOf(puCardType.getDiscount());
 			if (price.multiply(discount).multiply(new BigDecimal(req.getSaleCount())).compareTo(req.getAmount()) != 0) {
 				result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
@@ -96,8 +107,10 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return result;
 			}
+		}else {
+			price = req.getTotalAmount().divide(BigDecimal.valueOf(req.getSaleCount().longValue()));
 		}
-		
+
 		Date now = DateUtil.getCurrentDateTime();
 
 		// 获取提货卡商户信息
@@ -106,6 +119,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		// 创建订单
 		ShopOrder order = new ShopOrder();
 		order.setAmount(req.getAmount().doubleValue());
+		order.setTotalAmount(req.getTotalAmount()!=null?req.getTotalAmount():req.getAmount());
 		order.setCreateTime(now);
 		order.setMemberId(req.getMemberId());
 		order.setOrderNo(ShopUtis.buildOrderNo("puc"));
@@ -114,6 +128,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		descMap.put("commodityName", puCardType.getTitle());
 		descMap.put("saleCount", req.getSaleCount().toString());
 		descMap.put("amount", req.getAmount().toString());
+		descMap.put("totalAmount", (req.getTotalAmount()!=null?req.getTotalAmount():req.getAmount()).toString());
 		descMap.put("logo", puCardType.getPic());
 		order.setDescription(JSON.toJSONString(descMap));
 
@@ -132,20 +147,19 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		}
 		orderDetail.setCommodityId(puCards.get(0).getCardTypeId()); // 提货卡存提货卡类型Id
 		orderDetail.setCommodityType(puCards.get(0).getCommodityType());
-		orderDetail.setPrice(puCards.get(0).getPrice());
+		orderDetail.setPrice(price.doubleValue());
 		orderDetail.setSaleCount(req.getSaleCount());
 		orderDetail.setAmount(req.getAmount().doubleValue());
 		// 是否需要发送快递(1-是;0-否)
 		orderDetail.setIsSendMail(0);
 		orderDetail.setStatus(0);
 		orderDetail.setRemark(req.getRemark());
-		if (req.getOrderType().intValue()!=1) {
+		if (req.getOrderType().intValue() != 1) {
 			orderDetail.setActivityId(req.getActivityId());
 			orderDetail.setOrderType(req.getOrderType());
 			orderDetail.setTotalAmount(req.getTotalAmount());
-			orderDetail.setPrice(req.getTotalAmount().doubleValue());
 			orderDetail.setCommodityName(req.getActivityTitel());
-		}else {
+		} else {
 			orderDetail.setTotalAmount(req.getAmount());
 			orderDetail.setOrderType(1);
 			orderDetail.setCommodityName(puCards.get(0).getTitle());
@@ -153,7 +167,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		commonService.save(orderDetail);
 
 		// 配送信息
-		if (req.getAddressId()!=null && req.getAddressId().longValue() > 0) {
+		if (req.getAddressId() != null && req.getAddressId().longValue() > 0) {
 			ShopMemberAddress address = commonService.get(req.getAddressId(), ShopMemberAddress.class);
 			if (address != null && address.getMemberId() == req.getMemberId()) // 是当前用户地址
 			{
@@ -323,16 +337,6 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			return messageVo;
 		}
 
-		// 检查商户钱包
-		ShopBstkWallet wallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(), "ownerType", 2);
-		if (wallet == null) {
-			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
-			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
-			// 手动回滚当前事物
-			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-			return messageVo;
-		}
-
 		// 检查订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
 		for (ShopOrderDetail detail : orderDetails) {
 			if (detail.getStatus() != 3 && detail.getStatus() != 5) {
@@ -344,50 +348,101 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			}
 		}
 
-		// 修改订单详情
-		List<Long> orderDetailIds = new ArrayList<Long>();
-		for (ShopOrderDetail orderDetail : orderDetails) {
-			orderDetail.setStatus(6); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
-			commonService.update(orderDetail);
+		// 活动订单走这个分支
+		if (orderDetails.get(0).getOrderType().intValue() != 1) { // 订单类型：1-普通订单；2-抢购订单；3-竞拍订单
+			ShopAuction auction = null;
+			if (orderDetails.get(0).getOrderType().intValue() == 3) {
+				// 竞拍活动
+				auction = commonService.get(orderDetails.get(0).getActivityId(), ShopAuction.class);
+			}
+			// 向商户付款参数
+			WalletIncomeReq merchantIncomeReq = new WalletIncomeReq();
+			merchantIncomeReq.setOwnerType(2);
+			merchantIncomeReq.setRemark("");
+			// 要保存的付款记录
+			List<WalletIncomeVo> merchantIncomes = new ArrayList<>();
+			for (ShopOrderDetail orderDetail : orderDetails) {
+				orderDetail.setStatus(6); // 已收货
+				commonService.update(orderDetail);
 
-			orderDetailIds.add(orderDetail.getId());
-		}
+				WalletIncomeVo incomeVo = new WalletIncomeVo();
+				if (orderDetail.getOrderType().intValue() == 3) {
+					incomeVo.setAmount(orderDetail.getTotalAmount()
+							.subtract(BigDecimal.valueOf(auction.getCommission())).doubleValue());
+				} else {
+					incomeVo.setAmount(orderDetail.getTotalAmount().doubleValue());
+				}
 
-		BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
-		BigDecimal waitPayAmount = BigDecimal.valueOf(order.getAmount()).subtract(merchantFee);
+				incomeVo.setBusinessId(orderDetail.getId());
+				incomeVo.setBusinessTitle("抢购付款");
+				incomeVo.setBusinessType(4);
+				incomeVo.setOwnerId(orderDetail.getMerchantId());
+				merchantIncomes.add(incomeVo);
+			}
+			merchantIncomeReq.setIncomes(merchantIncomes);
+			// 向商户转款
+			ShopMessageVo<String> merchantIncomeMsg = walletApi.walletIncome(merchantIncomeReq);
+			if (!merchantIncomeMsg.isResult()) {
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return merchantIncomeMsg;
+			}
+		} else { // 普通订单走这个分支
+			// 检查商户钱包
+			ShopBstkWallet wallet = commonService.get(ShopBstkWallet.class, "ownerId", merchant.getId(), "ownerType",
+					2);
+			if (wallet == null) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
 
-		// 平台返利,上传BSTK钱包交易，平台返利发放,会员合并发放
-		List<ShopOrderSplitBill> bills = commonService.getListBySqlId(ShopOrderSplitBill.class,
-				"selectByOrderDetailIds", "list", orderDetailIds);
-		super.platformRebate(bills);
+			// 修改订单详情
+			List<Long> orderDetailIds = new ArrayList<Long>();
+			for (ShopOrderDetail orderDetail : orderDetails) {
+				orderDetail.setStatus(6); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
+				commonService.update(orderDetail);
 
-		// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
-		if (waitPayAmount.compareTo(BigDecimal.ZERO) > 0) {
-			// 记录商户钱包交易记录
-			String transNo = SnoGerUtil.getUUID();
-			ShopBstkWalletBill record = new ShopBstkWalletBill();
-			record.setWalletId(wallet.getId());
-			record.setOwnerId(merchant.getId());
-			record.setOwnerType(2);
-			record.setBillType(10);// 流水类型：1-提货卡激活，2-提货卡购买，3-提货卡支付，4-注册邀请返利，5-商品分享返利，6-代理返利，7-余额支付，8-微信支付，9-支付宝支付，10-销售收入
-			record.setTitle("销售收入");
-			record.setAmount(waitPayAmount.doubleValue());
-			record.setTransactionNo(transNo);
-			record.setBusinessId(order.getId());
-			record.setCreateTime(new Date());
-			record.setRemark("businessId为订单Id");
-			commonService.save(record);
+				orderDetailIds.add(orderDetail.getId());
+			}
 
-			// 更新商户钱包余额
-			BigDecimal amount = BigDecimal.valueOf(wallet.getTotelAmount()).add(waitPayAmount);
-			wallet.setTotelAmount(amount.doubleValue());
-			BigDecimal balance = BigDecimal.valueOf(wallet.getBalance()).add(waitPayAmount);
-			wallet.setBalance(balance.doubleValue());
-			commonService.update(wallet);
+			BigDecimal merchantFee = new BigDecimal(ConfigPropertieUtils.getString("bstk_wallet_merchant_fee"));
+			BigDecimal waitPayAmount = BigDecimal.valueOf(order.getAmount()).subtract(merchantFee);
 
-			// 上传BSTK商户钱包交易
-			bwsService.walletRecharge(transNo, order.getId(), merchant.getId(), 2, wallet.getPublicKeyAddr(),
-					waitPayAmount);
+			// 平台返利,上传BSTK钱包交易，平台返利发放,会员合并发放
+			List<ShopOrderSplitBill> bills = commonService.getListBySqlId(ShopOrderSplitBill.class,
+					"selectByOrderDetailIds", "list", orderDetailIds);
+			super.platformRebate(bills);
+
+			// 平台转账给商户，每笔交易手续费商户承担，平台少付给商户的手续费金额配置
+			if (waitPayAmount.compareTo(BigDecimal.ZERO) > 0) {
+				// 记录商户钱包交易记录
+				String transNo = SnoGerUtil.getUUID();
+				ShopBstkWalletBill record = new ShopBstkWalletBill();
+				record.setWalletId(wallet.getId());
+				record.setOwnerId(merchant.getId());
+				record.setOwnerType(2);
+				record.setBillType(10);// 流水类型：1-提货卡激活，2-提货卡购买，3-提货卡支付，4-注册邀请返利，5-商品分享返利，6-代理返利，7-余额支付，8-微信支付，9-支付宝支付，10-销售收入
+				record.setTitle("销售收入");
+				record.setAmount(waitPayAmount.doubleValue());
+				record.setTransactionNo(transNo);
+				record.setBusinessId(order.getId());
+				record.setCreateTime(new Date());
+				record.setRemark("businessId为订单Id");
+				commonService.save(record);
+
+				// 更新商户钱包余额
+				BigDecimal amount = BigDecimal.valueOf(wallet.getTotelAmount()).add(waitPayAmount);
+				wallet.setTotelAmount(amount.doubleValue());
+				BigDecimal balance = BigDecimal.valueOf(wallet.getBalance()).add(waitPayAmount);
+				wallet.setBalance(balance.doubleValue());
+				commonService.update(wallet);
+
+				// 上传BSTK商户钱包交易
+				bwsService.walletRecharge(BWSProperties.P_YUANDIAN, transNo, order.getId(), merchant.getId(), 2,
+						wallet.getPublicKeyAddr(), waitPayAmount);
+			}
 		}
 
 		messageVo.setResult(true);

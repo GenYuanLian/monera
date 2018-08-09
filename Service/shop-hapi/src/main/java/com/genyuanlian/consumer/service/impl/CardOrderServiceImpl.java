@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import com.genyuanlian.consumer.shop.model.ShopOrderCommoditySnapshot;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.model.ShopPuCard;
 import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
+import com.genyuanlian.consumer.shop.utils.BWSProperties;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.dao.spi.ICommonDao;
 import com.hnair.consumer.utils.DateUtil;
@@ -54,10 +56,6 @@ public class CardOrderServiceImpl implements ICardOrderService {
 			return result;
 		}
 
-		for (ShopOrderDetail orderDetail : orderDetails) {
-			orderDetail.setStatus(6);
-			commonDao.update(orderDetail);
-		}
 		Long memberId = orderDetails.get(0).getMemberId();
 		ShopBstkWallet bstkWallet = commonDao.get(ShopBstkWallet.class, "ownerId", memberId, "ownerType", 1);
 		if (bstkWallet == null) {
@@ -73,6 +71,14 @@ public class CardOrderServiceImpl implements ICardOrderService {
 		Double amount = new Double(0);
 
 		Date now = DateUtil.getCurrentDateTime();
+		
+		//修改订单明细
+		for (ShopOrderDetail orderDetail : orderDetails) {
+			orderDetail.setStatus(6);
+			orderDetail.setPayTime(DateUtil.getCurrentDateTime());
+			commonDao.update(orderDetail);
+		}
+		
 		ShopOrderDetail orderDetail = orderDetails.get(0);
 		if (orderDetail.getCommodityType() == 1) {
 			// 要取消的订单中提货卡订单详情id集合
@@ -146,8 +152,14 @@ public class CardOrderServiceImpl implements ICardOrderService {
 
 		// 上传BSTK钱包交易，会员账户增加
 		if (amount > 0) {
-			bwsService.walletRecharge(transNo, orderDetail.getOrderId(), memberId, 1, bstkWallet.getPublicKeyAddr(),
-					BigDecimal.valueOf(amount));
+			String msg = bwsService.walletRecharge(BWSProperties.P_YUANDIAN, transNo, orderDetail.getOrderId(),
+					memberId, 1, bstkWallet.getPublicKeyAddr(), BigDecimal.valueOf(amount));
+			if (StringUtils.isBlank(msg)) {
+				result.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorCode().toString());
+				result.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200004.getErrorMessage());
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return result;
+			}
 		}
 
 		result.setResult(true);

@@ -29,6 +29,7 @@ import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
 import com.genyuanlian.consumer.shop.model.ShopWallet;
+import com.genyuanlian.consumer.shop.utils.BWSProperties;
 import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
 import com.genyuanlian.consumer.shop.vo.CommodityIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.CommodityVo;
@@ -258,8 +259,8 @@ public class PuCardApiImpl implements IPuCardApi {
 		commonService.save(record);
 
 		// 上传BSTK钱包交易
-		bwsService.walletRecharge(transNo, card.getId(), memberId, 1, bstkWallet.getPublicKeyAddr(),
-				BigDecimal.valueOf(card.getTotelValue()));
+		bwsService.walletRecharge(BWSProperties.P_YUANDIAN, transNo, card.getId(), memberId, 1,
+				bstkWallet.getPublicKeyAddr(), BigDecimal.valueOf(card.getTotelValue()));
 
 		return messageVo;
 	}

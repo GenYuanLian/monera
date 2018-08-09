@@ -22,7 +22,7 @@ import com.hnair.consumer.utils.IpUtils;
 import com.hnair.consumer.utils.LoginCheck;
 import com.hnair.consumer.utils.ResultSender;
 
-//@LoginCheck
+@LoginCheck
 @Component("hapiweixinpayH5processor")
 public class WeixinpayH5Processor extends BaseApiProcessor {
 
