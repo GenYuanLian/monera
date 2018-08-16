@@ -16,11 +16,24 @@
 		<result column="refund_count" property="refundCount" jdbcType="INTEGER" />
 		<result column="amount" property="amount" jdbcType="DECIMAL" />
 		<result column="description" property="description" jdbcType="VARCHAR" />
-		<result column="commodity_snapshot_id" property="commoditySnapshotId" jdbcType="BIGINT" />
 		<result column="status" property="status" jdbcType="INTEGER" />
 		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="present_count" property="presentCount" jdbcType="INTEGER" />
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="pay_time" property="payTime" jdbcType="TIMESTAMP" />
 		<result column="cancel_reason" property="cancelReason" jdbcType="VARCHAR" />
+		<result column="trace_source" property="traceSource" jdbcType="VARCHAR" />
+		<result column="delete_flag" property="deleteFlag" jdbcType="INTEGER" />
+		<result column="is_send_mail" property="isSendMail" jdbcType="INTEGER" />
+		<result column="calc_force_order" property="calcForceOrder" jdbcType="INTEGER" />
+		<result column="public_key_addr" property="publicKeyAddr" jdbcType="VARCHAR" />
+		<result column="calc_force_task_flag" property="calcForceTaskFlag" jdbcType="INTEGER" />
+		<result column="balance_payment" property="balancePayment" jdbcType="DECIMAL" />
+		<result column="referra_code" property="referraCode" jdbcType="VARCHAR" />
+		<result column="referra_id" property="referraId" jdbcType="BIGINT" />	
+		<result column="total_amount" property="totalAmount" jdbcType="DECIMAL" />
+		<result column="order_type" property="orderType" jdbcType="INTEGER" />
+		<result column="activity_id" property="activityId" jdbcType="BIGINT" />
 	</resultMap>
 	<sql id="Base_Where">
 		<if test="id != null"> and id= #{id}</if>	
@@ -37,12 +50,56 @@
 		<if test="refundCount != null"> and refund_count= #{refundCount}</if>	
 		<if test="amount != null"> and amount= #{amount}</if>	
 		<if test="description != null and description !=''"> and description= #{description}</if>
-		<if test="commoditySnapshotId != null"> and commodity_snapshot_id= #{commoditySnapshotId}</if>	
 		<if test="status != null"> and status= #{status}</if>	
 		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="presentCount != null"> and present_count= #{presentCount}</if>
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
-		<if test="cancel_reason != null and cancel_reason !=''"> and cancel_reason= #{cancelReason}</if>
+		<if test="payTime != null"> and pay_time= #{payTime}</if>
+		<if test="startDate != null">and create_time <![CDATA[>=]]> #{startDate}</if>
+		<if test="endDate != null">and create_time <![CDATA[<=]]> #{endDate}</if>
+		<if test="cancelReason != null and cancelReason !=''"> and cancel_reason= #{cancelReason}</if>
 		<if test="lastCreateTime !=null">and create_time <![CDATA[<]]> #{lastCreateTime}</if>
+		<if test="traceSource != null and traceSource !=''"> and trace_source= #{traceSource}</if>
+		<if test="deleteFlag != null"> and delete_flag= #{deleteFlag}</if>
+		<if test="isSendMail != null"> and is_send_mail= #{isSendMail}</if>
+		<if test="calcForceOrder != null"> and calc_force_order= #{calcForceOrder}</if>
+		<if test="publicKeyAddr != null and publicKeyAddr !=''"> and public_key_addr= #{publicKeyAddr}</if>
+		<if test="calcForceTaskFlag != null"> and calc_force_task_flag= #{calcForceTaskFlag}</if>
+		<if test="balancePayment != null"> and balance_payment= #{balancePayment}</if>
+		<if test="balancePaymentGreaterThan0 != null"> and balance_payment <![CDATA[>]]> #{balancePaymentGreaterThan0}</if>		
+		<if test="referraCode != null and referraCode !=''"> and referra_code= #{referraCode}</if>
+		<if test="referraId != null"> and referra_id= #{referraId}</if>	
+		<if test="beginStatus !=null "> and status <![CDATA[>]]> #{beginStatus}</if>	
+		<if test="totalAmount != null"> and total_amount= #{totalAmount}</if>
+		<if test="orderType != null"> and order_type= #{orderType}</if>
+		<if test="activityId != null"> and activity_id= #{activityId}</if>	
+		<if test="existOrderTypes != null">
+			<if test="existOrderTypes.size() > 0">
+				and order_type in
+				<foreach item="item" index="index" collection="existOrderTypes" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="existOrderTypes.size() == 0"> and 1=0</if>
+		</if>
+		<if test="notExistOrderStatus != null">
+			<if test="notExistOrderStatus.size() > 0">
+				and status not in
+				<foreach item="item" index="index" collection="notExistOrderStatus" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="notExistOrderStatus.size() == 0"> and 1=0</if>
+		</if>
+		<if test="existActivityId != null">
+			<if test="existActivityId.size() > 0">
+				and activity_id in
+				<foreach item="item" index="index" collection="existActivityId" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="existActivityId.size() == 0"> and 1=0</if>
+		</if>
 	</sql>
 	<sql id="Base_Column_List">
 		id ,
@@ -58,12 +115,25 @@
 		sale_count ,
 		refund_count ,
 		amount ,
+		is_send_mail ,
+		calc_force_order,
+		public_key_addr,
+		calc_force_task_flag,
+		balance_payment,
 		description ,
-		commodity_snapshot_id ,
 		status ,
 		remark ,
+		referra_code ,
+		referra_id ,
+		present_count,		
 		create_time ,
-		cancel_reason
+		pay_time ,
+		cancel_reason,
+		trace_source,
+		delete_flag,
+		total_amount,
+		order_type,
+		activity_id
 	</sql>
 
 	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
@@ -95,13 +165,26 @@
 			<if test="price != null">price,</if>	
 			<if test="saleCount != null">sale_count,</if>	
 			<if test="refundCount != null">refund_count,</if>	
-			<if test="amount != null">amount,</if>	
+			<if test="amount != null">amount,</if>
+			<if test="isSendMail != null">is_send_mail,</if>	
+			<if test="calcForceOrder != null">calc_force_order,</if>
+			<if test="publicKeyAddr != null and publicKeyAddr !=''">public_key_addr,</if>
+			<if test="calcForceTaskFlag != null">calc_force_task_flag,</if>
+			<if test="balancePayment != null">balance_payment,</if>	
 			<if test="description != null and description !=''">description,</if>
-			<if test="commoditySnapshotId != null">commodity_snapshot_id,</if>	
 			<if test="status != null">status,</if>	
 			<if test="remark != null and remark !=''">remark,</if>
+			<if test="referraCode != null and referraCode !=''">referra_code,</if>
+			<if test="referraId != null">referra_id,</if>	
+			<if test="presentCount != null">present_count,</if>					
 			<if test="createTime != null">create_time,</if>	
+			<if test="payTime != null">pay_time,</if>	
 			<if test="cancelReason != null and cancelReason !=''">cancel_reason,</if>
+			<if test="traceSource != null and traceSource !=''">trace_source,</if>
+			<if test="deleteFlag != null and deleteFlag !=''">delete_flag,</if>
+			<if test="totalAmount != null">total_amount,</if>
+			<if test="orderType != null">order_type,</if>
+			<if test="activityId != null">activity_id,</if>	
 		</trim>
 		<trim prefix="values (" suffix=")" suffixOverrides=",">
 			<if test="id != null">
@@ -143,11 +226,23 @@
 			<if test="amount != null">
 				#{amount,jdbcType=DECIMAL},
 			</if>
+			<if test="isSendMail != null">
+				#{isSendMail,jdbcType=INTEGER},
+			</if>			
+			<if test="calcForceOrder != null">
+				#{calcForceOrder,jdbcType=INTEGER},
+			</if>
+			<if test="publicKeyAddr != null and publicKeyAddr !=''">
+				#{publicKeyAddr,jdbcType=VARCHAR},
+			</if>
+			<if test="calcForceTaskFlag != null">
+				#{calcForceTaskFlag,jdbcType=INTEGER},
+			</if>
+			<if test="balancePayment != null">
+				#{balancePayment,jdbcType=DECIMAL},
+			</if>
 			<if test="description != null and description !=''">
 				#{description,jdbcType=VARCHAR},
-			</if>
-			<if test="commoditySnapshotId != null">
-				#{commoditySnapshotId,jdbcType=BIGINT},
 			</if>
 			<if test="status != null">
 				#{status,jdbcType=INTEGER},
@@ -155,11 +250,38 @@
 			<if test="remark != null and remark !=''">
 				#{remark,jdbcType=VARCHAR},
 			</if>
+			<if test="referraCode != null and referraCode !=''">
+				#{referraCode,jdbcType=VARCHAR},
+			</if>
+			<if test="referraId != null">
+				#{referraId,jdbcType=BIGINT},
+			</if>	
+			<if test="presentCount != null">
+				#{presentCount,jdbcType=INTEGER},
+			</if>						
 			<if test="createTime != null">
 				#{createTime,jdbcType=TIMESTAMP},
 			</if>
+			<if test="payTime != null">
+				#{payTime,jdbcType=TIMESTAMP},
+			</if>
 			<if test="cancelReason != null and cancelReason !=''">
 				#{cancel_reason,jdbcType=VARCHAR},
+			</if>
+			<if test="traceSource != null and traceSource !=''">
+				#{traceSource,jdbcType=VARCHAR},
+			</if>			
+			<if test="deleteFlag != null">
+				#{delete_flag,jdbcType=INTEGER},
+			</if>	
+			<if test="totalAmount != null">
+				#{totalAmount,jdbcType=DECIMAL},
+			</if>	
+			<if test="orderType != null">
+				#{orderType,jdbcType=INTEGER},
+			</if>	
+			<if test="activityId != null">
+				#{activityId,jdbcType=BIGINT},
 			</if>
 		</trim>
 	</insert>
@@ -203,11 +325,23 @@
 			<if test="amount != null">
 				amount= #{amount,jdbcType=DECIMAL},
 			</if>
+			<if test="isSendMail != null">
+				is_send_mail= #{isSendMail,jdbcType=INTEGER},
+			</if>			
+			<if test="calcForceOrder != null">
+				calc_force_order= #{calcForceOrder,jdbcType=INTEGER},
+			</if>
+			<if test="publicKeyAddr != null and publicKeyAddr !=''">
+				public_key_addr= #{publicKeyAddr,jdbcType=VARCHAR},
+			</if>
+			<if test="calcForceTaskFlag != null">
+				calc_force_task_flag= #{calcForceTaskFlag,jdbcType=INTEGER},
+			</if>
+			<if test="balancePayment != null">
+				balance_payment= #{balancePayment,jdbcType=DECIMAL},
+			</if>
 			<if test="description != null and description !=''">
 				description= #{description,jdbcType=VARCHAR},
-			</if>
-			<if test="commoditySnapshotId != null">
-				commodity_snapshot_id= #{commoditySnapshotId,jdbcType=BIGINT},
 			</if>
 			<if test="status != null">
 				status= #{status,jdbcType=INTEGER},
@@ -215,11 +349,38 @@
 			<if test="remark != null and remark !=''">
 				remark= #{remark,jdbcType=VARCHAR},
 			</if>
+			<if test="referraCode != null and referraCode !=''">
+				referra_code= #{referraCode,jdbcType=VARCHAR},
+			</if>
+			<if test="referraId != null">
+				referra_id= #{referraId,jdbcType=BIGINT},
+			</if>	
+			<if test="presentCount != null">
+				present_count= #{presentCount,jdbcType=INTEGER},
+			</if>					
 			<if test="createTime != null">
 				create_time= #{createTime,jdbcType=TIMESTAMP},
 			</if>
+			<if test="payTime != null">
+				pay_time= #{payTime,jdbcType=TIMESTAMP},
+			</if>
 			<if test="cancelReason != null and cancelReason !=''">
 				cancel_reason= #{cancelReason,jdbcType=VARCHAR},
+			</if>
+			<if test="traceSource != null and traceSource !=''">
+				trace_source= #{traceSource,jdbcType=VARCHAR},
+			</if>			
+			<if test="deleteFlag != null and deleteFlag !=''">
+				delete_flag= #{deleteFlag,jdbcType=INTEGER},
+			</if>	
+			<if test="totalAmount != null">
+				total_amount= #{totalAmount,jdbcType=DECIMAL},
+			</if>	
+			<if test="orderType != null">
+				order_type= #{orderType,jdbcType=INTEGER},
+			</if>	
+			<if test="activityId != null">
+				activity_id= #{activityId,jdbcType=BIGINT}
 			</if>
 		</set>
 		where
@@ -272,5 +433,59 @@
 		from shop_order_detail
 		WHERE `status`<![CDATA[>=]]>3 and `status`<![CDATA[<=]]>8
 		GROUP BY merchant_id
+	</select>
+	<select id="getPurchasedByMember" resultType="java.lang.Integer" parameterType="map">
+		SELECT IFNULL(SUM(sale_count),0)
+		from shop_order_detail
+		WHERE `status` not in (1,2)
+		<include refid="Base_Where" />
+	</select>
+	<resultMap  id="CmsOrderDetailVoMap" type="com.genyuanlian.consumer.shop.vo.CmsOrderDetailVo">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="member_id" property="memberId" jdbcType="BIGINT" />
+		<result column="memberName" property="memberName" jdbcType="VARCHAR" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+		<result column="order_id" property="orderId" jdbcType="BIGINT" />
+		<result column="order_no" property="orderNo" jdbcType="VARCHAR" />
+		<result column="merchant_id" property="merchantId" jdbcType="BIGINT" />
+		<result column="merchant_name" property="merchantName" jdbcType="VARCHAR" />
+		<result column="commodity_id" property="commodityId" jdbcType="BIGINT" />
+		<result column="commodity_type" property="commodityType" jdbcType="INTEGER" />
+		<result column="commodity_name" property="commodityName" jdbcType="VARCHAR" />
+		<result column="pay_type" property="payType" jdbcType="INTEGER" />
+		<result column="price" property="price" jdbcType="DECIMAL" />
+		<result column="sale_count" property="saleCount" jdbcType="INTEGER" />
+		<result column="refund_count" property="refundCount" jdbcType="INTEGER" />
+		<result column="amount" property="amount" jdbcType="DECIMAL" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="is_send_mail" property="isSendMail" jdbcType="INTEGER" />
+		<result column="calc_force_order" property="calcForceOrder" jdbcType="INTEGER" />
+		<result column="public_key_addr" property="publicKeyAddr" jdbcType="VARCHAR" />
+		<result column="calc_force_task_flag" property="calcForceTaskFlag" jdbcType="INTEGER" />
+		<result column="balance_payment" property="balancePayment" jdbcType="DECIMAL" />
+	</resultMap>
+	
+	<select id="cmsOrderDetails" resultMap="CmsOrderDetailVoMap">
+		SELECT d.*,m.mobile ,m.nick_name as memberName,o.pay_type
+		FROM shop_order_detail d
+		INNER JOIN shop_member m ON d.member_id = m.id
+		INNER JOIN shop_order o ON o.id = d.order_id
+		<if test="activatedCardPay != null">
+		INNER JOIN (SELECT p.order_id from shop_commodity_order_pay p INNER JOIN shop_pu_card c ON p.pu_card_id=c.id WHERE c.type=1) as pc ON pc.order_id=o.id
+		</if>
+		where 1=1
+		<if test="startDate != null">and d.create_time <![CDATA[>=]]> #{startDate}</if>
+		<if test="endDate != null">and d.create_time <![CDATA[<=]]> #{endDate}</if>
+		<if test="orderNo != null and orderNo !=''"> and d.order_no= #{orderNo}</if>
+		<if test="commodityType != null"> and d.commodity_type= #{commodityType}</if>	
+		<if test="status != null"> and d.status= #{status}</if>	
+		<if test="payType != null"> and o.pay_type= #{payType}</if>
+		<if test="excludeMobiles != null">
+			and m.mobile not in
+		<foreach item="item" index="index" collection="excludeMobiles" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+		</if>
 	</select>
 </mapper>

@@ -18,7 +18,9 @@
 		<result column="id_number" property="idNumber" jdbcType="VARCHAR" />
 		<result column="address" property="address" jdbcType="VARCHAR" />
 		<result column="referra_code" property="referraCode" jdbcType="VARCHAR" />
+		<result column="referra_id" property="referraId" jdbcType="BIGINT" />
 		<result column="invitation_code" property="invitationCode" jdbcType="VARCHAR" />
+		<result column="invitation_code_pic" property="invitationCodePic" jdbcType="VARCHAR" />
 		<result column="channel" property="channel" jdbcType="VARCHAR" />
 		<result column="channel_version" property="channelVersion" jdbcType="VARCHAR" />
 		<result column="sign_ip" property="signIp" jdbcType="VARCHAR" />
@@ -43,7 +45,9 @@
 		<if test="idNumber != null and idNumber !=''"> and id_number= #{idNumber}</if>
 		<if test="address != null and address !=''"> and address= #{address}</if>
 		<if test="referraCode != null and referraCode !=''"> and referra_code= #{referraCode}</if>
+		<if test="referraId != null"> and referra_id= #{referraId}</if>
 		<if test="invitationCode != null and invitationCode !=''"> and invitation_code= #{invitationCode}</if>
+		<if test="invitationCodePic != null and invitationCodePic !=''"> and invitation_code_pic= #{invitationCodePic}</if>
 		<if test="channel != null and channel !=''"> and channel= #{channel}</if>
 		<if test="channelVersion != null and channelVersion !=''"> and channel_version= #{channelVersion}</if>
 		<if test="signIp != null and signIp !=''"> and sign_ip= #{signIp}</if>
@@ -68,7 +72,9 @@
 		id_number ,
 		address ,
 		referra_code ,
+		referra_id ,
 		invitation_code ,
+		invitation_code_pic ,
 		channel ,
 		channel_version ,
 		sign_ip ,
@@ -118,7 +124,9 @@
 			<if test="idNumber != null and idNumber !=''">id_number,</if>
 			<if test="address != null and address !=''">address,</if>
 			<if test="referraCode != null and referraCode !=''">referra_code,</if>
+			<if test="referraId != null">referra_id,</if>
 			<if test="invitationCode != null and invitationCode !=''">invitation_code,</if>
+			<if test="invitationCodePic != null and invitationCodePic !=''">invitation_code_pic,</if>
 			<if test="channel != null and channel !=''">channel,</if>
 			<if test="channelVersion != null and channelVersion !=''">channel_version,</if>
 			<if test="signIp != null and signIp !=''">sign_ip,</if>
@@ -175,8 +183,14 @@
 			<if test="referraCode != null and referraCode !=''">
 				#{referraCode,jdbcType=VARCHAR},
 			</if>
+			<if test="referraId != null">
+				#{referraId,jdbcType=BIGINT},
+			</if>			
 			<if test="invitationCode != null and invitationCode !=''">
 				#{invitationCode,jdbcType=VARCHAR},
+			</if>
+			<if test="invitationCodePic != null and invitationCodePic !=''">
+				#{invitationCodePic,jdbcType=VARCHAR},
 			</if>
 			<if test="channel != null and channel !=''">
 				#{channel,jdbcType=VARCHAR},
@@ -248,8 +262,14 @@
 			<if test="referraCode != null and referraCode !=''">
 				referra_code= #{referraCode,jdbcType=VARCHAR},
 			</if>
+			<if test="referraId != null">
+				referra_id= #{referraId,jdbcType=BIGINT},
+			</if>			
 			<if test="invitationCode != null and invitationCode !=''">
 				invitation_code= #{invitationCode,jdbcType=VARCHAR},
+			</if>
+			<if test="invitationCodePic != null and invitationCodePic !=''">
+				invitation_code_pic= #{invitationCodePic,jdbcType=VARCHAR},
 			</if>
 			<if test="channel != null and channel !=''">
 				channel= #{channel,jdbcType=VARCHAR},
@@ -289,6 +309,8 @@
 		<include refid="Base_Column_List" />
 		from shop_member where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">

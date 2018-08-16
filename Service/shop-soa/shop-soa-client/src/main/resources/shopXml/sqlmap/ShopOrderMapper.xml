@@ -7,9 +7,12 @@
 		<result column="order_no" property="orderNo" jdbcType="VARCHAR" />
 		<result column="pay_type" property="payType" jdbcType="INTEGER" />
 		<result column="amount" property="amount" jdbcType="DECIMAL" />
+		<result column="totalAmount" property="totalAmount" jdbcType="DECIMAL" />
 		<result column="description" property="description" jdbcType="VARCHAR" />
 		<result column="remark" property="remark" jdbcType="VARCHAR" />
 		<result column="transaction_no" property="transactionNo" jdbcType="VARCHAR" />
+		<result column="referra_code" property="referraCode" jdbcType="VARCHAR" />
+		<result column="referra_id" property="referraId" jdbcType="BIGINT" />		
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
 	</resultMap>
 	<sql id="Base_Where">
@@ -18,9 +21,12 @@
 		<if test="orderNo != null and orderNo !=''"> and order_no= #{orderNo}</if>
 		<if test="payType != null"> and pay_type= #{payType}</if>	
 		<if test="amount != null"> and amount= #{amount}</if>	
+		<if test="totalAmount != null"> and total_amount= #{totalAmount}</if>	
 		<if test="description != null and description !=''"> and description= #{description}</if>
 		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
 		<if test="transactionNo != null and transactionNo !=''"> and transaction_no= #{transactionNo}</if>
+		<if test="referraCode != null and referraCode !=''"> and referra_code= #{referraCode}</if>
+		<if test="referraId != null"> and referra_id= #{referraId}</if>		
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
 		<if test="lastCreateTime !=null">and create_time <![CDATA[<]]> #{lastCreateTime}</if>
 	</sql>
@@ -30,9 +36,12 @@
 		order_no ,
 		pay_type ,
 		amount ,
+		total_amount ,
 		description ,
 		remark ,
 		transaction_no ,
+		referra_code ,
+		referra_id ,		
 		create_time 
 	</sql>
 
@@ -58,9 +67,12 @@
 			<if test="orderNo != null and orderNo !=''">order_no,</if>
 			<if test="payType != null">pay_type,</if>	
 			<if test="amount != null">amount,</if>	
+			<if test="totalAmount != null">total_amount,</if>	
 			<if test="description != null and description !=''">description,</if>
 			<if test="remark != null and remark !=''">remark,</if>
 			<if test="transactionNo != null and transactionNo !=''">transaction_no,</if>
+			<if test="referraCode != null and referraCode !=''">referra_code,</if>
+			<if test="referraId != null">referra_id,</if>			
 			<if test="createTime != null">create_time,</if>	
 		</trim>
 		<trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -79,6 +91,9 @@
 			<if test="amount != null">
 				#{amount,jdbcType=DECIMAL},
 			</if>
+			<if test="totalAmount != null">
+				#{totalAmount,jdbcType=DECIMAL},
+			</if>
 			<if test="description != null and description !=''">
 				#{description,jdbcType=VARCHAR},
 			</if>
@@ -88,6 +103,12 @@
 			<if test="transactionNo != null and transactionNo !=''">
 				#{transactionNo,jdbcType=VARCHAR},
 			</if>
+			<if test="referraCode != null and referraCode !=''">
+				#{referraCode,jdbcType=VARCHAR},
+			</if>
+			<if test="referraId != null">
+				#{referraId,jdbcType=BIGINT},
+			</if>			
 			<if test="createTime != null">
 				#{createTime,jdbcType=TIMESTAMP},
 			</if>
@@ -110,6 +131,9 @@
 			<if test="amount != null">
 				amount= #{amount,jdbcType=DECIMAL},
 			</if>
+			<if test="totalAmount != null">
+				total_amount= #{totalAmount,jdbcType=DECIMAL},
+			</if>
 			<if test="description != null and description !=''">
 				description= #{description,jdbcType=VARCHAR},
 			</if>
@@ -119,6 +143,12 @@
 			<if test="transactionNo != null and transactionNo !=''">
 				transaction_no= #{transactionNo,jdbcType=VARCHAR},
 			</if>
+			<if test="referraCode != null and referraCode !=''">
+				referra_code= #{referraCode,jdbcType=VARCHAR},
+			</if>
+			<if test="referraId != null">
+				referra_id= #{referraId,jdbcType=BIGINT},
+			</if>			
 			<if test="createTime != null">
 				create_time= #{createTime,jdbcType=TIMESTAMP}
 			</if>
@@ -142,6 +172,8 @@
 		<include refid="Base_Column_List" />
 		from shop_order where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">

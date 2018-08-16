@@ -10,6 +10,8 @@
 		<result column="price" property="price" jdbcType="DECIMAL" />
 		<result column="discount" property="discount" jdbcType="DECIMAL" />
 		<result column="pic" property="pic" jdbcType="VARCHAR" />
+		<result column="act_logo" property="actLogo" jdbcType="VARCHAR" />
+		<result column="act_prd_pic" property="actPrdPic" jdbcType="VARCHAR" />
 		<result column="status" property="status" jdbcType="INTEGER" />
 		<result column="remark" property="remark" jdbcType="VARCHAR" />
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
@@ -23,6 +25,8 @@
 		<if test="price != null"> and price= #{price}</if>	
 		<if test="discount != null"> and discount= #{discount}</if>	
 		<if test="pic != null and pic !=''"> and pic= #{pic}</if>
+		<if test="actLogo != null and actLogo !=''"> and act_logo= #{actLogo}</if>
+		<if test="actPrdPic != null and actPrdPic !=''"> and act_prd_pic= #{actPrdPic}</if>
 		<if test="status != null"> and status= #{status}</if>	
 		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
@@ -36,6 +40,8 @@
 		price ,
 		discount ,
 		pic ,
+		act_logo ,
+		act_prd_pic ,
 		status ,
 		remark ,
 		create_time 
@@ -66,6 +72,8 @@
 			<if test="price != null">price,</if>	
 			<if test="discount != null">discount,</if>	
 			<if test="pic != null and pic !=''">pic,</if>
+			<if test="actLogo != null and actLogo !=''">act_logo,</if>
+			<if test="actPrdPic != null and actPrdPic !=''">act_prd_pic,</if>
 			<if test="status != null">status,</if>	
 			<if test="remark != null and remark !=''">remark,</if>
 			<if test="createTime != null">create_time,</if>	
@@ -95,6 +103,12 @@
 			<if test="pic != null and pic !=''">
 				#{pic,jdbcType=VARCHAR},
 			</if>
+			<if test="actLogo != null and actLogo !=''">
+				#{actLogo,jdbcType=VARCHAR},
+			</if>
+			<if test="actPrdPic != null and actPrdPic !=''">
+				#{actPrdPic,jdbcType=VARCHAR},
+			</if>						
 			<if test="status != null">
 				#{status,jdbcType=INTEGER},
 			</if>
@@ -132,6 +146,12 @@
 			<if test="pic != null and pic !=''">
 				pic= #{pic,jdbcType=VARCHAR},
 			</if>
+			<if test="actLogo != null and actLogo !=''">
+				act_logo= #{actLogo,jdbcType=VARCHAR},
+			</if>
+			<if test="actPrdPic != null and actPrdPic !=''">
+				act_prd_pic= #{actPrdPic,jdbcType=VARCHAR},
+			</if>						
 			<if test="status != null">
 				status= #{status,jdbcType=INTEGER},
 			</if>
@@ -151,6 +171,7 @@
 		<include refid="Base_Column_List" />
 		from shop_pu_card_type where 1=1
 		<include refid="Base_Where" />
+		order by price asc
 	</select>
 	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
 		select count(1) from shop_pu_card_type where 1=1
@@ -161,6 +182,8 @@
 		<include refid="Base_Column_List" />
 		from shop_pu_card_type where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">
@@ -170,6 +193,7 @@
 		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
 			#{item}
 		</foreach>
+		order by price asc
 	</select>
 
 </mapper>

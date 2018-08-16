@@ -9,10 +9,11 @@
 		<result column="business_id" property="businessId" jdbcType="BIGINT" />
 		<result column="call_url" property="callUrl" jdbcType="VARCHAR" />
 		<result column="call_req" property="callReq" jdbcType="VARCHAR" />
-		<result column="call_resp" property="callResp" jdbcType="VARCHAR" />
+		<result column="call_resp" property="callResp" jdbcType="LONGVARCHAR" />
 		<result column="status" property="status" jdbcType="INTEGER" />
 		<result column="retry_count" property="retryCount" jdbcType="INTEGER" />
 		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="transaction_no" property="transactionNo" jdbcType="VARCHAR" />
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
 	</resultMap>
 	<sql id="Base_Where">
@@ -25,8 +26,9 @@
 		<if test="callReq != null and callReq !=''"> and call_req= #{callReq}</if>
 		<if test="callResp != null and callResp !=''"> and call_resp= #{callResp}</if>
 		<if test="status != null"> and status= #{status}</if>	
-		<if test="retryCount != null"> and retry_count= #{retryCount}</if>	
+		<if test="retryCount != null"> and retry_count <![CDATA[>]]> #{retryCount}</if>
 		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
+		<if test="transactionNo != null and transactionNo !=''"> and transaction_no= #{transactionNo}</if>
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
 	</sql>
 	<sql id="Base_Column_List">
@@ -41,6 +43,7 @@
 		status ,
 		retry_count ,
 		remark ,
+		transaction_no ,
 		create_time 
 	</sql>
 
@@ -58,7 +61,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBstkRecord">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBstkRecord" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_bstk_record
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -72,6 +75,7 @@
 			<if test="status != null">status,</if>	
 			<if test="retryCount != null">retry_count,</if>	
 			<if test="remark != null and remark !=''">remark,</if>
+			<if test="transactionNo != null and transactionNo !=''">transaction_no,</if>
 			<if test="createTime != null">create_time,</if>	
 		</trim>
 		<trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -97,7 +101,7 @@
 				#{callReq,jdbcType=VARCHAR},
 			</if>
 			<if test="callResp != null and callResp !=''">
-				#{callResp,jdbcType=VARCHAR},
+				#{callResp,jdbcType=LONGVARCHAR},
 			</if>
 			<if test="status != null">
 				#{status,jdbcType=INTEGER},
@@ -108,6 +112,9 @@
 			<if test="remark != null and remark !=''">
 				#{remark,jdbcType=VARCHAR},
 			</if>
+			<if test="transactionNo != null and transactionNo !=''">
+				#{transactionNo,jdbcType=VARCHAR},
+			</if>			
 			<if test="createTime != null">
 				#{createTime,jdbcType=TIMESTAMP},
 			</if>
@@ -137,7 +144,7 @@
 				call_req= #{callReq,jdbcType=VARCHAR},
 			</if>
 			<if test="callResp != null and callResp !=''">
-				call_resp= #{callResp,jdbcType=VARCHAR},
+				call_resp= #{callResp,jdbcType=LONGVARCHAR},
 			</if>
 			<if test="status != null">
 				status= #{status,jdbcType=INTEGER},
@@ -148,6 +155,9 @@
 			<if test="remark != null and remark !=''">
 				remark= #{remark,jdbcType=VARCHAR},
 			</if>
+			<if test="transactionNo != null and transactionNo !=''">
+				transaction_no= #{transactionNo,jdbcType=VARCHAR},
+			</if>			
 			<if test="createTime != null">
 				create_time= #{createTime,jdbcType=TIMESTAMP}
 			</if>
@@ -171,6 +181,8 @@
 		<include refid="Base_Column_List" />
 		from shop_bstk_record where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">
@@ -181,5 +193,16 @@
 			#{item}
 		</foreach>
 	</select>
+
+	<select id="selectFailedTasks" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_bstk_record where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+
+
 
 </mapper>

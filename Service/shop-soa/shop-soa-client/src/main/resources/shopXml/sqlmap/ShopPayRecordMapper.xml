@@ -61,7 +61,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopPayRecord">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopPayRecord" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_pay_record
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -181,6 +181,8 @@
 		<include refid="Base_Column_List" />
 		from shop_pay_record where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">
@@ -192,4 +194,14 @@
 		</foreach>
 	</select>
 
+	<select id="getList" resultMap="BaseResultMap">
+		select r.*,m.mobile
+		from shop_pay_record r
+		inner join shop_member m on r.member_id=m.id
+		where 1=1 and r.status>0
+		<if test="startDate != null and startDate !=''">AND r.create_time<![CDATA[>=]]>#{startDate}</if>
+		<if test="endDate != null and endDate !=''">AND r.create_time<![CDATA[<=]]>#{endDate}</if>
+		<if test="orderNo != null and orderNo !=''"> AND r.order_no= #{orderNo}</if>
+		<if test="mobile != null and mobile !=''"> AND m.mobile= #{mobile}</if>
+	</select>
 </mapper>

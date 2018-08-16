@@ -91,7 +91,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopPuCard">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopPuCard" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_pu_card
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -287,17 +287,18 @@
 	</resultMap>
 	
 	<select id="groupByCardType" resultMap="groupResultMap">
-		SELECT card_type_id,SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS inventory,SUM(CASE WHEN status != 0 THEN 1 ELSE 0 END) AS salesVolume
+		SELECT card_type_id,SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS inventory,SUM(CASE WHEN status > 1 THEN 1 ELSE 0 END) AS salesVolume
 		from shop_pu_card
 		WHERE type=#{type} and channel=#{channel} and card_type_id in
 		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
 			 #{item}
 		</foreach>
-		GROUP BY card_type_id
+		GROUP BY card_type_id,price
+		order by price asc
 	</select>
 	
 	<select id="getStatistics" resultType="java.util.Map">
-		SELECT COUNT(1) count,SUM(balance) sumBalance
+		SELECT COUNT(1) count,IFNULL(SUM(balance),0) sumBalance
 		FROM shop_pu_card where 1=1
 		<include refid="Base_Where" />
 	</select>
@@ -312,4 +313,22 @@
 		balance > 0
 		order by valid_date asc,balance asc
 	</select>	
+	
+	<resultMap id="puCardStatisticsMap" type="com.genyuanlian.consumer.shop.vo.PuCardStatisticsVo">
+		<result column="soldCount" property="soldCount" jdbcType="INTEGER" />
+		<result column="soldAmountSum" property="soldAmountSum" jdbcType="DECIMAL" />
+		<result column="soldBalanceSum" property="soldBalanceSum" jdbcType="DECIMAL" />
+		<result column="unsoldCount" property="unsoldCount" jdbcType="INTEGER" />
+		<result column="unsoldAmountSum" property="unsoldAmountSum" jdbcType="DECIMAL" />
+	</resultMap>
+	<select id="getPuCardStatistics" resultMap="puCardStatisticsMap">
+		select sum(case when member_id is null then 0 else 1 end) soldCount, 
+		sum(case when member_id is null then 0 else totel_value end) soldAmountSum,
+		sum(case when member_id is null then 0 else balance end) soldBalanceSum,
+		sum(case when member_id is null then 1 else 0 end) unsoldCount, 
+		sum(case when member_id is null then totel_value else 0 end) unsoldAmountSum
+		from shop_pu_card
+		where 1=1
+		<include refid="Base_Where" />
+	</select>
 </mapper>

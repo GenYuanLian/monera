@@ -8,6 +8,9 @@
 		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
 		<result column="wallet_address" property="walletAddress" jdbcType="VARCHAR" />
 		<result column="public_key_addr" property="publicKeyAddr" jdbcType="VARCHAR" />
+		<result column="totel_amount" property="totelAmount" jdbcType="DECIMAL" />
+		<result column="balance" property="balance" jdbcType="DECIMAL" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
 	</resultMap>
 	<sql id="Base_Where">
@@ -17,6 +20,9 @@
 		<if test="mobile != null and mobile !=''"> and mobile= #{mobile}</if>
 		<if test="walletAddress != null and walletAddress !=''"> and wallet_address= #{walletAddress}</if>
 		<if test="publicKeyAddr != null and publicKeyAddr !=''"> and public_key_addr= #{publicKeyAddr}</if>
+		<if test="totelAmount != null"> and totel_amount= #{totelAmount}</if>	
+		<if test="balance != null"> and balance= #{balance}</if>	
+		<if test="remark != null and remark !=''"> and remark= #{remark}</if>		
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
 	</sql>
 	<sql id="Base_Column_List">
@@ -26,6 +32,9 @@
 		mobile ,
 		wallet_address ,
 		public_key_addr ,
+		totel_amount ,
+		balance ,
+		remark ,
 		create_time 
 	</sql>
 
@@ -43,7 +52,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBstkWallet">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBstkWallet" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_bstk_wallet
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -52,6 +61,9 @@
 			<if test="mobile != null and mobile !=''">mobile,</if>
 			<if test="walletAddress != null and walletAddress !=''">wallet_address,</if>
 			<if test="publicKeyAddr != null and publicKeyAddr !=''">public_key_addr,</if>
+			<if test="totelAmount != null">totel_amount,</if>
+			<if test="balance != null">balance,</if>		
+			<if test="remark != null and remark !=''">remark,</if>			
 			<if test="createTime != null">create_time,</if>	
 		</trim>
 		<trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -73,6 +85,15 @@
 			<if test="publicKeyAddr != null and publicKeyAddr !=''">
 				#{publicKeyAddr,jdbcType=VARCHAR},
 			</if>
+			<if test="totelAmount != null">
+				#{totelAmount,jdbcType=DECIMAL},
+			</if>
+			<if test="balance != null">
+				#{balance,jdbcType=DECIMAL},
+			</if>			
+			<if test="remark != null and remark !=''">
+				#{remark,jdbcType=VARCHAR},
+			</if>			
 			<if test="createTime != null">
 				#{createTime,jdbcType=TIMESTAMP},
 			</if>
@@ -98,6 +119,15 @@
 			<if test="publicKeyAddr != null and publicKeyAddr !=''">
 				public_key_addr= #{publicKeyAddr,jdbcType=VARCHAR},
 			</if>
+			<if test="totelAmount != null">
+				totel_amount= #{totelAmount,jdbcType=DECIMAL},
+			</if>
+			<if test="balance != null">
+				balance= #{balance,jdbcType=DECIMAL},
+			</if>			
+			<if test="remark != null and remark !=''">
+				remark= #{remark,jdbcType=VARCHAR},
+			</if>			
 			<if test="createTime != null">
 				create_time= #{createTime,jdbcType=TIMESTAMP}
 			</if>
@@ -121,6 +151,8 @@
 		<include refid="Base_Column_List" />
 		from shop_bstk_wallet where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">
@@ -132,4 +164,19 @@
 		</foreach>
 	</select>
 
+	<select id="selectByMemberIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from shop_bstk_wallet where owner_type=1 and owner_id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+	
+	<select id="getBalanceSum" resultType="java.util.Map"> 
+		select sum(balance) balanceSum 
+		from shop_bstk_wallet 
+		where balance>0
+		<include refid="Base_Where" />
+	</select>
 </mapper>

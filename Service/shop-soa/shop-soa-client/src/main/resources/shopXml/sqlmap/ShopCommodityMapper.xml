@@ -9,12 +9,20 @@
 		<result column="title" property="title" jdbcType="VARCHAR" />
 		<result column="brief_intro" property="briefIntro" jdbcType="VARCHAR" />
 		<result column="logo" property="logo" jdbcType="VARCHAR" />
+		<result column="act_logo" property="actLogo" jdbcType="VARCHAR" />
 		<result column="remark" property="remark" jdbcType="VARCHAR" />
 		<result column="price" property="price" jdbcType="DECIMAL" />
+		<result column="price_total" property="priceTotal" jdbcType="DECIMAL" />
 		<result column="discount" property="discount" jdbcType="DECIMAL" />
 		<result column="inventory_quantity" property="inventoryQuantity" jdbcType="INTEGER" />
 		<result column="sale_quantity" property="saleQuantity" jdbcType="INTEGER" />
 		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="purchase_restrict" property="purchaseRestrict" jdbcType="INTEGER" />
+		<result column="pay_explain" property="payExplain" jdbcType="LONGVARCHAR" />		
+		<result column="is_send_mail" property="isSendMail" jdbcType="INTEGER" />
+		<result column="trace_source" property="traceSource" jdbcType="VARCHAR" />
+		<result column="present_rate" property="presentRate" jdbcType="INTEGER" />
+		<result column="sort" property="sort" jdbcType="INTEGER" />
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
 	</resultMap>
 	<sql id="Base_Where">
@@ -25,12 +33,20 @@
 		<if test="title != null and title !=''"> and title= #{title}</if>
 		<if test="briefIntro != null and briefIntro !=''"> and brief_intro= #{briefIntro}</if>
 		<if test="logo != null and logo !=''"> and logo= #{logo}</if>
+		<if test="actLogo != null and actLogo !=''"> and act_logo= #{actLogo}</if>
 		<if test="remark != null and remark !=''"> and remark= #{remark}</if>
 		<if test="price != null"> and price= #{price}</if>	
+		<if test="priceTotal != null"> and price_total= #{priceTotal}</if>
 		<if test="discount != null"> and discount= #{discount}</if>	
 		<if test="inventoryQuantity != null"> and inventory_quantity= #{inventoryQuantity}</if>	
 		<if test="saleQuantity != null"> and sale_quantity= #{saleQuantity}</if>	
 		<if test="status != null"> and status= #{status}</if>	
+		<if test="purchaseRestrict != null"> and purchase_restrict= #{purchaseRestrict}</if>
+		<if test="payExplain != null and payExplain !=''"> and pay_explain= #{payExplain}</if>		
+		<if test="isSendMail != null"> and is_send_mail= #{isSendMail}</if>
+		<if test="traceSource != null and traceSource !=''"> and trace_source= #{traceSource}</if>
+		<if test="presentRate != null"> and present_rate= #{presentRate}</if>
+		<if test="sort != null"> and sort= #{sort}</if>
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
 	</sql>
 	<sql id="Base_Column_List">
@@ -41,12 +57,20 @@
 		title ,
 		brief_intro ,
 		logo ,
+		act_logo ,
 		remark ,
 		price ,
+		price_total ,
 		discount ,
 		inventory_quantity ,
 		sale_quantity ,
 		status ,
+		purchase_restrict,
+		pay_explain ,		
+		is_send_mail,
+		trace_source,
+		present_rate,
+		sort,
 		create_time 
 	</sql>
 
@@ -64,7 +88,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopCommodity">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopCommodity" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_commodity
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -74,12 +98,20 @@
 			<if test="title != null and title !=''">title,</if>
 			<if test="briefIntro != null and briefIntro !=''">brief_intro,</if>
 			<if test="logo != null and logo !=''">logo,</if>
+			<if test="actLogo != null and actLogo !=''">act_logo,</if>
 			<if test="remark != null and remark !=''">remark,</if>
 			<if test="price != null">price,</if>	
+			<if test="priceTotal != null">price_total,</if>
 			<if test="discount != null">discount,</if>	
 			<if test="inventoryQuantity != null">inventory_quantity,</if>	
 			<if test="saleQuantity != null">sale_quantity,</if>	
 			<if test="status != null">status,</if>	
+			<if test="purchaseRestrict != null">purchase_restrict,</if>
+			<if test="payExplain != null and payExplain !=''">pay_explain,</if>			
+			<if test="isSendMail != null">is_send_mail,</if>
+			<if test="traceSource != null and traceSource !=''">trace_source,</if>
+			<if test="presentRate != null">present_rate,</if>
+			<if test="sort != null">sort,</if>
 			<if test="createTime != null">create_time,</if>	
 		</trim>
 		<trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -104,11 +136,17 @@
 			<if test="logo != null and logo !=''">
 				#{logo,jdbcType=VARCHAR},
 			</if>
+			<if test="actLogo != null and actLogo !=''">
+				#{actLogo,jdbcType=VARCHAR},
+			</if>			
 			<if test="remark != null and remark !=''">
 				#{remark,jdbcType=VARCHAR},
 			</if>
 			<if test="price != null">
 				#{price,jdbcType=DECIMAL},
+			</if>
+			<if test="priceTotal != null">
+				#{priceTotal,jdbcType=DECIMAL},
 			</if>
 			<if test="discount != null">
 				#{discount,jdbcType=DECIMAL},
@@ -122,6 +160,24 @@
 			<if test="status != null">
 				#{status,jdbcType=INTEGER},
 			</if>
+			<if test="purchaseRestrict != null">
+				#{purchaseRestrict,jdbcType=INTEGER},
+			</if>
+			<if test="payExplain != null and payExplain !=''">
+				#{payExplain,jdbcType=LONGVARCHAR},
+			</if>			
+			<if test="isSendMail != null">
+				#{isSendMail,jdbcType=INTEGER},
+			</if>
+			<if test="traceSource != null and traceSource !=''">
+				#{traceSource,jdbcType=VARCHAR},
+			</if>	
+			<if test="presentRate != null">
+				#{presentRate,jdbcType=INTEGER},
+			</if>			
+			<if test="sort != null">
+				#{sort,jdbcType=INTEGER},
+			</if>					
 			<if test="createTime != null">
 				#{createTime,jdbcType=TIMESTAMP},
 			</if>
@@ -150,11 +206,17 @@
 			<if test="logo != null and logo !=''">
 				logo= #{logo,jdbcType=VARCHAR},
 			</if>
+			<if test="actLogo != null and actLogo !=''">
+				act_logo= #{actLogo,jdbcType=VARCHAR},
+			</if>			
 			<if test="remark != null and remark !=''">
 				remark= #{remark,jdbcType=VARCHAR},
 			</if>
 			<if test="price != null">
 				price= #{price,jdbcType=DECIMAL},
+			</if>
+			<if test="priceTotal != null">
+				price_total= #{priceTotal,jdbcType=DECIMAL},
 			</if>
 			<if test="discount != null">
 				discount= #{discount,jdbcType=DECIMAL},
@@ -168,6 +230,24 @@
 			<if test="status != null">
 				status= #{status,jdbcType=INTEGER},
 			</if>
+			<if test="purchaseRestrict != null">
+				purchase_restrict= #{purchaseRestrict,jdbcType=INTEGER},
+			</if>
+			<if test="payExplain != null and payExplain !=''">
+				pay_explain= #{payExplain,jdbcType=LONGVARCHAR},
+			</if>			
+			<if test="isSendMail != null">
+				is_send_mail= #{isSendMail,jdbcType=INTEGER},
+			</if>
+			<if test="traceSource != null and traceSource !=''">
+				trace_source= #{traceSource,jdbcType=VARCHAR},
+			</if>	
+			<if test="presentRate != null">
+				present_rate= #{presentRate,jdbcType=INTEGER},
+			</if>				
+			<if test="sort != null">
+				sort= #{sort,jdbcType=INTEGER},
+			</if>					
 			<if test="createTime != null">
 				create_time= #{createTime,jdbcType=TIMESTAMP}
 			</if>
@@ -181,6 +261,7 @@
 		<include refid="Base_Column_List" />
 		from shop_commodity where 1=1
 		<include refid="Base_Where" />
+		order by sort asc
 	</select>
 	<select id="pageCount" resultType="java.lang.Integer" parameterType="map">
 		select count(1) from shop_commodity where 1=1
@@ -191,6 +272,8 @@
 		<include refid="Base_Column_List" />
 		from shop_commodity where 1=1
 		<include refid="Base_Where" />
+		order by sort asc
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">

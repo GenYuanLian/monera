@@ -12,6 +12,7 @@
 		<setting name="useGeneratedKeys" value="false" />
 		<setting name="defaultExecutorType" value="SIMPLE" />
 		<setting name="defaultStatementTimeout" value="25000" />
+		<setting name="logPrefix" value="dao."/><!-- 输出sql到日志的配置 -->
 	</settings>
 	
     <plugins>

@@ -9,6 +9,7 @@
 		<result column="memb_token" property="membToken" jdbcType="VARCHAR" />
 		<result column="valid_time" property="validTime" jdbcType="TIMESTAMP" />
 		<result column="login_ip" property="loginIp" jdbcType="VARCHAR" />
+		<result column="login_type" property="loginType" jdbcType="INTEGER" />
 		<result column="latitude" property="latitude" jdbcType="VARCHAR" />
 		<result column="longitude" property="longitude" jdbcType="VARCHAR" />
 		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
@@ -21,6 +22,7 @@
 		<if test="membToken != null and membToken !=''"> and memb_token= #{membToken}</if>
 		<if test="validTime != null"> and valid_time= #{validTime}</if>	
 		<if test="loginIp != null and loginIp !=''"> and login_ip= #{loginIp}</if>
+		<if test="loginType != null"> and login_type= #{loginType}</if>
 		<if test="latitude != null and latitude !=''"> and latitude= #{latitude}</if>
 		<if test="longitude != null and longitude !=''"> and longitude= #{longitude}</if>
 		<if test="createTime != null"> and create_time= #{createTime}</if>	
@@ -33,6 +35,7 @@
 		memb_token ,
 		valid_time ,
 		login_ip ,
+		login_type ,
 		latitude ,
 		longitude ,
 		create_time 
@@ -52,7 +55,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopLoginLog">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopLoginLog" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_login_log
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -62,6 +65,7 @@
 			<if test="membToken != null and membToken !=''">memb_token,</if>
 			<if test="validTime != null">valid_time,</if>	
 			<if test="loginIp != null and loginIp !=''">login_ip,</if>
+			<if test="loginType != null">login_type,</if>	
 			<if test="latitude != null and latitude !=''">latitude,</if>
 			<if test="longitude != null and longitude !=''">longitude,</if>
 			<if test="createTime != null">create_time,</if>	
@@ -87,6 +91,9 @@
 			</if>
 			<if test="loginIp != null and loginIp !=''">
 				#{loginIp,jdbcType=VARCHAR},
+			</if>
+			<if test="loginType != null">
+				#{loginType,jdbcType=INTEGER},
 			</if>
 			<if test="latitude != null and latitude !=''">
 				#{latitude,jdbcType=VARCHAR},
@@ -122,6 +129,9 @@
 			<if test="loginIp != null and loginIp !=''">
 				login_ip= #{loginIp,jdbcType=VARCHAR},
 			</if>
+			<if test="loginType != null">
+				login_type= #{loginType,jdbcType=INTEGER},
+			</if>
 			<if test="latitude != null and latitude !=''">
 				latitude= #{latitude,jdbcType=VARCHAR},
 			</if>
@@ -151,6 +161,8 @@
 		<include refid="Base_Column_List" />
 		from shop_login_log where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">

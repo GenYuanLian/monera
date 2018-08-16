@@ -81,7 +81,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBaseArea">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopBaseArea" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_base_area
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -208,6 +208,8 @@
 		<include refid="Base_Column_List" />
 		from shop_base_area where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">
@@ -228,7 +230,7 @@
 	
 	<select id="selectShortAll" resultMap="ShortResultMap">
 		select area_code as value,area_name as name,parent_code as parent
-		from shop_base_area
+		from shop_base_area where level <![CDATA[<]]> 4
 	</select>
 		
 </mapper>

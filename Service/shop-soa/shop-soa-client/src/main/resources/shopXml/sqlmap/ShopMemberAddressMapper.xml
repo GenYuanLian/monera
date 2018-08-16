@@ -64,7 +64,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopMemberAddress">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopMemberAddress" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_member_address
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -191,6 +191,8 @@
 		<include refid="Base_Column_List" />
 		from shop_member_address where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">

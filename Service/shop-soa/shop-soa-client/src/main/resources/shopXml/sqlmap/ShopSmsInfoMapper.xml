@@ -54,7 +54,7 @@
 	    <include refid="Base_Column_List" />
 	    from shop_sms_info
 	    where mobile = #{mobile,jdbcType=VARCHAR}  and  smstype = #{type,jdbcType=VARCHAR} 
-	    <![CDATA[ and DATE_FORMAT(create_time, '%d %b %Y %T:%f') >= DATE_FORMAT(#{createTime,jdbcType=TIMESTAMP}, '%d %b %Y %T:%f') ]]>  
+	     and create_time <![CDATA[>=]]>  #{createTime,jdbcType=TIMESTAMP} 
 	</select>
   
 	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
@@ -63,7 +63,7 @@
 		id = #{id,jdbcType=BIGINT}
 	</delete>
 
-	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopSmsInfo">
+	<insert id="insertSelective" parameterType="com.genyuanlian.consumer.shop.model.ShopSmsInfo" useGeneratedKeys="true" keyProperty="id">
 		insert into shop_sms_info
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">id,</if>	
@@ -169,6 +169,8 @@
 		<include refid="Base_Column_List" />
 		from shop_sms_info where 1=1
 		<include refid="Base_Where" />
+		order by create_time DESC
+		LIMIT #{pageIndex,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}		
 	</select>
 
 	<select id="selectByIds" resultMap="BaseResultMap">
