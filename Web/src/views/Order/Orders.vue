@@ -231,7 +231,7 @@ export default {
       //TODO 抢购订单去支付
       this.$router.push({name:'snatch_pay', query:{orderNo:orderNo, amount:amount}});
     },
-    auctionPay: function(orderNo) {
+    auctionPay: function(orderNo, amount) {
       //TODO 竞拍订单去支付
       this.$router.push({name:'auction_pay', query:{orderNo:orderNo, amount:amount}});
     },

@@ -17,13 +17,13 @@ if (process.env.NODE_ENV === 'development') {
   env = require('../../config/prod.env');
 } else {
   env.NODE_ENV = "production";
-  env.API_SERVER = "http://shopapi.genyuanlian.com";//http://shoptestapi.genyuanlian.com http://shopapi.genyuanlian.com
+  env.API_SERVER = "https://shopapi.genyuanlian.com";//http://shoptestapi.genyuanlian.com http://shopapi.genyuanlian.com
 }
 
 // axios 配置
 axios.defaults.timeout = 300000;
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
-axios.defaults.baseURL = env.API_SERVER;
+axios.defaults.baseURL = "/";
 
 // POST传参序列化
 axios.interceptors.request.use((config) => {

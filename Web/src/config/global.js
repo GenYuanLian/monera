@@ -2,6 +2,7 @@
  * 全局加载
  */
 // 重置样式
+import '../assets/css/normalize.css';
 import '../assets/css/common.less';
 import '../assets/js/flexible.js';
 import {

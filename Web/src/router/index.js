@@ -69,6 +69,7 @@ const AuctionList = resolve => require(["@/views/Auction/Auction_List"], resolve
 const AuctionBail = resolve => require(["@/views/Auction/Auction_Bail"], resolve);
 const AuctionRemind = resolve => require(["@/views/Auction/Auction_Remind"], resolve);
 const AuctionPayBail = resolve => require(["@/views/Auction/Auction_Pay_Bail"], resolve);
+const AuctionPay = resolve => require(["@/views/Auction/Auction_Pay"], resolve);
 const AuctionProduct = resolve => require(["@/views/Auction/Auction_Product"], resolve);
 const AuctionBidlist = resolve => require(["@/views/Auction/Auction_Bidlist"], resolve);
 const SnatchBlock = resolve => require(["@/views/Snatch/Snatch_Block"], resolve);
@@ -423,6 +424,11 @@ const routes = [{
   path: "/auction_pay_bail",
   name: "auction_pay_bail",
   component: AuctionPayBail
+},
+{
+  path: "/auction_pay",
+  name: "auction_pay",
+  component: AuctionPay
 },
 {
   path: "/auction_bidlist",

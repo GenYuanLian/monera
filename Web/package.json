@@ -1,7 +1,7 @@
 {
-  "name": "europa-app",
+  "name": "gylshop",
   "version": "1.0.0",
-  "description": "Europa fortune h5 app",
+  "description": "GYL shop h5 app",
   "author": "zeke",
   "private": true,
   "scripts": {

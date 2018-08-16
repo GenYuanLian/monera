@@ -216,18 +216,21 @@ export default {
           this.selectValue = res.data.addr.addressAlias;
           this.addressDetail = res.data.addr.address;
           this.isMan = res.data.addr.gender == 1 ? 1 : 0;
-          if(res.data.addr.areaName&&res.data.addr.areaName.split("-").length==4) {
+          let len = res.data.addr.areaName ? res.data.addr.areaName.split("-").length : 0;
+          // TODO 未保存街道时的判断
+          if(len > 3) {
             this.cityName = res.data.addr.areaName.substr(0, res.data.addr.areaName.lastIndexOf("-")).replace(/-/g, ' ');
             this.streetName = res.data.addr.areaName.split("-")[3];
+          } else if(len > 0) {
+            this.cityName = res.data.addr.areaName.substr(0).replace(/-/g, ' ');
           }
           res.data.areas.forEach((item, i) => {
             if(i<3) {
               this.cityVal.push(item.areaCode+"");
-            }else {
+            }else if(i>=3) {
               this.streetVal.push(item.areaCode+"");
             }
           });
-          console.log(this.cityVal);
         } else{
           showMsg(res.status.message);
         }
@@ -256,7 +259,7 @@ export default {
       let param = {
         receiver: this.contact,
         gender: this.isMan ? 1 : 2,
-        areaCode: this.streetVal[0], // 四级联动区域末级结点Id
+        areaCode: this.streetVal[0] ? this.streetVal[0] : this.cityVal[2], // 四级联动区域末级结点Id
         areaName: this.cityName+" "+this.streetName,
         address: this.addressDetail,
         mobile: this.phone,

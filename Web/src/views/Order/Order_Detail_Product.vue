@@ -28,7 +28,7 @@
         <div class="paied-bot">
           <span>送货费  0</span>
           <span class="paied-price" v-if="orderType==1">实付：{{orderMsg.amount}}源点</span>
-          <span class="paied-price" v-else>{{orderMsg.status < 3 ? ('应付：'+ orderMsg.amount) : ('总付：' + orderMsg.totalAmount)}}BSTK</span>
+          <span class="paied-price" v-else>{{orderMsg.status < 3 ? ('应付：'+ orderMsg.amount ) : ('总付：' + orderMsg.totalAmount)}} BSTK<span class="fs_24">{{(orderType==3 ? '(已含佣金)' : '')}}</span></span>
         </div>
         <div class="pay-bank" v-if="(payExplain||payExplain!='') && orderType==1">
           <div class="pay-tip"><i class="ico-pay-info"></i>支付提示</div>
@@ -72,7 +72,7 @@
         <h6>订单信息</h6>
         <div class="order-row" v-if="orderType != 1">
           <div class="row-key">保证金</div>
-          <div class="row-val">{{orderMsg.totalAmount - orderMsg.amount}} BSTK</div>
+          <div class="row-val">{{calcNum(orderMsg.totalAmount, orderMsg.amount)}} BSTK</div>
         </div>
         <div class="order-row" v-if="false">
           <div class="row-key">发送时间</div>
@@ -171,6 +171,11 @@ export default {
     Header, Flow, FlowState, FlowLine
   },
   methods: {
+    calcNum:function(n1, n2) {
+      // TODO 数值计算，防止多位小数出现
+      var num = (parseFloat(n1) - parseFloat(n2)).toFixed(2);
+      return num;
+    },
     getOrderDetail: function(flag) {
       //TODO 查询订单详情
       let param = {
@@ -461,6 +466,9 @@ html,body{
           font-size: 34px;
           color: #ffa936;
           margin-right: 30px;
+          .fs_24{
+            font-size: 24px;
+          }
         }
       }
       .pay-bank{

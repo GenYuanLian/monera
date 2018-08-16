@@ -6,7 +6,8 @@
       </header>
       <homeSkeleton v-if="!init"></homeSkeleton>
       <section v-else class="content">
-        <swiper class="home-swiper" :list="shopImgs" v-model="shopImgIdx" @on-index-change="shopImgOnIndexChange" :interval="5000" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'home-dots'"></swiper>
+        <swiper class="home-swiper" :list="shopImgs" v-model="shopImgIdx" @on-index-change="shopImgOnIndexChange" :interval="5000" :loop="true" :auto="true" :show-desc-mask="false" :dots-position="'center'" :dots-class="'home-dots'">
+        </swiper>
         <div class="activity">
           <div class="act-title"><i class="ico-title-l m-r10"></i><span>好货</span><i class="ico-title-r m-l10"></i></div>
           <div class="act-panic" @click="goSnatch"><img src="../assets/images/Bg/panic-buying.png" alt=""><span>抢购专区</span></div>
@@ -105,12 +106,14 @@ export default {
       this.$httpPost(apiUrl.getHomeBanner, {}).then((res) => {
         if(res.status.code==0&&res.data) {
           let data = res.data.images;
+          let swiperImgs = [];
           data.forEach(element => {
-            this.shopImgs.push({
-              img:element,
-              url:'javascript:'
+            swiperImgs.push({
+              img: element.url,
+              url: 'merchant_info?id='+element.id+'&type='+element.type
             });
           });
+          this.shopImgs = swiperImgs;
         } else {
           showMsg(res.status.message);
         }

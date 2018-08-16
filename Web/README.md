@@ -24,3 +24,11 @@ npm run build
 npm run build:test
 
 ```
+## Auto script
+
+```安装淘宝镜像 cnpm
+npm install -g cnpm --registry=https://registry.npm.taobao.org
+cd GYLShop
+cnpm install
+npm run bulid
+cp dist/ ./data/www (复制发布包到web服务器路径)
