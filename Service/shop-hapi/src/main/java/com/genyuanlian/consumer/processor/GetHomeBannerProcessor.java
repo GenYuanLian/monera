@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import com.genyuanlian.consumer.shop.model.ShopSystemPic;
+import com.genyuanlian.consumer.shop.vo.LinkedPictureVo;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.processor.BaseApiProcessor;
 import com.hnair.consumer.utils.ResultSender;
@@ -27,10 +28,14 @@ public class GetHomeBannerProcessor extends BaseApiProcessor {
 		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
 
 		List<ShopSystemPic> list = commonService.getList(ShopSystemPic.class, "picType", 1, "status", 1);
-		List<String> banners = new ArrayList<String>();
+		List<LinkedPictureVo> banners = new ArrayList<LinkedPictureVo>();
 		for (ShopSystemPic pic : list) {
 			String url = imageDomain + pic.getUrl();
-			banners.add(url);
+			LinkedPictureVo b = new LinkedPictureVo();
+			b.setUrl(url);
+			b.setId(pic.getOwnerId());
+			b.setType(pic.getOwnerType());
+			banners.add(b);
 		}
 
 		sender.put("images", banners);
