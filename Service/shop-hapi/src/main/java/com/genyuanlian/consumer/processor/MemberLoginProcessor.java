@@ -14,6 +14,7 @@ import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.constant.ErrorCodeEnum;
 import com.hnair.consumer.processor.BaseApiProcessor;
 import com.hnair.consumer.utils.IpUtils;
+import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.ResultSender;
 
 @Component("hapiloginprocessor")
@@ -53,8 +54,8 @@ public class MemberLoginProcessor extends BaseApiProcessor {
 		ShopMessageVo<Map<String, Object>> messageVo = memberApi.login(params);
 		if (messageVo.isResult()) {
 			sender.put("userInfo", messageVo.getT());
-			sender.success(response,messageVo.getMessage());
-		}else {
+			sender.success(response, messageVo.getMessage());
+		} else {
 			sender.fail(Integer.parseInt(messageVo.getErrorCode()), messageVo.getErrorMessage(), response);
 		}
 	}

@@ -358,18 +358,18 @@ public class BWSServiceImpl implements IBWSService {
 //			 BWSWalletCreateResponseVo.class);
 //			 System.out.print(voResult);
 
-//			 JSONObject params=new JSONObject();
-//			 params.put("wallet","");
-//			 String response =HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/balance",params);
-//			 BWSWalletResponse result =
-//			 JSONObject.parseObject(response,BWSWalletResponse.class);
-//			 System.out.println(result.getData());
+			 JSONObject params=new JSONObject();
+			 params.put("wallet","{\"coin\":\"btc\",\"network\":\"livenet\",\"xPrivKey\":\"xprv9s21ZrQH143K4DiN4zjhQHU9YekqUnWmpCbc5LSinZp1XysEHPdpLZDMAetYv4KPfCP7EiotG8JYtzHjobQaeiyQpiyfoHvwQr75nuXdNUL\",\"xPubKey\":\"xpub6D6Kbh271o67CKsj1cwRXyVNJrAtKexLqMdNyE35gfTcZXC7ihyzb8QVgFdXaEeZxUcDxEEHcdcXiPQD4XtAnvrZd7CprjMsYEp84g5Gqep\",\"requestPrivKey\":\"e82604fed40abeaa18a0c342f1dfe4e6f7736629bf0bf0d958f0da6a43215e87\",\"requestPubKey\":\"02e28f73bc1ce85a304b9143556689c9553ca18f2a0c16b98bdf91cd3d6c898e74\",\"copayerId\":\"7bf796cbb544228c8f9c0fdc490486de54dff18226eb80d75b78e2027a026e61\",\"publicKeyRing\":[{\"xPubKey\":\"xpub6D6Kbh271o67CKsj1cwRXyVNJrAtKexLqMdNyE35gfTcZXC7ihyzb8QVgFdXaEeZxUcDxEEHcdcXiPQD4XtAnvrZd7CprjMsYEp84g5Gqep\",\"requestPubKey\":\"02e28f73bc1ce85a304b9143556689c9553ca18f2a0c16b98bdf91cd3d6c898e74\"}],\"walletId\":\"a57e7428-5b11-4197-b19c-abe935edc762\",\"walletName\":\"BSTK Wallet\",\"m\":1,\"n\":1,\"walletPrivKey\":\"aec81bfee02cef6f8d5e47e252f0c3ea813a9de7a3eb07ca74847f92463ed9bc\",\"personalEncryptingKey\":\"KBCru9zW5sNHRPotxW4XDQ==\",\"sharedEncryptingKey\":\"DGvmbZqWQmHosJa5VtxwoA==\",\"mnemonic\":\"硝 补 饲 宴 斥 胞 条 柄 访 失 库 磁\",\"entropySource\":\"49fcbf6436feb6208013293098bc5f4637e0e038d63fbaa3b79fbcdcb5389c47\",\"mnemonicHasPassphrase\":false,\"derivationStrategy\":\"BIP44\",\"account\":0,\"compliantDerivation\":true,\"addressType\":\"P2PKH\"}");
+			 String response =HttpClientUtils.bwsPost("https://service.genyuanlian.com/api/wallet/balance",params);
+			 BWSWalletResponse result =
+			 JSONObject.parseObject(response,BWSWalletResponse.class);
+			 System.out.println(result.getData());
 			
 //			 JSONObject params = new JSONObject();
 //			 params.put("senderWallet","");
 //			 params.put("receiverAddress","");
 //			 params.put("amount", new BigDecimal(99.999).multiply(new BigDecimal(100000000)));
-//			 String response = HttpClientUtils.bwsPost("http://service.genyuanlian.com/api/wallet/transfer",params);
+//			 String response = HttpClientUtils.bwsPost("https://service.genyuanlian.com/api/wallet/transfer",params);
 //			 System.out.print(response);
 //			 BWSWalletResponse result = JSONObject.parseObject(response,BWSWalletResponse.class);
 //			 BWSWalletTransferResponseVo voResult =JSONObject.parseObject(result.getData(),BWSWalletTransferResponseVo.class);

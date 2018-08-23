@@ -573,7 +573,17 @@ public class MemberApiImpl implements IMemberApi {
 		if (!file.isEmpty()) {
 			try {
 				// 图片上传
-				FileResponse ponse = SftpUtil.imgFileUpload(file.getInputStream());
+				// sftp参数构造
+				Map<String, Object> sftpParams = new HashMap<>();
+				sftpParams.put("host", ConfigPropertieUtils.getString("sftp.host"));
+				sftpParams.put("port", ConfigPropertieUtils.getString("sftp.port"));
+				sftpParams.put("username", ConfigPropertieUtils.getString("sftp.username"));
+				sftpParams.put("password", ConfigPropertieUtils.getString("sftp.password"));
+				sftpParams.put("imgSize", ConfigPropertieUtils.getString("sftp.imgSize"));
+				sftpParams.put("imageSuffix", ConfigPropertieUtils.getString("sftp.imageSuffix"));
+				sftpParams.put("imageDir", ConfigPropertieUtils.getString("sftp.imageDir"));
+				sftpParams.put("basePath", ConfigPropertieUtils.getString("sftp.basePath"));
+				FileResponse ponse = SftpUtil.imgFileUpload(file.getInputStream(), sftpParams);
 				resultMap.put("name", ponse.getFileName());
 				resultMap.put("size", ponse.getFileSize());
 				resultMap.put("path", ponse.getFileUrl());
@@ -952,12 +962,9 @@ public class MemberApiImpl implements IMemberApi {
 	/**
 	 * 登录
 	 * 
-	 * @param member
-	 *            登录用户对象
-	 * @param loginType
-	 *            登录类型：1-密码登录；2-短信验证码登录；3-第三方授权登录
-	 * @param loginIp
-	 *            用户ip
+	 * @param member    登录用户对象
+	 * @param loginType 登录类型：1-密码登录；2-短信验证码登录；3-第三方授权登录；
+	 * @param loginIp   用户ip
 	 * @return
 	 */
 	@Transactional

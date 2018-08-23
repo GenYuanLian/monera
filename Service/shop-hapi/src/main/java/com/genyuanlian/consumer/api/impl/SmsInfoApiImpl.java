@@ -56,7 +56,8 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 	@Transactional
 	public ShopMessageVo<String> sendSms(SendSmsParamsVo params) {
 		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
-		logger.info("短信发送调用到这里了=================,手机号:" + params.getMobile() + "短信类型:" + params.getSmstype()+"参数："+params.getParams());
+		logger.info("短信发送调用到这里了=================,手机号:" + params.getMobile() + "短信类型:" + params.getSmstype() + "参数："
+				+ params.getParams());
 		// 财务确认付款
 		if (SmsTypeConstants.confirmPayment.equals(params.getSmstype())) {
 			// 允许发送此类验证码的手机号集合
@@ -82,7 +83,7 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 
 		// 缓存短信发送的次数
 		String cacheKeySmsHourCount = "sendSms" + params.getMobile() + "key";
-		logger.info("缓存短信发送的次数:"+cacheKeySmsHourCount);
+		logger.info("缓存短信发送的次数:" + cacheKeySmsHourCount);
 		// 短信发送的次数
 		Object logCount = masterRedisTemplate.opsForValue().get(cacheKeySmsHourCount);
 		int maxCount = Integer.parseInt(ConfigPropertieUtils.getString("member.sendsms.count"));
@@ -106,7 +107,9 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 
 		// 检验会员是否注册
 		List<ShopMember> members = commonService.getList(ShopMember.class, "mobile", params.getMobile());
-		if (SmsTypeConstants.register.equals(params.getSmstype()) && members != null && members.size() > 0) {
+		if ((SmsTypeConstants.register.equals(params.getSmstype())
+				|| SmsTypeConstants.comm_register.equals(params.getSmstype())) && members != null
+				&& members.size() > 0) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100001.getErrorMessage());
 			// 手动回滚当前事物
@@ -115,7 +118,9 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		}
 
 		// 会员未注册，登录或者找回密码，返回会员未注册错误
-		if (SmsTypeConstants.login.equals(params.getSmstype()) && (members == null || members.size() == 0)) {
+		if ((SmsTypeConstants.login.equals(params.getSmstype())
+				|| SmsTypeConstants.comm_login.equals(params.getSmstype()))
+				&& (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
 			// 手动回滚当前事物
@@ -123,7 +128,9 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			return messageVo;
 		}
 
-		if (SmsTypeConstants.findPwd.equals(params.getSmstype()) && (members == null || members.size() == 0)) {
+		if ((SmsTypeConstants.findPwd.equals(params.getSmstype())
+				|| SmsTypeConstants.comm_findPwd.equals(params.getSmstype()))
+				&& (members == null || members.size() == 0)) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100002.getErrorMessage());
 			// 手动回滚当前事物
@@ -140,15 +147,18 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 		}
 
 		// 调用发送短信接口
-		
+
 		ArrayList<String> pars = new ArrayList<String>();
 
 		// 注册-register,找回密码-findPwd, 登录-login
-		String verificationCode=null;
+		String verificationCode = null;
 		switch (params.getSmstype()) {
 		case SmsTypeConstants.register:
+		case SmsTypeConstants.comm_register:
 		case SmsTypeConstants.findPwd:
+		case SmsTypeConstants.comm_findPwd:
 		case SmsTypeConstants.login:
+		case SmsTypeConstants.comm_login:
 		case SmsTypeConstants.confirmPayment:
 		case SmsTypeConstants.resetPayPwd:
 			verificationCode = SnoGerUtil.getRandomNum(6);
@@ -156,15 +166,17 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 			params.setParams(pars);
 			break;
 		}
-		
-		SmsSingleSenderResult resp = QCloudSMSUtils.sendSMS(params.getSmstype(), params.getMobile(), params.getParams());
-		
+
+		SmsSingleSenderResult resp = QCloudSMSUtils.sendSMS(params.getSmstype(), params.getMobile(),
+				params.getParams());
+
 		String content = SmsContent.buildContent(params.getParams(), params.getSmstype());// 短信内容
 		// 持久化
 		String smsNumber = UUID.randomUUID().toString();// 发送短信编码
 		ShopSmsInfo smsInfo = new ShopSmsInfo();// 存储短信数据库
 		smsInfo.setContent(content);
-		if ("register".equals(params.getSmstype()) || "confirmPayment".equals(params.getSmstype())) {
+		if ("register".equals(params.getSmstype()) || "comm.register".equals(params.getSmstype())
+				|| "confirmPayment".equals(params.getSmstype())) {
 			smsInfo.setMemberId(Long.valueOf("0"));
 		} else {
 			smsInfo.setMemberId(members.get(0).getId());
@@ -188,7 +200,6 @@ public class SmsInfoApiImpl implements ISmsInfoApi {
 				masterRedisTemplate.opsForValue().set(cacheKeySmsNumber, verificationCode);
 				masterRedisTemplate.expire(cacheKeySmsNumber, 5, TimeUnit.MINUTES);
 			}
-			
 
 			// 短信发送控制缓存
 			String cacheKeySmsSend = params.getSmstype() + params.getMobile();

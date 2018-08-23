@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.genyuanlian.consumer.service.IBWSService;
 import com.genyuanlian.consumer.shop.api.IMerchantApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
+import com.genyuanlian.consumer.shop.model.ShopCoinPrice;
 import com.genyuanlian.consumer.shop.model.ShopComment;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopCommodityPic;
@@ -28,6 +29,7 @@ import com.genyuanlian.consumer.shop.model.ShopProductCommon;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
 import com.genyuanlian.consumer.shop.model.ShopWallet;
 import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
+import com.genyuanlian.consumer.shop.vo.CommodityCalcForceVo;
 import com.genyuanlian.consumer.shop.vo.CommodityIdParamsVo;
 import com.genyuanlian.consumer.shop.vo.CommodityVo;
 import com.genyuanlian.consumer.shop.vo.IdParamsVo;
@@ -454,6 +456,77 @@ public class MerchantApiImpl implements IMerchantApi {
 		messageVo.setT(resp);
 		messageVo.setMessage("数据获取成功");
 		return messageVo;
+	}
+
+	@Override
+	public ShopMessageVo<Map<String, Object>> getCommodityCalcForceList() {
+		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<Map<String, Object>>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		logger.info("获取获取算力服务商品列表调用到这里了=================");
+
+		String imageDomain = ConfigPropertieUtils.getString("image.server.address");
+		Long merchantId = Long.parseLong(ConfigPropertieUtils.getString("calc.force.merchant.id"));
+		ShopMerchant merchant = commonService.get(merchantId, ShopMerchant.class);
+		List<CommodityCalcForceVo> voList = new ArrayList<CommodityCalcForceVo>();
+		if (merchant != null) {
+			// 状态：1-正常，2-冻结
+			if (merchant.getStatus() == 1) {
+				// 商品列表
+				List<ShopCommodity> commodityList = commonService.getList(ShopCommodity.class, "merchantId",
+						merchant.getId(), "status", 1);
+
+				// 算力服务产品列表
+				List<ShopProductCalcForce> products = commonService.getList(ShopProductCalcForce.class);
+				Map<Long, ShopProductCalcForce> productMap = new HashMap<Long, ShopProductCalcForce>();
+				for (ShopProductCalcForce p : products) {
+					productMap.put(p.getCommodityId(), p);
+				}
+
+				// ETH行情
+				List<ShopCoinPrice> coinPriceList = commonService.getListBySqlId(ShopCoinPrice.class, "pageData",
+						"coinType", "ETH", "pageIndex", 0, "pageSize", 1);
+				if (coinPriceList != null && coinPriceList.size() > 0) {
+					ShopCoinPrice coinPrice = coinPriceList.get(0);
+					if (commodityList != null && commodityList.size() > 0) {
+						for (ShopCommodity com : commodityList) {
+							CommodityCalcForceVo vo = new CommodityCalcForceVo();
+							vo.setCommodityId(com.getId());
+							vo.setCommodityType(3);
+							vo.setCommodityName(com.getTitle());
+							vo.setCommodityLogo(imageDomain + com.getLogo());
+							// 折扣
+							Double price = BigDecimal.valueOf(com.getPrice())
+									.multiply(BigDecimal.valueOf(com.getDiscount())).doubleValue();
+							vo.setCommodityPrice(price);
+							Double priceEth = BigDecimal.valueOf(price)
+									.divide(BigDecimal.valueOf(coinPrice.getPrice()), 8, BigDecimal.ROUND_HALF_UP)
+									.doubleValue();
+							vo.setCommodityPriceEth(priceEth);
+                            vo.setInventoryQuantity(com.getInventoryQuantity());
+							// 赋值产品信息
+							if (productMap.containsKey(com.getId())) {
+								ShopProductCalcForce prod = productMap.get(com.getId());
+								vo.setDuration(prod.getDuration());
+								vo.setTonkenDayLow((int) Math.floor(prod.getTonkenDayLow()));
+								vo.setTonkenDayHigh((int) Math.ceil(prod.getTonkenDayHigh()));
+							}
+							
+							voList.add(vo);
+						}
+					}
+				}
+			}
+
+			resultMap.put("commoditys", voList);
+			messageVo.setResult(true);
+			messageVo.setT(resultMap);
+			messageVo.setMessage("数据获取成功");
+			return messageVo;
+		} else {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
+			return messageVo;
+		}
 	}
 
 }
