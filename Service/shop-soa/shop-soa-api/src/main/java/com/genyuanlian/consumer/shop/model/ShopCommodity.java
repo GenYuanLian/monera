@@ -17,7 +17,7 @@ public class ShopCommodity implements Serializable {
 
 	private Long merchantId;
 
-	private Integer commodityType; //商品类型：1-区块链计算机,2-通用商品
+	private Integer commodityType; // 商品类型：1-区块链计算机,2-通用商品,3-算力服务
 
 	private Long productId;
 
@@ -27,9 +27,13 @@ public class ShopCommodity implements Serializable {
 
 	private String logo;
 
+	private String actLogo;
+
 	private String remark;
 
 	private Double price;
+
+	private Double priceTotal; // 总价(当price<price_total,需付尾款)
 
 	private Double discount;
 
@@ -37,7 +41,19 @@ public class ShopCommodity implements Serializable {
 
 	private Integer saleQuantity;
 
-	private Integer status; //状态：1-上架,2-下架
+	private Integer status; // 状态：1-上架,2-下架
+
+	private Integer purchaseRestrict; // 购买限制数量：0-不限制
+
+	private String payExplain;
+
+	private Integer isSendMail; // 是否需要发送快递(1-是;0-否)
+
+	private String traceSource;// 溯源地址
+
+	private Integer presentRate; // 赠送比例：买一赠几
+
+	private Integer sort; // 排序
 
 	private java.util.Date createTime;
 
@@ -97,6 +113,14 @@ public class ShopCommodity implements Serializable {
 		return this.logo;
 	}
 
+	public String getActLogo() {
+		return actLogo;
+	}
+
+	public void setActLogo(String actLogo) {
+		this.actLogo = actLogo;
+	}
+
 	public void setRemark(String value) {
 		this.remark = value;
 	}
@@ -111,6 +135,14 @@ public class ShopCommodity implements Serializable {
 
 	public Double getPrice() {
 		return this.price;
+	}
+
+	public Double getPriceTotal() {
+		return priceTotal;
+	}
+
+	public void setPriceTotal(Double priceTotal) {
+		this.priceTotal = priceTotal;
 	}
 
 	public void setDiscount(Double value) {
@@ -143,6 +175,54 @@ public class ShopCommodity implements Serializable {
 
 	public Integer getStatus() {
 		return this.status;
+	}
+
+	public Integer getPurchaseRestrict() {
+		return purchaseRestrict;
+	}
+
+	public void setPurchaseRestrict(Integer purchaseRestrict) {
+		this.purchaseRestrict = purchaseRestrict;
+	}
+
+	public void setPayExplain(String value) {
+		this.payExplain = value;
+	}
+
+	public String getPayExplain() {
+		return this.payExplain;
+	}
+
+	public Integer getIsSendMail() {
+		return isSendMail;
+	}
+
+	public void setIsSendMail(Integer isSendMail) {
+		this.isSendMail = isSendMail;
+	}
+
+	public String getTraceSource() {
+		return traceSource;
+	}
+
+	public void setTraceSource(String traceSource) {
+		this.traceSource = traceSource;
+	}
+
+	public Integer getPresentRate() {
+		return presentRate;
+	}
+
+	public void setPresentRate(Integer presentRate) {
+		this.presentRate = presentRate;
+	}
+
+	public Integer getSort() {
+		return sort;
+	}
+
+	public void setSort(Integer sort) {
+		this.sort = sort;
 	}
 
 	public void setCreateTime(java.util.Date value) {

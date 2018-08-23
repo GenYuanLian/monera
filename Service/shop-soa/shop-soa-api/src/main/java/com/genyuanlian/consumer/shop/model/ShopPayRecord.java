@@ -40,6 +40,8 @@ public class ShopPayRecord implements Serializable{
 	
 	private java.util.Date createTime;
 	
+	private String mobile;
+	
 		
 	public void setId(Long value) {
 		this.id = value;
@@ -155,6 +157,14 @@ public class ShopPayRecord implements Serializable{
 	
 	public java.util.Date getCreateTime() {
 		return this.createTime;
+	}
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
 	}
 		
 }

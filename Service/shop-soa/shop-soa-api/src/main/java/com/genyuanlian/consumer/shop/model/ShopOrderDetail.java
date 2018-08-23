@@ -1,6 +1,7 @@
 package com.genyuanlian.consumer.shop.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * ShopOrderDetail Entity.
@@ -27,7 +28,7 @@ public class ShopOrderDetail implements Serializable {
 
 	private Long commodityId;
 
-	private Integer commodityType; //商品类型：1-提货卡,2-溯源卡,3-零售商品
+	private Integer commodityType; // 商品类型：1-提货卡,2-溯源卡,3-零售商品
 
 	private String commodityName;
 
@@ -41,30 +42,61 @@ public class ShopOrderDetail implements Serializable {
 
 	private String description;
 
-	private Long commoditySnapshotId;
-
-	private Integer status; //订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成，9-用户已删除
+	private Integer status; // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
 
 	private String remark;
 
+	private Integer presentCount; // 赠送数量
+
 	private java.util.Date createTime;
 	
+	private java.util.Date payTime;
+
 	/**
 	 * 取消原因
 	 */
 	private String cancelReason;
 
+	private String traceSource;// 溯源地址
+
+	private Integer deleteFlag; // 删除标记:0-未删除,1-删除
+
 	/**
 	 * 剩余支付时间（秒）
 	 */
 	private Long surplusPayTime;
-	
-	private Integer payType; //支付方式:1-微信,2-支付宝,3-提货卡
-	
+
+	private Integer payType; // 支付方式:1-微信,2-支付宝,3-提货卡
+
 	/**
 	 * 商户类型:1-零售商,2-提货卡,3-溯源卡
 	 */
 	private Integer merchType;
+
+	/**
+	 * 商户Logo
+	 */
+	private String merchLogo;
+
+	private Integer isSendMail; // 是否需要发送快递(1-是;0-否)
+
+	private Integer calcForceOrder = 0;// 是否是算力服务订单:0-否，1-是
+
+	private String publicKeyAddr; // 会员钱包公钥地址
+
+	private Integer calcForceTaskFlag = 0; // 算力服务任务创建标记:0-未创建，1-已创建
+
+	private Double balancePayment = 0d; // 需线下付款金额,线下付款结清后，设置为0
+
+	private String referraCode;
+
+	private Long referraId;
+
+	private BigDecimal totalAmount;
+
+	private Integer orderType; //订单类型：1-普通订单；2-抢购订单；3-竞拍订单
+
+	private Long activityId;
 
 	public void setId(Long value) {
 		this.id = value;
@@ -178,14 +210,6 @@ public class ShopOrderDetail implements Serializable {
 		return this.description;
 	}
 
-	public void setCommoditySnapshotId(Long value) {
-		this.commoditySnapshotId = value;
-	}
-
-	public Long getCommoditySnapshotId() {
-		return this.commoditySnapshotId;
-	}
-
 	public Integer getStatus() {
 		return status;
 	}
@@ -202,6 +226,14 @@ public class ShopOrderDetail implements Serializable {
 		return this.remark;
 	}
 
+	public Integer getPresentCount() {
+		return presentCount;
+	}
+
+	public void setPresentCount(Integer presentCount) {
+		this.presentCount = presentCount;
+	}
+
 	public void setCreateTime(java.util.Date value) {
 		this.createTime = value;
 	}
@@ -210,12 +242,36 @@ public class ShopOrderDetail implements Serializable {
 		return this.createTime;
 	}
 
+	public java.util.Date getPayTime() {
+		return payTime;
+	}
+
+	public void setPayTime(java.util.Date payTime) {
+		this.payTime = payTime;
+	}
+
 	public String getCancelReason() {
 		return cancelReason;
 	}
 
 	public void setCancelReason(String cancelReason) {
 		this.cancelReason = cancelReason;
+	}
+
+	public String getTraceSource() {
+		return traceSource;
+	}
+
+	public void setTraceSource(String traceSource) {
+		this.traceSource = traceSource;
+	}
+
+	public Integer getDeleteFlag() {
+		return deleteFlag;
+	}
+
+	public void setDeleteFlag(Integer deleteFlag) {
+		this.deleteFlag = deleteFlag;
 	}
 
 	public Long getSurplusPayTime() {
@@ -240,6 +296,94 @@ public class ShopOrderDetail implements Serializable {
 
 	public void setMerchType(Integer merchType) {
 		this.merchType = merchType;
+	}
+
+	public String getMerchLogo() {
+		return merchLogo;
+	}
+
+	public void setMerchLogo(String merchLogo) {
+		this.merchLogo = merchLogo;
+	}
+
+	public Integer getIsSendMail() {
+		return isSendMail;
+	}
+
+	public void setIsSendMail(Integer isSendMail) {
+		this.isSendMail = isSendMail;
+	}
+
+	public Integer getCalcForceOrder() {
+		return calcForceOrder;
+	}
+
+	public void setCalcForceOrder(Integer calcForceOrder) {
+		this.calcForceOrder = calcForceOrder;
+	}
+
+	public String getPublicKeyAddr() {
+		return publicKeyAddr;
+	}
+
+	public void setPublicKeyAddr(String publicKeyAddr) {
+		this.publicKeyAddr = publicKeyAddr;
+	}
+
+	public Integer getCalcForceTaskFlag() {
+		return calcForceTaskFlag;
+	}
+
+	public void setCalcForceTaskFlag(Integer calcForceTaskFlag) {
+		this.calcForceTaskFlag = calcForceTaskFlag;
+	}
+
+	public Double getBalancePayment() {
+		return balancePayment;
+	}
+
+	public void setBalancePayment(Double balancePayment) {
+		this.balancePayment = balancePayment;
+	}
+
+	public void setReferraCode(String value) {
+		this.referraCode = value;
+	}
+
+	public String getReferraCode() {
+		return this.referraCode;
+	}
+
+	public void setReferraId(Long referraId) {
+		this.referraId = referraId;
+	}
+
+	public Long getReferraId() {
+		return referraId;
+	}
+
+	public BigDecimal getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(BigDecimal totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+
+	public Integer getOrderType() {
+		return orderType;
+	}
+
+	public void setOrderType(Integer orderType) {
+		this.orderType = orderType;
+	}
+
+	public Long getActivityId() {
+		return activityId;
+	}
+
+	public void setActivityId(Long activityId) {
+		this.activityId = activityId;
 	}
 
 }

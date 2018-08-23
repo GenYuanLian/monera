@@ -19,4 +19,26 @@ public interface IWeixinpayApi {
 	 * @return
 	 */
 	public ShopMessageVo<String> weixinpayAysnNotify(Map<String, String> map);
+	
+	/**
+	 * 获取微信openId
+	 * @param code
+	 * @param isMinProgram 是否小程序
+	 * @return
+	 */
+	public ShopMessageVo<Map<String, Object>>getWeixinOpenId(String code,Boolean isMinProgram) throws Exception ;
+	
+	/**
+	 * 微信回调结果XML构造
+	 * @param return_code
+	 * @param return_msg
+	 * @return
+	 */
+	public String setXML(String return_code, String return_msg);
+	
+	/**
+	 * 获取微信分享配置参数
+	 * @return
+	 */
+	public ShopMessageVo<Map<String, String>> getWeixinShareConfig(String url);
 }

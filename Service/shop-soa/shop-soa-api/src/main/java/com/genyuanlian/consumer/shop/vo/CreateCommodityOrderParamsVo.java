@@ -24,6 +24,21 @@ public class CreateCommodityOrderParamsVo implements Serializable {
 
 	private Long addressId; // 收货地址Id
 
+	private String walletAddress; // 钱包地址
+
+	private String referraCode; // 推荐码
+
+	// 临时属性
+	private Long referraId = new Long(0); // 推荐人Id
+	
+	private Long activityId;  //活动Id
+	
+	private String activityTitel;
+	
+	private Integer orderType;  //订单类型：1-普通订单；2-抢购订单；3-竞拍订单
+	
+	private BigDecimal totalAmount;  //总金额
+	
 	public Integer getCommodityType() {
 		return commodityType;
 	}
@@ -79,4 +94,61 @@ public class CreateCommodityOrderParamsVo implements Serializable {
 	public void setAddressId(Long addressId) {
 		this.addressId = addressId;
 	}
+
+	public String getWalletAddress() {
+		return walletAddress;
+	}
+
+	public void setWalletAddress(String walletAddress) {
+		this.walletAddress = walletAddress;
+	}
+
+	public String getReferraCode() {
+		return referraCode;
+	}
+
+	public void setReferraCode(String referraCode) {
+		this.referraCode = referraCode;
+	}
+	
+	public Long getReferraId() {
+		return referraId;
+	}
+
+	public void setReferraId(Long referraId) {
+		this.referraId = referraId;
+	}
+
+	public Long getActivityId() {
+		return activityId;
+	}
+
+	public void setActivityId(Long activityId) {
+		this.activityId = activityId;
+	}
+
+	public String getActivityTitel() {
+		return activityTitel;
+	}
+
+	public void setActivityTitel(String activityTitel) {
+		this.activityTitel = activityTitel;
+	}
+
+	public Integer getOrderType() {
+		return orderType;
+	}
+
+	public void setOrderType(Integer orderType) {
+		this.orderType = orderType;
+	}
+
+	public BigDecimal getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(BigDecimal totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+	
 }

@@ -19,6 +19,10 @@ public class CommodityVo implements Serializable {
 
 	private Double commodityPrice;
 
+	private Integer inventoryQuantity;
+
+	private String traceSource; // 商品溯源信息
+
 	public Long getCommodityId() {
 		return commodityId;
 	}
@@ -58,4 +62,21 @@ public class CommodityVo implements Serializable {
 	public void setCommodityPrice(Double commodityPrice) {
 		this.commodityPrice = commodityPrice;
 	}
+
+	public Integer getInventoryQuantity() {
+		return inventoryQuantity;
+	}
+
+	public void setInventoryQuantity(Integer inventoryQuantity) {
+		this.inventoryQuantity = inventoryQuantity;
+	}
+
+	public String getTraceSource() {
+		return traceSource;
+	}
+
+	public void setTraceSource(String traceSource) {
+		this.traceSource = traceSource;
+	}
+
 }

@@ -23,6 +23,9 @@ public class CommodityOrderPayParamsVo implements Serializable {
 
 	// 商品简介
 	private String productDesc;
+	
+	//支付密码
+	private String payPwd;
 
 	public Double getTotalAmount() {
 		return totalAmount;
@@ -63,4 +66,13 @@ public class CommodityOrderPayParamsVo implements Serializable {
 	public void setProductDesc(String productDesc) {
 		this.productDesc = productDesc;
 	}
+
+	public String getPayPwd() {
+		return payPwd;
+	}
+
+	public void setPayPwd(String payPwd) {
+		this.payPwd = payPwd;
+	}
+	
 }

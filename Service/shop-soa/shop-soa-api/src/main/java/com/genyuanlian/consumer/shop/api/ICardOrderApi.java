@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
+import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 
@@ -20,8 +21,7 @@ public interface ICardOrderApi {
 	 * @param remark
 	 * @return
 	 */
-	public ShopMessageVo<String> createPuCardOrder(Long puCardTypeId, Integer payCount, Integer cardType,
-			BigDecimal amount, Long memberId, String remark);
+	public ShopMessageVo<String> createPuCardOrder(CreateCommodityOrderParamsVo req);
 
 	/**
 	 * 取消订单
@@ -30,7 +30,8 @@ public interface ICardOrderApi {
 	 *            要取消的订单
 	 * @param status
 	 *            1-取消支付；2-支付过期
-	 * @param cancelReason 取消原因
+	 * @param cancelReason
+	 *            取消原因
 	 * @return
 	 */
 	public ShopMessageVo<String> cancelPuCardOrder(List<ShopOrderDetail> orders, Integer status, String cancelReason);

@@ -17,9 +17,9 @@ public class ShopBstkRecord implements Serializable {
 
 	private Long ownerId;
 
-	private Integer ownerType; //钱包所有者类型：1-会员：2-商户
+	private Integer ownerType; // 钱包所有者类型：1-会员：2-商户
 
-	private Integer callType;
+	private Integer callType; // 业务类型:1-创建钱包,2-充值,3-消费,4-批量充值,5-转账
 
 	private Long businessId;
 
@@ -34,6 +34,8 @@ public class ShopBstkRecord implements Serializable {
 	private Integer retryCount;
 
 	private String remark;
+
+	private String transactionNo; // 交易编号,本地生成
 
 	private java.util.Date createTime;
 
@@ -123,6 +125,14 @@ public class ShopBstkRecord implements Serializable {
 
 	public String getRemark() {
 		return this.remark;
+	}
+
+	public String getTransactionNo() {
+		return transactionNo;
+	}
+
+	public void setTransactionNo(String transactionNo) {
+		this.transactionNo = transactionNo;
 	}
 
 	public void setCreateTime(java.util.Date value) {

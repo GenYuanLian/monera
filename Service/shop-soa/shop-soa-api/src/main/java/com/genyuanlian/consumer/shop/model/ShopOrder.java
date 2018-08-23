@@ -1,6 +1,7 @@
 package com.genyuanlian.consumer.shop.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * ShopOrder Entity.
@@ -19,15 +20,21 @@ public class ShopOrder implements Serializable {
 
 	private String orderNo;
 
-	private Integer payType; //支付方式:1-微信,2-支付宝,3-提货卡
+	private Integer payType; // 支付方式:1-微信,2-支付宝,3-提货卡
 
 	private Double amount;
+	
+	private BigDecimal totalAmount;
 
 	private String description;
 
 	private String remark;
 
 	private String transactionNo;
+
+	private String referraCode;
+
+	private Long referraId;
 
 	private java.util.Date createTime;
 
@@ -71,6 +78,14 @@ public class ShopOrder implements Serializable {
 		return this.amount;
 	}
 
+	public BigDecimal getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(BigDecimal totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+
 	public void setDescription(String value) {
 		this.description = value;
 	}
@@ -93,6 +108,22 @@ public class ShopOrder implements Serializable {
 
 	public String getTransactionNo() {
 		return this.transactionNo;
+	}
+
+	public void setReferraCode(String value) {
+		this.referraCode = value;
+	}
+
+	public String getReferraCode() {
+		return this.referraCode;
+	}
+
+	public void setReferraId(Long referraId) {
+		this.referraId = referraId;
+	}
+
+	public Long getReferraId() {
+		return referraId;
 	}
 
 	public void setCreateTime(java.util.Date value) {

@@ -1,5 +1,9 @@
 package com.genyuanlian.consumer.shop.api;
 
+import java.util.List;
+
+import com.genyuanlian.consumer.shop.model.ShopConfirmPaymentLog;
+import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.vo.CommodityOrderPayParamsVo;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
@@ -22,4 +26,28 @@ public interface ICommodityOrderApi {
 	 */
 	public ShopMessageVo<String> orderPay(CommodityOrderPayParamsVo params);
 
+	/**
+	 * 确认付款
+	 * 
+	 * @param confirmPaymentLog
+	 * @return
+	 */
+	public ShopMessageVo<String> confirmPayment(ShopConfirmPaymentLog confirmPaymentLog);
+
+	/**
+	 * 发送快递
+	 * 
+	 * @param orderDetailId
+	 * @param expressNo
+	 * @param expressSupplier
+	 * @return
+	 */
+	public ShopMessageVo<String> sendDelivery(Long orderDetailId, String expressNo, String expressSupplier);
+
+	/**
+	 * 为订单明细创建相应的算力服务计划任务
+	 * 
+	 * @param orderDetails
+	 */
+	public void CreateOrderCalcForce(List<ShopOrderDetail> orderDetails);
 }

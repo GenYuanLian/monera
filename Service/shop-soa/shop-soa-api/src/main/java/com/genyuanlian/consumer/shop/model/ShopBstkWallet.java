@@ -17,13 +17,19 @@ public class ShopBstkWallet implements Serializable {
 
 	private Long ownerId;
 
-	private Integer ownerType; //钱包所有者类型：1-会员：2-商户
+	private Integer ownerType; // 钱包所有者类型：1-会员：2-商户
 
 	private String mobile;
 
 	private String walletAddress;
 
 	private String publicKeyAddr;
+
+	private Double totelAmount; // 总收入
+
+	private Double balance; // 可用余额
+
+	private String remark;
 
 	private java.util.Date createTime;
 
@@ -73,6 +79,30 @@ public class ShopBstkWallet implements Serializable {
 
 	public String getPublicKeyAddr() {
 		return this.publicKeyAddr;
+	}
+
+	public Double getTotelAmount() {
+		return totelAmount;
+	}
+
+	public void setTotelAmount(Double totelAmount) {
+		this.totelAmount = totelAmount;
+	}
+
+	public Double getBalance() {
+		return balance;
+	}
+
+	public void setBalance(Double balance) {
+		this.balance = balance;
+	}
+
+	public String getRemark() {
+		return remark;
+	}
+
+	public void setRemark(String remark) {
+		this.remark = remark;
 	}
 
 	public void setCreateTime(java.util.Date value) {

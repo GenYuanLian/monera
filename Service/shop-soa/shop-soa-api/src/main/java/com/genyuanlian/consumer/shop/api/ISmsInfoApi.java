@@ -10,4 +10,13 @@ public interface ISmsInfoApi {
 	 * @param params
 	 */
 	public ShopMessageVo<String> sendSms(SendSmsParamsVo params);
+	
+	/**
+	 * 验证码验证
+	 * @param smsNumber
+	 * @param mobile
+	 * @param verificationCode
+	 * @return
+	 */
+	public ShopMessageVo<Boolean> checkVerificationCode(String smsNumber,String mobile,String verificationCode);
 }

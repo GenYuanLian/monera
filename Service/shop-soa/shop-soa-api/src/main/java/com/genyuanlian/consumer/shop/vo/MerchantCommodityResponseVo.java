@@ -17,6 +17,12 @@ public class MerchantCommodityResponseVo implements Serializable {
 	private Integer merchantType; // 商户类型:1-零售商,2-提货卡,3-溯源卡
 
 	private String merchantLogo;
+	
+	//收货地址是否必填：1-是；0-否
+	private Integer AddressRequire=0;
+	
+	//钱包地址是否必填：1-是；0-否
+	private Integer walletAddressRequire=0;
 
 	private List<CommodityVo> commodityList; // 产品列表
 
@@ -54,6 +60,24 @@ public class MerchantCommodityResponseVo implements Serializable {
 
 	public List<CommodityVo> getCommodityList() {
 		return commodityList;
+	}
+
+	
+	
+	public Integer getAddressRequire() {
+		return AddressRequire;
+	}
+
+	public void setAddressRequire(Integer addressRequire) {
+		AddressRequire = addressRequire;
+	}
+
+	public Integer getWalletAddressRequire() {
+		return walletAddressRequire;
+	}
+
+	public void setWalletAddressRequire(Integer walletAddressRequire) {
+		this.walletAddressRequire = walletAddressRequire;
 	}
 
 	public void setCommodityList(List<CommodityVo> commodityList) {

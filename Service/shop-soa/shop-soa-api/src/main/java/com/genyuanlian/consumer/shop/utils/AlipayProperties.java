@@ -18,8 +18,6 @@ public class AlipayProperties {
 	public static String ALIPAY_APP_ID=ConfigPropertieUtils.getString("ALIPAY_APP_ID");
     //开发者应用私钥。java配置PKCS8格式
 	public static String ALIPAY_RSA_RRIVATE_KEY=ConfigPropertieUtils.getString("ALIPAY_RSA_RRIVATE_KEY");
-	//返回页地址
-	public static String ALIPAY_RETURN_URL=ConfigPropertieUtils.getString("ALIPAY_RETURN_URL");
 	//异步接口请求
 	public static String ALIPAY_NOTIFY_URL=ConfigPropertieUtils.getString("ALIPAY_NOTIFY_URL");
 	//编码字符集。默认 utf-8

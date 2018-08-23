@@ -29,6 +29,10 @@ public class ShopPuCardType implements Serializable {
 
 	private String pic;
 
+	private String actLogo;
+
+	private String actPrdPic;
+
 	private Integer status;
 
 	private String remark;
@@ -39,7 +43,7 @@ public class ShopPuCardType implements Serializable {
 
 	private Integer salesVolume;
 
-	//很重要，小胖子 你别删掉（商品列表或下单页面 后台接口参数，用来区分是哪种商品）
+	// 很重要，小胖子 你别删掉（商品列表或下单页面 后台接口参数，用来区分是哪种商品）
 	private Integer commodityType = 1;// 商品类型：1-提货卡,2-溯源卡,3-零售商品
 
 	public void setId(Long value) {
@@ -104,6 +108,22 @@ public class ShopPuCardType implements Serializable {
 
 	public String getPic() {
 		return this.pic;
+	}
+
+	public String getActLogo() {
+		return actLogo;
+	}
+
+	public void setActLogo(String actLogo) {
+		this.actLogo = actLogo;
+	}
+
+	public String getActPrdPic() {
+		return actPrdPic;
+	}
+
+	public void setActPrdPic(String actPrdPic) {
+		this.actPrdPic = actPrdPic;
 	}
 
 	public void setStatus(Integer value) {

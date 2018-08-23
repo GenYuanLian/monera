@@ -2,22 +2,22 @@ package com.genyuanlian.consumer.shop.vo;
 
 import java.io.Serializable;
 
-public class MemberLoginParamsVo implements Serializable{
+public class MemberLoginParamsVo implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -6898453904863723164L;
 
-	private String loginName; //登录账号
-	
-	private String loginType; //登录方式 password,smscode
-	
-	private String loginCode; //密码或者短信编码
-	
-	private String smsCode; //短信验证码
-	
-	private String ip; 
+	private String loginName; // 登录账号
+
+	private String loginType; // 登录方式 password,smscode
+
+	private String loginCode; // 密码或者短信编码
+
+	private String smsCode; // 短信验证码
+
+	private String ip;
 
 	public String getLoginName() {
 		return loginName;

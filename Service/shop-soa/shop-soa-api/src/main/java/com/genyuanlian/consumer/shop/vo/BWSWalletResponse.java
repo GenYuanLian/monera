@@ -3,34 +3,37 @@ package com.genyuanlian.consumer.shop.vo;
 import java.io.Serializable;
 
 /**
- * BWS 返回对象
- * Created by hunter.wang on 2018/5/10.
+ * BWS 返回对象 Created by hunter.wang on 2018/5/10.
  */
-public class BWSWalletResponse implements Serializable
-{
-    /**
-     * 是否ok
-     */
-    private boolean isOK;
+public class BWSWalletResponse implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -472969402040395057L;
 
-    /**
-     * 返回数据类型
-     */
-    private String data;
+	/**
+	 * 是否ok
+	 */
+	private boolean isOK;
 
-    public boolean isOK() {
-        return isOK;
-    }
+	/**
+	 * 返回数据类型
+	 */
+	private String data;
 
-    public String getData() {
-        return data;
-    }
+	public boolean isOK() {
+		return isOK;
+	}
 
-    public void setData(String data) {
-        this.data = data;
-    }
+	public String getData() {
+		return data;
+	}
 
-    public void setOK(boolean isOK) {
-        isOK = isOK;
-    }
+	public void setData(String data) {
+		this.data = data;
+	}
+
+	public void setOK(boolean isOK) {
+		this.isOK = isOK;
+	}
 }

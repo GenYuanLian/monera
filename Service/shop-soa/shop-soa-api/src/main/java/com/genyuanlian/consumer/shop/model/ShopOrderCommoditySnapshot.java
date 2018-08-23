@@ -26,6 +26,8 @@ public class ShopOrderCommoditySnapshot implements Serializable {
 	private String remark;
 
 	private java.util.Date createTime;
+	
+	private Long orderDetailId;
 
 	public void setId(Long value) {
 		this.id = value;
@@ -81,6 +83,14 @@ public class ShopOrderCommoditySnapshot implements Serializable {
 
 	public java.util.Date getCreateTime() {
 		return this.createTime;
+	}
+
+	public Long getOrderDetailId() {
+		return orderDetailId;
+	}
+
+	public void setOrderDetailId(Long orderDetailId) {
+		this.orderDetailId = orderDetailId;
 	}
 
 }

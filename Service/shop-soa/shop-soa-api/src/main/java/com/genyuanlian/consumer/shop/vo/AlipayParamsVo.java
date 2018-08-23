@@ -23,6 +23,8 @@ public class AlipayParamsVo implements Serializable {
 
 	// 商品简介
 	private String productDesc;
+	
+	private String returnUrl;
 
 	public Double getTotalAmount() {
 		return totalAmount;
@@ -62,6 +64,14 @@ public class AlipayParamsVo implements Serializable {
 
 	public void setProductDesc(String productDesc) {
 		this.productDesc = productDesc;
+	}
+
+	public String getReturnUrl() {
+		return returnUrl;
+	}
+
+	public void setReturnUrl(String returnUrl) {
+		this.returnUrl = returnUrl;
 	}
 
 }

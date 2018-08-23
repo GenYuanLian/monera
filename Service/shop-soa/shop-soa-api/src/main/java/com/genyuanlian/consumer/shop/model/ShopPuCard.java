@@ -45,7 +45,7 @@ public class ShopPuCard implements Serializable {
 
 	private java.util.Date activationTime;
 
-	private Integer status;
+	private Integer status; //状态：0-未售、1-已锁定、2-售出、3-激活、4-部分使用、5-全部使用、6-已过期、7-已作废
 
 	private String remark;
 

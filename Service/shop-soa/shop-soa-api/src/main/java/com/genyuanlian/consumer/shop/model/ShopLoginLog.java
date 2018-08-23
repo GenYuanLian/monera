@@ -26,6 +26,11 @@ public class ShopLoginLog implements Serializable {
 	private java.util.Date validTime;
 
 	private String loginIp;
+	
+	/**
+	 * 登录类型：1-密码登录；2-短信验证码登录；3-第三方授权登录
+	 */
+	private Integer loginType;
 
 	private String latitude;
 
@@ -87,6 +92,14 @@ public class ShopLoginLog implements Serializable {
 
 	public String getLoginIp() {
 		return this.loginIp;
+	}
+
+	public Integer getLoginType() {
+		return loginType;
+	}
+
+	public void setLoginType(Integer loginType) {
+		this.loginType = loginType;
 	}
 
 	public void setLatitude(String value) {

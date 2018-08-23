@@ -19,7 +19,7 @@ public class ShopMerchant implements Serializable {
 
 	private String merchCode;
 
-	private Integer merchType; //商户类型:1-零售商,2-提货卡,3-溯源卡
+	private Integer merchType; // 商户类型:1-零售商,2-提货卡,3-溯源卡
 
 	private String logoPic;
 
@@ -39,16 +39,18 @@ public class ShopMerchant implements Serializable {
 
 	private String notice;
 
-	private Integer status;
+	private Integer status; // 状态：1-正常，2-冻结
 
 	private String remark;
+
+	private Integer sort;
 
 	private java.util.Date createTime;
 
 	// 非数据库字段
-	private String salesVolume; // 销量
+	private String salesVolume = "0"; // 销量
 
-	private String praise; // 好评
+	private String praise = "0"; // 好评
 
 	public void setId(Long value) {
 		this.id = value;
@@ -168,6 +170,14 @@ public class ShopMerchant implements Serializable {
 
 	public String getRemark() {
 		return this.remark;
+	}
+
+	public Integer getSort() {
+		return sort;
+	}
+
+	public void setSort(Integer sort) {
+		this.sort = sort;
 	}
 
 	public void setCreateTime(java.util.Date value) {
