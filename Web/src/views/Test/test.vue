@@ -236,7 +236,7 @@
     mounted:function() {
       // this.mesLunbo();
       // this.$refs.msgS.scroll();
-      this.mergeShareImg();
+      // this.mergeShareImg();
     }
   };
 </script>
