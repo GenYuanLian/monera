@@ -55,7 +55,7 @@ public class DeleteOrderProcessor extends BaseApiProcessor {
 		}
 
 		OrderNoParamsVo params = new OrderNoParamsVo();
-		params.setMemberId(Integer.valueOf(memberId));
+		params.setMemberId(Long.valueOf(memberId));
 		params.setOrderNo(orderNo);
 		ShopMessageVo<String> messageVo = cardOrderApi.deleteOrder(params);
 		if (messageVo.isResult()) {

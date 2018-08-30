@@ -13,6 +13,7 @@ import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.hnair.consumer.constant.ErrorCodeEnum;
 import com.hnair.consumer.processor.BaseApiProcessor;
 import com.hnair.consumer.utils.LoginCheck;
+import com.hnair.consumer.utils.ProUtility;
 import com.hnair.consumer.utils.ResultSender;
 
 @LoginCheck
@@ -28,16 +29,21 @@ public class GetPuCardOrdersProcessor extends BaseApiProcessor {
 		String memberId = request.getParameter("memberId");
 		String pageIndex = request.getParameter("pageIndex");
 		String pageSize = request.getParameter("pageSize");
+		String orderSource = request.getParameter("orderSource");
+		if (ProUtility.isNull(orderSource)) {
+			orderSource = "mmdj"; // 订单来源：mmdj,sqgw
+		}
 
-		ShopMessageVo<Map<String, Object>> messageVo = cardOrdeApi.getPuCardOrders(Long.valueOf(memberId),
+		ShopMessageVo<Map<String, Object>> messageVo = cardOrdeApi.getPuCardOrders(Long.valueOf(memberId), orderSource,
 				Integer.valueOf(pageIndex), Integer.valueOf(pageSize));
-		
+
 		if (messageVo.isResult()) {
 			sender.put("orders", messageVo.getT().get("orders"));
 			sender.put("hasNext", messageVo.getT().get("hasNext"));
 			sender.success(response);
-		}else {
-			sender.fail(ErrorCodeEnum.ERROR_CODE_10000.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10000.getErrorMessage(), response);
+		} else {
+			sender.fail(ErrorCodeEnum.ERROR_CODE_10000.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10000.getErrorMessage(),
+					response);
 		}
 	}
 

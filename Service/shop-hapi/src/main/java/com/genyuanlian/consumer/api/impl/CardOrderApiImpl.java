@@ -19,6 +19,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.alibaba.fastjson.JSON;
 import com.genyuanlian.consumer.service.IBWSService;
+import com.genyuanlian.consumer.service.IBaseOrderService;
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
 import com.genyuanlian.consumer.shop.api.IPuCardApi;
 import com.genyuanlian.consumer.shop.api.IWalletApi;
@@ -64,6 +65,9 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 	@Resource
 	private IBWSService bwsService;
 
+	@Resource
+	private IBaseOrderService baseOrderService;
+
 	// 事物隔离级别为最高，不可脏读，后期改未异步锁
 	@Transactional(isolation = Isolation.SERIALIZABLE)
 	@Override
@@ -80,9 +84,9 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			return result;
 		}
 
-		//价格
-		BigDecimal price=BigDecimal.ZERO;
-		
+		// 价格
+		BigDecimal price = BigDecimal.ZERO;
+
 		// 查询该类型未售提货卡
 		List<ShopPuCard> puCards = puCardApi.getPuCardsByTypeId(req.getCommodityId(), 0, 2, 6);
 
@@ -107,7 +111,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 				return result;
 			}
-		}else {
+		} else {
 			price = req.getTotalAmount().divide(BigDecimal.valueOf(req.getSaleCount().longValue()));
 		}
 
@@ -119,16 +123,18 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		// 创建订单
 		ShopOrder order = new ShopOrder();
 		order.setAmount(req.getAmount().doubleValue());
-		order.setTotalAmount(req.getTotalAmount()!=null?req.getTotalAmount():req.getAmount());
+		order.setTotalAmount(req.getTotalAmount() != null ? req.getTotalAmount() : req.getAmount());
 		order.setCreateTime(now);
 		order.setMemberId(req.getMemberId());
 		order.setOrderNo(ShopUtis.buildOrderNo("puc"));
 		order.setRemark(req.getRemark());
+		// 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+		order.setPayType(1); // 设置默认值
 		Map<String, String> descMap = new HashMap<>();
 		descMap.put("commodityName", puCardType.getTitle());
 		descMap.put("saleCount", req.getSaleCount().toString());
 		descMap.put("amount", req.getAmount().toString());
-		descMap.put("totalAmount", (req.getTotalAmount()!=null?req.getTotalAmount():req.getAmount()).toString());
+		descMap.put("totalAmount", (req.getTotalAmount() != null ? req.getTotalAmount() : req.getAmount()).toString());
 		descMap.put("logo", puCardType.getPic());
 		order.setDescription(JSON.toJSONString(descMap));
 
@@ -152,7 +158,6 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		orderDetail.setAmount(req.getAmount().doubleValue());
 		// 是否需要发送快递(1-是;0-否)
 		orderDetail.setIsSendMail(0);
-		orderDetail.setStatus(0);
 		orderDetail.setRemark(req.getRemark());
 		if (req.getOrderType().intValue() != 1) {
 			orderDetail.setActivityId(req.getActivityId());
@@ -165,6 +170,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			orderDetail.setCommodityName(puCards.get(0).getTitle());
 		}
 		commonService.save(orderDetail);
+		baseOrderService.setOrderStatus(orderDetail, 0);
 
 		// 配送信息
 		if (req.getAddressId() != null && req.getAddressId().longValue() > 0) {
@@ -231,7 +237,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 		// 修改订单详情
 		for (ShopOrderDetail orderDetail : orderDetails) {
 			if (orderDetail.getStatus().equals(0)) {
-				orderDetail.setStatus(status);
+				baseOrderService.setOrderStatus(orderDetail, status);
 				orderDetail.setCancelReason(cancelReason);
 				commonService.update(orderDetail);
 			} else {
@@ -362,7 +368,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			// 要保存的付款记录
 			List<WalletIncomeVo> merchantIncomes = new ArrayList<>();
 			for (ShopOrderDetail orderDetail : orderDetails) {
-				orderDetail.setStatus(6); // 已收货
+				baseOrderService.setOrderStatus(orderDetail, 6);// 已收货
 				commonService.update(orderDetail);
 
 				WalletIncomeVo incomeVo = new WalletIncomeVo();
@@ -401,7 +407,7 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			// 修改订单详情
 			List<Long> orderDetailIds = new ArrayList<Long>();
 			for (ShopOrderDetail orderDetail : orderDetails) {
-				orderDetail.setStatus(6); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
+				baseOrderService.setOrderStatus(orderDetail, 6); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
 				commonService.update(orderDetail);
 
 				orderDetailIds.add(orderDetail.getId());
@@ -455,13 +461,17 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 	public ShopOrderDetail getOrderByOrderNo(String orderNo) {
 		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "orderNo", orderNo);
 		if (orders != null && orders.size() > 0) {
-			return orders.get(0);
+			// 屏蔽敏感信息
+			ShopOrderDetail order = orders.get(0);
+			order.setWalletPrivate("");
+			return order;
 		}
 		return null;
 	}
 
 	@Override
-	public ShopMessageVo<Map<String, Object>> getPuCardOrders(Long memberId, Integer pageIndex, Integer pageSize) {
+	public ShopMessageVo<Map<String, Object>> getPuCardOrders(Long memberId, String orderSource, Integer pageIndex,
+			Integer pageSize) {
 		ShopMessageVo<Map<String, Object>> messageVo = new ShopMessageVo<>();
 		Map<String, Object> result = new HashMap<>();
 
@@ -473,14 +483,27 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			pageSize = 20;
 		}
 
+		// 订单来源：mmdj,sqgw
+		// orderSource 参数表示，获取指定的来源的订单，同时获取其他来源的已支付的订单
 		List<ShopOrderDetail> list = commonService.getListBySqlId(ShopOrderDetail.class, "pageData", "memberId",
-				memberId, "deleteFlag", 0, "pageIndex", pageIndex * pageSize, "pageSize", pageSize + 1);
+				memberId, "orderSource", orderSource, "deleteFlag", 0, "pageIndex", pageIndex * pageSize, "pageSize",
+				pageSize + 1);
 
 		// 商户集合
-		List<ShopMerchant> merchants = new ArrayList<>();
+		List<ShopMerchant> merchants = new ArrayList<ShopMerchant>();
+		List<ShopOrder> orders = new ArrayList<ShopOrder>();
+		HashMap<Long, ShopOrder> orderMap = new HashMap<Long, ShopOrder>();
 		if (list != null && list.size() > 0) {
+			// 商户列表
 			List<Long> merchantIds = list.stream().map(i -> i.getMerchantId()).distinct().collect(Collectors.toList());
 			merchants = commonService.get(merchantIds, ShopMerchant.class);
+
+			// 订单列表
+			List<Long> orderIds = list.stream().map(i -> i.getOrderId()).distinct().collect(Collectors.toList());
+			orders = commonService.get(orderIds, ShopOrder.class);
+			for (ShopOrder o : orders) {
+				orderMap.put(o.getId(), o);
+			}
 		}
 
 		if (list == null || list.size() == 0) {
@@ -499,12 +522,19 @@ public class CardOrderApiImpl extends BaseOrderApiImpl implements ICardOrderApi 
 			// 支付等待时长，单位分钟
 			Integer time = ConfigPropertieUtils.getLong("wait_pay_time", 30l).intValue();
 			for (ShopOrderDetail order : list) {
+				// 屏蔽敏感信息
+				order.setWalletPrivate("");
 				order.setDescription(imageDomain + order.getDescription());
 				order.setSurplusPayTime(
 						DateUtil.diffDateTime(DateUtil.addMinute(order.getCreateTime(), time), new Date()));
 				if (merchants != null && merchants.size() > 0) {
 					order.setMerchType(merchants.stream().filter(i -> i.getId() == order.getMerchantId())
 							.map(i -> i.getMerchType()).findFirst().get());
+				}
+				if (orders != null && orders.size() > 0) {
+					if (orderMap.containsKey(order.getOrderId())) {
+						order.setPayType(orderMap.get(order.getOrderId()).getPayType());
+					}
 				}
 			}
 		}

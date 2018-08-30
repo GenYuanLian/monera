@@ -1,5 +1,7 @@
 package com.genyuanlian.consumer.api.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,18 +22,20 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.alibaba.fastjson.JSON;
 import com.genyuanlian.consumer.service.IBWSService;
+import com.genyuanlian.consumer.service.IBaseOrderService;
+import com.genyuanlian.consumer.service.IETHService;
 import com.genyuanlian.consumer.service.IMemberSecurityService;
 import com.genyuanlian.consumer.shop.api.ICommodityOrderApi;
 import com.genyuanlian.consumer.shop.api.ISystemApi;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
 import com.genyuanlian.consumer.shop.model.ShopBstkWalletBill;
+import com.genyuanlian.consumer.shop.model.ShopCoinPrice;
 import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopCommodityOrderPay;
 import com.genyuanlian.consumer.shop.model.ShopConfirmPaymentLog;
 import com.genyuanlian.consumer.shop.model.ShopMember;
 import com.genyuanlian.consumer.shop.model.ShopMemberAddress;
-import com.genyuanlian.consumer.shop.model.ShopMemberSecurity;
 import com.genyuanlian.consumer.shop.model.ShopMemberShare;
 import com.genyuanlian.consumer.shop.model.ShopMerchant;
 import com.genyuanlian.consumer.shop.model.ShopOrder;
@@ -49,11 +53,16 @@ import com.genyuanlian.consumer.shop.model.ShopPuCardTradeRecord;
 import com.genyuanlian.consumer.shop.utils.BWSProperties;
 import com.genyuanlian.consumer.shop.vo.CommodityOrderPayParamsVo;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
+import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.utils.ShopUtis;
+import com.genyuanlian.consumer.vo.EthWalletResp;
 import com.hnair.consumer.dao.service.ICommonService;
 import com.hnair.consumer.utils.DateUtil;
+import com.hnair.consumer.utils.FileResponse;
 import com.hnair.consumer.utils.ProUtility;
+import com.hnair.consumer.utils.QrCodeCreateUtil;
+import com.hnair.consumer.utils.SftpUtil;
 import com.hnair.consumer.utils.SnoGerUtil;
 import com.hnair.consumer.utils.ValidateRegexUtils;
 import com.hnair.consumer.utils.system.ConfigPropertieUtils;
@@ -75,6 +84,9 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 	@Resource
 	private ISystemApi systemApi;
 
+	@Resource
+	private IETHService ethService;
+
 	@SuppressWarnings("rawtypes")
 	@Resource(name = "masterRedisTemplate")
 	private RedisTemplate masterRedisTemplate;
@@ -82,6 +94,9 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 	@SuppressWarnings("rawtypes")
 	@Resource(name = "slaveRedisTemplate")
 	private RedisTemplate slaveRedisTemplate;
+
+	@Resource
+	private IBaseOrderService baseOrderService;
 
 	@Override
 	@Transactional(isolation = Isolation.SERIALIZABLE)
@@ -110,7 +125,15 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 
 		BigDecimal price = BigDecimal.ZERO;
 
+		ShopOrder order = new ShopOrder();
+		// 订单类型：1-普通订单；2-抢购订单；3-竞拍订单
 		if (params.getOrderType() == 1) {
+			if (params.getPayType() != null) { // 后续的业务代码指定了支付方式
+				order.setPayType(params.getPayType());
+			} else {
+				order.setPayType(3);// 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+			}
+
 			if (commodity.getStatus() != 1) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorCode().toString());
 				messageVo.setMessage(ShopErrorCodeEnum.ERROR_CODE_100201.getErrorMessage());
@@ -128,8 +151,26 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 				return messageVo;
 			}
 
+			// 获取商品实时价格
+			if (order.getPayType() == 3) // 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+			{
+				price = BigDecimal.valueOf(commodity.getPrice()).multiply(BigDecimal.valueOf(commodity.getDiscount()));
+			} else if (order.getPayType() == 5) // 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+			{
+				BigDecimal rmbPrice = BigDecimal.valueOf(commodity.getPrice())
+						.multiply(BigDecimal.valueOf(commodity.getDiscount()));
+				// ETH行情
+				List<ShopCoinPrice> coinPriceList = commonService.getListBySqlId(ShopCoinPrice.class, "pageData",
+						"coinType", "ETH", "pageIndex", 0, "pageSize", 1);
+				if (coinPriceList != null && coinPriceList.size() > 0) {
+					ShopCoinPrice coinPrice = coinPriceList.get(0);
+					BigDecimal priceEth = rmbPrice.divide(BigDecimal.valueOf(coinPrice.getPrice()), 8,
+							BigDecimal.ROUND_HALF_UP);
+					price = priceEth;
+				}
+			}
+
 			// 价格验证
-			price = BigDecimal.valueOf(commodity.getPrice()).multiply(BigDecimal.valueOf(commodity.getDiscount()));
 			if (price.multiply(new BigDecimal(params.getSaleCount())).compareTo(params.getAmount()) != 0) {
 				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorCode().toString());
 				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200001.getErrorMessage());
@@ -152,6 +193,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			}
 		} else {
 			price = params.getTotalAmount().divide(BigDecimal.valueOf(params.getSaleCount().longValue()));
+			order.setPayType(4); // 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
 		}
 
 		if (commodity.getCommodityType() == 3) {
@@ -213,19 +255,19 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
 
 		// 创建订单
-		ShopOrder order = new ShopOrder();
 		order.setAmount(params.getAmount().doubleValue());
-		order.setTotalAmount(params.getTotalAmount()!=null?params.getTotalAmount():params.getAmount());
+		order.setTotalAmount(params.getTotalAmount() != null ? params.getTotalAmount() : params.getAmount());
 		order.setCreateTime(now);
 		order.setMemberId(params.getMemberId());
 		order.setOrderNo(ShopUtis.buildOrderNo("com"));
 		order.setRemark(params.getRemark());
-		order.setPayType(3);
+		order.setSource(params.getSource());
 		Map<String, String> descMap = new HashMap<>();
 		descMap.put("commodityName", commodity.getTitle());
 		descMap.put("saleCount", params.getSaleCount().toString());
 		descMap.put("amount", params.getAmount().toString());
-		descMap.put("totalAmount", (params.getTotalAmount()!=null?params.getTotalAmount():params.getAmount()).toString());
+		descMap.put("totalAmount",
+				(params.getTotalAmount() != null ? params.getTotalAmount() : params.getAmount()).toString());
 		descMap.put("logo", commodity.getLogo());
 		order.setDescription(JSON.toJSONString(descMap));
 		// 不能自己推荐自己
@@ -253,7 +295,6 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		orderDetail.setPrice(price.doubleValue());
 		orderDetail.setSaleCount(params.getSaleCount());
 		orderDetail.setAmount(params.getAmount().doubleValue());
-		orderDetail.setStatus(0);
 		orderDetail.setRemark(params.getRemark());
 		orderDetail.setPresentCount(commodity.getPresentRate() * params.getSaleCount()); // 计算赠送数量
 		// 不能自己推荐自己
@@ -269,7 +310,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			orderDetail.setCalcForceOrder(1);
 		}
 		orderDetail.setTraceSource(commodity.getTraceSource());
-		if (params.getOrderType() != 1) {
+		if (params.getOrderType() != 1) { // 订单类型：1-普通订单；2-抢购订单；3-竞拍订单
 			orderDetail.setActivityId(params.getActivityId());
 			orderDetail.setOrderType(params.getOrderType());
 			orderDetail.setTotalAmount(params.getTotalAmount());
@@ -280,7 +321,49 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			orderDetail.setCommodityName(commodity.getTitle());
 		}
 
+		orderDetail.setSource(params.getSource());
+
+		// 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+		if (order.getPayType() == 5) {
+			// 创建ETH账号
+			EthWalletResp ethWallet = ethService.newAccount();
+			if (ethWallet == null) {
+				messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200015.getErrorCode().toString());
+				messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200015.getErrorMessage());
+				// 手动回滚当前事物
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return messageVo;
+			}
+
+			// 订单记录数字货币账号信息
+			orderDetail.setWalletAddress(ethWallet.getAddress());
+			orderDetail.setWalletPrivate(ethWallet.getPrivateKey());
+			orderDetail.setWalletKeyJsonName(ethWallet.getKeyJsonName());
+		}
+
+		// 生成的二维码输出流
+		ByteArrayOutputStream outputStreamQrCode = new ByteArrayOutputStream();
+		try {
+			QrCodeCreateUtil.writeToStream(orderDetail.getWalletAddress(), 200, "png", null, outputStreamQrCode);
+			Map<String, Object> sftpParams = new HashMap<>();
+			sftpParams.put("host", ConfigPropertieUtils.getString("sftp.host"));
+			sftpParams.put("port", ConfigPropertieUtils.getString("sftp.port"));
+			sftpParams.put("username", ConfigPropertieUtils.getString("sftp.username"));
+			sftpParams.put("password", ConfigPropertieUtils.getString("sftp.password"));
+			sftpParams.put("imgSize", ConfigPropertieUtils.getString("sftp.imgSize"));
+			sftpParams.put("imageSuffix", ConfigPropertieUtils.getString("sftp.imageSuffix"));
+			sftpParams.put("imageDir", ConfigPropertieUtils.getString("sftp.imageDir"));
+			sftpParams.put("basePath", ConfigPropertieUtils.getString("sftp.basePath"));
+			FileResponse ponse = SftpUtil.imgFileUpload(new ByteArrayInputStream(outputStreamQrCode.toByteArray()),
+					sftpParams);
+			orderDetail.setWalletAddressQrcode(ponse.getFileUrl());
+		} catch (Exception e) {
+			logger.error("生成收款地址二维码错误：" + e.getMessage());
+		}
+
+		// 保存订单明细
 		commonService.save(orderDetail);
+		baseOrderService.setOrderStatus(orderDetail, 0);
 
 		// 创建订单产品快照
 		ShopOrderCommoditySnapshot snapshot = new ShopOrderCommoditySnapshot();
@@ -351,7 +434,8 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		}
 
 		// 检查订单
-		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", params.getOrderNo(),"memberId",params.getMemberId());
+		ShopOrder order = commonService.get(ShopOrder.class, "orderNo", params.getOrderNo(), "memberId",
+				params.getMemberId());
 		if (order == null) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_800008.getErrorMessage());
@@ -553,7 +637,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 
 			// 结清，修改订单状态
 			orderDetail.setBalancePayment(new Double(0)); // 所需尾款为0
-			orderDetail.setStatus(orderStatus);
+			baseOrderService.setOrderStatus(orderDetail, orderStatus);
 			orderDetail.setPayTime(DateUtil.getCurrentDateTime());
 			commonService.update(orderDetail);
 
@@ -603,7 +687,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 			orderDetail.setBalancePayment(
 					(BigDecimal.valueOf(commodity.getPriceTotal()).subtract(BigDecimal.valueOf(commodity.getPrice()))
 							.multiply(BigDecimal.valueOf(orderDetail.getSaleCount()))).doubleValue());
-			orderDetail.setStatus(orderStatus);
+			baseOrderService.setOrderStatus(orderDetail, orderStatus);
 			orderDetail.setPayTime(DateUtil.getCurrentDateTime());
 			commonService.update(orderDetail);
 		}
@@ -871,7 +955,7 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 
 				// 是否需要发送快递(1-是;0-否)
 				if (orderDetail.getIsSendMail() == 0) {
-					orderDetail.setStatus(6);
+					baseOrderService.setOrderStatus(orderDetail, 6);
 					finanTransferOrderDetailIdList.add(orderDetail.getId());
 					finanTransferAmount = finanTransferAmount.add(BigDecimal.valueOf(orderDetail.getAmount()));
 					merchantId = orderDetail.getMerchantId();
@@ -1016,11 +1100,64 @@ public class CommodityOrderApiImpl extends BaseOrderApiImpl implements ICommodit
 		commonService.update(delivery);
 
 		// 修改订单状态为已发货
-		orderDetail.setStatus(5);
+		baseOrderService.setOrderStatus(orderDetail, 5);
 		commonService.update(orderDetail);
 
 		messageVo.setResult(true);
 		messageVo.setT("物流信息更新成功");
+
+		return messageVo;
+	}
+
+	@Override
+	public ShopMessageVo<String> completeOrderPay(OrderNoParamsVo params) {
+		ShopMessageVo<String> messageVo = new ShopMessageVo<String>();
+		logger.info("数字货币扫码支付支付完成调用到这里了=================,用户ID:" + params.getMemberId() + "订单编号:" + params.getOrderNo());
+
+		// 查询订单明细集合
+		List<ShopOrderDetail> orderDetails = commonService.getList(ShopOrderDetail.class, "orderNo",
+				params.getOrderNo(), "memberId", params.getMemberId());
+		if (orderDetails == null || orderDetails.size() == 0) {
+			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorCode().toString());
+			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_200002.getErrorMessage());
+
+			return messageVo;
+		}
+
+		Boolean payFlag = false;
+
+		// 循环处理订单，目前只有一个订单明细
+		for (ShopOrderDetail order : orderDetails) {
+			if (order.getStatus() != 0) {
+				continue;
+			}
+
+			String walletAddress = order.getWalletAddress();
+			// 查询地址是否收到转账
+			if (ethService.getBalance(walletAddress).compareTo(BigDecimal.valueOf(order.getAmount())) >= 0) {
+				payFlag = true;
+			}
+
+			if (payFlag == true) {
+				// 为竞拍到的算力服务创建任务
+				List<ShopOrderDetail> list = new ArrayList<ShopOrderDetail>();
+				list.add(order);
+				this.CreateOrderCalcForce(list);
+
+				// 修改订单状态信息
+				order.setPayTime(new Date());
+				baseOrderService.setOrderStatus(order, 8); // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成,9-抢购失败,已退款
+				commonService.update(order);
+			}
+		}
+
+		messageVo.setResult(true);
+		messageVo.setT(orderDetails.get(0).getOrderNo());
+		if (payFlag == true) {
+			messageVo.setMessage("支付成功");
+		} else {
+			messageVo.setMessage("支付结果后台正在确认中，如果你已经完成支付，可返回进行其他操作");
+		}
 
 		return messageVo;
 	}

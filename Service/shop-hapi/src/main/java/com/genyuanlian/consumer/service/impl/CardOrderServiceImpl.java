@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.genyuanlian.consumer.service.IBWSService;
+import com.genyuanlian.consumer.service.IBaseOrderService;
 import com.genyuanlian.consumer.service.ICardOrderService;
 import com.genyuanlian.consumer.shop.enums.ShopErrorCodeEnum;
 import com.genyuanlian.consumer.shop.model.ShopBstkWallet;
@@ -40,6 +41,9 @@ public class CardOrderServiceImpl implements ICardOrderService {
 
 	@Resource
 	private IBWSService bwsService;
+
+	@Resource
+	private IBaseOrderService baseOrderService;
 
 	@Override
 	@Transactional
@@ -71,14 +75,14 @@ public class CardOrderServiceImpl implements ICardOrderService {
 		Double amount = new Double(0);
 
 		Date now = DateUtil.getCurrentDateTime();
-		
-		//修改订单明细
+
+		// 修改订单明细
 		for (ShopOrderDetail orderDetail : orderDetails) {
-			orderDetail.setStatus(6);
+			baseOrderService.setOrderStatus(orderDetail, 6);
 			orderDetail.setPayTime(DateUtil.getCurrentDateTime());
 			commonDao.update(orderDetail);
 		}
-		
+
 		ShopOrderDetail orderDetail = orderDetails.get(0);
 		if (orderDetail.getCommodityType() == 1) {
 			// 要取消的订单中提货卡订单详情id集合

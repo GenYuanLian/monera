@@ -418,15 +418,20 @@ public class MerchantApiImpl implements IMerchantApi {
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 			return messageVo;
 		}
+
 		// 状态：1-上架,2-下架
 		if (commodity.getStatus() != 1) {
 			messageVo.setErrorCode(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorCode().toString());
 			messageVo.setErrorMessage(ShopErrorCodeEnum.ERROR_CODE_100013.getErrorMessage());
 			return messageVo;
 		}
+
+		// 是否需要算力包收益发放地址
 		if (commodity.getCommodityType() == 3) {
 			resp.setWalletAddressRequire(1);
 		}
+
+		// 是否需要邮寄
 		resp.setAddressRequire(commodity.getIsSendMail());
 
 		ShopMerchant merchant = commonService.get(commodity.getMerchantId(), ShopMerchant.class);
@@ -446,6 +451,18 @@ public class MerchantApiImpl implements IMerchantApi {
 		Double price = BigDecimal.valueOf(commodity.getPrice()).multiply(BigDecimal.valueOf(commodity.getDiscount()))
 				.doubleValue();
 		vo.setCommodityPrice(price);
+		if (commodity.getCommodityType() == 3) {
+			// ETH行情
+			List<ShopCoinPrice> coinPriceList = commonService.getListBySqlId(ShopCoinPrice.class, "pageData",
+					"coinType", "ETH", "pageIndex", 0, "pageSize", 1);
+			if (coinPriceList != null && coinPriceList.size() > 0) {
+				ShopCoinPrice coinPrice = coinPriceList.get(0);
+				Double priceEth = BigDecimal.valueOf(price)
+						.divide(BigDecimal.valueOf(coinPrice.getPrice()), 8, BigDecimal.ROUND_HALF_UP).doubleValue();
+				vo.setCommodityPriceEth(priceEth);
+			}
+		}
+		vo.setPurchaseRestrict(commodity.getPurchaseRestrict());
 		vo.setTraceSource(commodity.getTraceSource());
 
 		List<CommodityVo> list = new ArrayList<CommodityVo>();
@@ -495,14 +512,15 @@ public class MerchantApiImpl implements IMerchantApi {
 							vo.setCommodityName(com.getTitle());
 							vo.setCommodityLogo(imageDomain + com.getLogo());
 							// 折扣
-							Double price = BigDecimal.valueOf(com.getPrice())
+							Double price = BigDecimal.valueOf(com.getPriceTotal()) // 总价
 									.multiply(BigDecimal.valueOf(com.getDiscount())).doubleValue();
 							vo.setCommodityPrice(price);
 							Double priceEth = BigDecimal.valueOf(price)
 									.divide(BigDecimal.valueOf(coinPrice.getPrice()), 8, BigDecimal.ROUND_HALF_UP)
 									.doubleValue();
 							vo.setCommodityPriceEth(priceEth);
-                            vo.setInventoryQuantity(com.getInventoryQuantity());
+							vo.setInventoryQuantity(com.getInventoryQuantity());
+							vo.setPurchaseRestrict(com.getPurchaseRestrict());
 							// 赋值产品信息
 							if (productMap.containsKey(com.getId())) {
 								ShopProductCalcForce prod = productMap.get(com.getId());
@@ -510,7 +528,7 @@ public class MerchantApiImpl implements IMerchantApi {
 								vo.setTonkenDayLow((int) Math.floor(prod.getTonkenDayLow()));
 								vo.setTonkenDayHigh((int) Math.ceil(prod.getTonkenDayHigh()));
 							}
-							
+
 							voList.add(vo);
 						}
 					}

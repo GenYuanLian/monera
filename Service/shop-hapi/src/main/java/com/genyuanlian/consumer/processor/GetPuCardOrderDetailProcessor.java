@@ -82,9 +82,18 @@ public class GetPuCardOrderDetailProcessor extends BaseApiProcessor {
 		orderDetail.setMerchLogo(imageDomain + merchan.getLogoPic());
 		orderDetail.setPayType(order.getPayType());
 		orderDetail.setDescription(imageDomain + orderDetail.getDescription());
+		if (ProUtility.isNotNull(orderDetail.getWalletAddressQrcode())) {
+			orderDetail.setWalletAddressQrcode(imageDomain + orderDetail.getWalletAddressQrcode());
+		}
+
+		// 剩余支付时间
 		orderDetail.setSurplusPayTime(
 				DateUtil.diffDateTime(DateUtil.addMinute(orderDetail.getCreateTime(), time), new Date()));
 
+		// 屏蔽敏感信息
+		orderDetail.setWalletPrivate("");
+
+		sender.put("order", order);
 		sender.put("cardOrder", orderDetail);
 		sender.put("delivery", delivery);
 		// 商品类型：1-提货卡,2-溯源卡,3-零售商品

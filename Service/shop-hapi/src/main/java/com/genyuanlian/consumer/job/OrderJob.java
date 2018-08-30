@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.genyuanlian.consumer.service.IBWSService;
+import com.genyuanlian.consumer.service.IBaseOrderService;
 import com.genyuanlian.consumer.shop.api.IAuctionApi;
 import com.genyuanlian.consumer.shop.api.ICardOrderApi;
 import com.genyuanlian.consumer.shop.api.ISystemApi;
@@ -27,12 +28,14 @@ import com.genyuanlian.consumer.shop.model.ShopCommodity;
 import com.genyuanlian.consumer.shop.model.ShopOrderCalcForce;
 import com.genyuanlian.consumer.shop.model.ShopOrderCalcForceTask;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
+import com.genyuanlian.consumer.shop.model.ShopOrderStatusRecord;
 import com.genyuanlian.consumer.shop.model.ShopPuCardType;
 import com.genyuanlian.consumer.shop.model.ShopSaleVolume;
 import com.genyuanlian.consumer.shop.model.ShopWallet;
 import com.genyuanlian.consumer.shop.model.ShopWalletBill;
 import com.genyuanlian.consumer.shop.utils.BWSProperties;
 import com.genyuanlian.consumer.shop.vo.BWSWalletCreateResponseVo;
+import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ReceiverVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 import com.genyuanlian.consumer.vo.SaleVolumeConfigVo;
@@ -71,6 +74,9 @@ public class OrderJob {
 
 	@Resource
 	private IAuctionApi auctionApi;
+
+	@Resource
+	private IBaseOrderService baseOrderService;
 
 	/**
 	 * 过期未支付
@@ -118,6 +124,90 @@ public class OrderJob {
 	}
 
 	/**
+	 * 订单状态自动完成
+	 */
+	@Scheduled(cron = "0 0/10 * * * ? ")
+	public void orderComplete() {
+		if ("1".equals(jobLock)) {
+			return;
+		}
+
+		logger.info("订单状态自动完成任务-开始");
+
+		// 确认收货n天未有评价的订单
+		Long order_auto_compelte_time = ConfigPropertieUtils.getLong("order_auto_compelte_time", 30l);
+		Long order_auto_receive_time = ConfigPropertieUtils.getLong("order_auto_receive_time", 30l);
+		Date now = new Date();
+
+		// 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成,9-抢购失败,已退款
+		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "status", 6);
+		if (orders != null && orders.size() > 0) {
+			for (ShopOrderDetail order : orders) {
+				ShopOrderStatusRecord record = commonService.get(ShopOrderStatusRecord.class, "targetStatus", 6,
+						"orderDetailId", order.getId());
+				if (record != null) {
+					// 已确认收货n天
+					if (DateUtil.diffDateTime(now, record.getCreateTime()) > order_auto_compelte_time * 60L) {
+						baseOrderService.setOrderStatus(order, 8);
+					}
+				} else {
+					// 订单已创建n+m天，处理订单状态表，之前历史订单数据，状态数据不全的情况
+					if (DateUtil.diffDateTime(now,
+							order.getCreateTime()) > (order_auto_compelte_time + order_auto_receive_time) * 60L) {
+						baseOrderService.setOrderStatus(order, 8);
+					}
+				}
+			}
+		}
+
+		logger.info("订单状态自动完成任务-结束");
+	}
+
+	/**
+	 * 订单状态自动买家确认收货
+	 */
+	@Scheduled(cron = "0 0/10 * * * ? ")
+	public void orderReceive() {
+		if ("1".equals(jobLock)) {
+			return;
+		}
+
+		logger.info("订单状态自动买家确认收货任务-开始");
+
+		// 确认收货n天未有评价的订单
+		Long order_auto_receive_time = ConfigPropertieUtils.getLong("order_auto_receive_time", 30l);
+		Date now = new Date();
+
+		// 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成,9-抢购失败,已退款
+		List<ShopOrderDetail> orders = commonService.getList(ShopOrderDetail.class, "status", 5);
+		if (orders != null && orders.size() > 0) {
+			for (ShopOrderDetail order : orders) {
+				ShopOrderStatusRecord record = commonService.get(ShopOrderStatusRecord.class, "targetStatus", 5,
+						"orderDetailId", order.getId());
+				if (record != null) {
+					// 商家已发货n天
+					if (DateUtil.diffDateTime(now, record.getCreateTime()) > order_auto_receive_time * 60L) {
+						OrderNoParamsVo params = new OrderNoParamsVo();
+						params.setMemberId(order.getMemberId());
+						params.setOrderNo(order.getOrderNo());
+						cardOrderApi.buyerConfirmOrder(params);
+					}
+				} else {
+					// 订单已创建n+m天，处理订单状态表，之前历史订单数据，状态数据不全的情况
+					if (DateUtil.diffDateTime(now, order.getCreateTime()) > (order_auto_receive_time) * 60L) {
+						OrderNoParamsVo params = new OrderNoParamsVo();
+						params.setMemberId(order.getMemberId());
+						params.setOrderNo(order.getOrderNo());
+						cardOrderApi.buyerConfirmOrder(params);
+					}
+				}
+			}
+		}
+
+		logger.info("订单状态自动买家确认收货任务-结束");
+	}
+
+	/**
 	 * 调用钱包接口重试
 	 */
 	@Scheduled(cron = "0 0/10 * * * ? ")
@@ -126,10 +216,9 @@ public class OrderJob {
 			return;
 		}
 		/*
-		 * List<ShopBstkRecord> tasks =
-		 * commonService.getList(ShopBstkRecord.class, "status", 2); if (tasks
-		 * != null && tasks.size() > 0) { for (ShopBstkRecord record : tasks) {
-		 * ShopBstkRecord upRecord = new ShopBstkRecord();
+		 * List<ShopBstkRecord> tasks = commonService.getList(ShopBstkRecord.class,
+		 * "status", 2); if (tasks != null && tasks.size() > 0) { for (ShopBstkRecord
+		 * record : tasks) { ShopBstkRecord upRecord = new ShopBstkRecord();
 		 * upRecord.setId(record.getId()); // 执行任务 try {
 		 * 
 		 *//**
@@ -147,12 +236,11 @@ public class OrderJob {
 		/*
 		 * if (record.getCallType() == 1) {
 		 * 
-		 * BWSWalletCreateResponseVo resultVo =
-		 * JSONObject.parseObject(result.getData(),
+		 * BWSWalletCreateResponseVo resultVo = JSONObject.parseObject(result.getData(),
 		 * BWSWalletCreateResponseVo.class);
 		 * 
-		 * // 调用接口更新 // 插入 wallet ShopBstkWallet upWallet = new
-		 * ShopBstkWallet(); upWallet.setOwnerId(record.getOwnerId());
+		 * // 调用接口更新 // 插入 wallet ShopBstkWallet upWallet = new ShopBstkWallet();
+		 * upWallet.setOwnerId(record.getOwnerId());
 		 * upRecord.setOwnerType(record.getOwnerType());
 		 * upWallet.setWalletAddress(resultVo.getWallet());
 		 * upWallet.setPublicKeyAddr(resultVo.getMainAddr());
@@ -163,32 +251,29 @@ public class OrderJob {
 		 *//**
 			 * 充值 消费
 			 *//*
-			 * else if (record.getCallType() == 2 || record.getCallType() == 3)
-			 * { BWSWalletTransferResponseVo voResult =
-			 * JSONObject.parseObject(result.getData(),
-			 * BWSWalletTransferResponseVo.class);
-			 * 
-			 * // 调用接口更新
-			 * if(record.getBusinessId()!=null&&record.getBusinessId()>0) {
-			 * ShopOrder upOrder = new ShopOrder();
-			 * upOrder.setId(record.getBusinessId());
-			 * upOrder.setTransactionNo(voResult.getTxid());
-			 * commonService.update(upOrder); } }
-			 * 
-			 * upRecord.setStatus(1); upRecord.setRemark("自动任务调用");
-			 * upRecord.setCreateTime(DateUtil.getCurrentDateTime());
-			 * commonService.update(upRecord);
-			 * 
-			 * } catch (Exception ex) { logger.error("自动任务调用bws接口失败", ex);
-			 * upRecord.setRetryCount(record.getRetryCount() + 1);
-			 * upRecord.setStatus(2); upRecord.setRemark("自动任务调用");
-			 * upRecord.setCreateTime(DateUtil.getCurrentDateTime());
-			 * commonService.update(upRecord);
-			 * 
-			 * }
-			 * 
-			 * } }
-			 */
+				 * else if (record.getCallType() == 2 || record.getCallType() == 3) {
+				 * BWSWalletTransferResponseVo voResult =
+				 * JSONObject.parseObject(result.getData(), BWSWalletTransferResponseVo.class);
+				 * 
+				 * // 调用接口更新 if(record.getBusinessId()!=null&&record.getBusinessId()>0) {
+				 * ShopOrder upOrder = new ShopOrder(); upOrder.setId(record.getBusinessId());
+				 * upOrder.setTransactionNo(voResult.getTxid()); commonService.update(upOrder);
+				 * } }
+				 * 
+				 * upRecord.setStatus(1); upRecord.setRemark("自动任务调用");
+				 * upRecord.setCreateTime(DateUtil.getCurrentDateTime());
+				 * commonService.update(upRecord);
+				 * 
+				 * } catch (Exception ex) { logger.error("自动任务调用bws接口失败", ex);
+				 * upRecord.setRetryCount(record.getRetryCount() + 1); upRecord.setStatus(2);
+				 * upRecord.setRemark("自动任务调用");
+				 * upRecord.setCreateTime(DateUtil.getCurrentDateTime());
+				 * commonService.update(upRecord);
+				 * 
+				 * }
+				 * 
+				 * } }
+				 */
 	}
 
 	/**

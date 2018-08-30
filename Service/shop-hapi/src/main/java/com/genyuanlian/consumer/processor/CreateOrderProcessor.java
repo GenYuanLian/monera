@@ -44,12 +44,20 @@ public class CreateOrderProcessor extends BaseCreateOrderProcessor {
 		// 收货地址
 		String addressId = request.getParameter("addressId");
 
-		// 钱包地址
+		// 钱包地址(算力服务收益发放BSTK钱包)
 		String walletAddress = request.getParameter("walletAddress");
 
 		// 推荐码
 		String referraCode = request.getParameter("referraCode");
-		
+
+		// 订单来源：mmdj,sqgw
+		String source = request.getParameter("source");
+		if (ProUtility.isNull(source)) {
+			source = "mmdj";
+		}
+
+		// 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+		String payType = request.getParameter("payType");
 
 		if (!checkParams(commodityType, commodityId, saleCount, amount) || Integer.valueOf(saleCount) <= 0) {
 			sender.fail(ErrorCodeEnum.ERROR_CODE_10002.getErrorCode(), ErrorCodeEnum.ERROR_CODE_10002.getErrorMessage(),
@@ -57,7 +65,7 @@ public class CreateOrderProcessor extends BaseCreateOrderProcessor {
 			return;
 		}
 
-		//参数
+		// 参数
 		CreateCommodityOrderParamsVo params = new CreateCommodityOrderParamsVo();
 		params.setCommodityType(Integer.valueOf(commodityType));
 		params.setCommodityId(Long.parseLong(commodityId));
@@ -75,7 +83,14 @@ public class CreateOrderProcessor extends BaseCreateOrderProcessor {
 		if (StringUtils.isNotBlank(referraCode)) {
 			params.setReferraCode(referraCode);
 		}
-		
+
+		if (ProUtility.isNotNull(payType)) {
+			params.setPayType(Integer.parseInt(payType));
+		}
+		if (StringUtils.isNotBlank(source)) {
+			params.setSource(source);
+		}
+
 		ShopMessageVo<String> messageVo = super.createOrderMain(params);
 
 		if (messageVo != null && messageVo.isResult()) {
