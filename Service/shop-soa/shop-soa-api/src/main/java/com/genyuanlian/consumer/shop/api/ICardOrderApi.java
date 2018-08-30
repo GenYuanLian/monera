@@ -1,6 +1,5 @@
 package com.genyuanlian.consumer.shop.api;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -26,12 +25,9 @@ public interface ICardOrderApi {
 	/**
 	 * 取消订单
 	 * 
-	 * @param orders
-	 *            要取消的订单
-	 * @param status
-	 *            1-取消支付；2-支付过期
-	 * @param cancelReason
-	 *            取消原因
+	 * @param orders       要取消的订单
+	 * @param status       1-取消支付；2-支付过期
+	 * @param cancelReason 取消原因
 	 * @return
 	 */
 	public ShopMessageVo<String> cancelPuCardOrder(List<ShopOrderDetail> orders, Integer status, String cancelReason);
@@ -64,9 +60,11 @@ public interface ICardOrderApi {
 	 * 查询订单列表
 	 * 
 	 * @param memberId
+	 * @param orderSource 订单来源：mmdj,sqgw
 	 * @param pageIndex
 	 * @param pageSize
 	 * @return
 	 */
-	public ShopMessageVo<Map<String, Object>> getPuCardOrders(Long memberId, Integer pageIndex, Integer pageSize);
+	public ShopMessageVo<Map<String, Object>> getPuCardOrders(Long memberId, String orderSource, Integer pageIndex,
+			Integer pageSize);
 }

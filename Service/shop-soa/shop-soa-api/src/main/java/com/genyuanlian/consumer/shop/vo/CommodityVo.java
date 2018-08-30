@@ -17,9 +17,13 @@ public class CommodityVo implements Serializable {
 
 	private String commodityLogo;
 
-	private Double commodityPrice;
+	private Double commodityPrice; // RMB价格
+
+	private Double commodityPriceEth; // ETH价格
 
 	private Integer inventoryQuantity;
+
+	private Integer purchaseRestrict; // 购买限制数量：0-不限制
 
 	private String traceSource; // 商品溯源信息
 
@@ -63,12 +67,28 @@ public class CommodityVo implements Serializable {
 		this.commodityPrice = commodityPrice;
 	}
 
+	public Double getCommodityPriceEth() {
+		return commodityPriceEth;
+	}
+
+	public void setCommodityPriceEth(Double commodityPriceEth) {
+		this.commodityPriceEth = commodityPriceEth;
+	}
+
 	public Integer getInventoryQuantity() {
 		return inventoryQuantity;
 	}
 
 	public void setInventoryQuantity(Integer inventoryQuantity) {
 		this.inventoryQuantity = inventoryQuantity;
+	}
+
+	public Integer getPurchaseRestrict() {
+		return purchaseRestrict;
+	}
+
+	public void setPurchaseRestrict(Integer purchaseRestrict) {
+		this.purchaseRestrict = purchaseRestrict;
 	}
 
 	public String getTraceSource() {

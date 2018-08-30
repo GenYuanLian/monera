@@ -22,7 +22,7 @@ public class ShopPayRecord implements Serializable{
 	
 	private String payAccount;
 	
-	private Integer accountType;
+	private Integer accountType; //账户类型:1-weixin,2-alipay
 	
 	private String tradeNo;
 	

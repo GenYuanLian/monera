@@ -39,6 +39,8 @@ public class ShopOrderDelivery implements Serializable {
 
 	private String expressNo;
 
+	private java.util.Date deliveryTime;
+
 	private String remark;
 
 	private String email;
@@ -147,6 +149,14 @@ public class ShopOrderDelivery implements Serializable {
 
 	public String getExpressNo() {
 		return this.expressNo;
+	}
+
+	public java.util.Date getDeliveryTime() {
+		return deliveryTime;
+	}
+
+	public void setDeliveryTime(java.util.Date deliveryTime) {
+		this.deliveryTime = deliveryTime;
 	}
 
 	public void setRemark(String value) {

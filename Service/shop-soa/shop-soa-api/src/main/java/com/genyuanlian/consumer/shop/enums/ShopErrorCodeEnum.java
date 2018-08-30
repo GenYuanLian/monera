@@ -48,6 +48,7 @@ public enum ShopErrorCodeEnum {
 	ERROR_CODE_200012(200012, "超出限购数量"),
 	ERROR_CODE_200013(200013, "钱包地址格式错误"),
 	ERROR_CODE_200014(200014, "不可重复下单"),
+	ERROR_CODE_200015(200015, "下单失败"),
 	
 	ERROR_CODE_300000(300000, "未预约，不能参与"),
 	ERROR_CODE_300001(300001, "等其他人出价后，再参与出价"),

@@ -20,10 +20,10 @@ public class ShopOrder implements Serializable {
 
 	private String orderNo;
 
-	private Integer payType; // 支付方式:1-微信,2-支付宝,3-提货卡
+	private Integer payType; // 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
 
 	private Double amount;
-	
+
 	private BigDecimal totalAmount;
 
 	private String description;
@@ -35,6 +35,8 @@ public class ShopOrder implements Serializable {
 	private String referraCode;
 
 	private Long referraId;
+
+	private String source; // 订单来源：mmdj,sqgw
 
 	private java.util.Date createTime;
 
@@ -124,6 +126,14 @@ public class ShopOrder implements Serializable {
 
 	public Long getReferraId() {
 		return referraId;
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
 	}
 
 	public void setCreateTime(java.util.Date value) {

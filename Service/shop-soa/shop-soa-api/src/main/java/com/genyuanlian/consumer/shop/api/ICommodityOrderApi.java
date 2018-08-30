@@ -6,6 +6,7 @@ import com.genyuanlian.consumer.shop.model.ShopConfirmPaymentLog;
 import com.genyuanlian.consumer.shop.model.ShopOrderDetail;
 import com.genyuanlian.consumer.shop.vo.CommodityOrderPayParamsVo;
 import com.genyuanlian.consumer.shop.vo.CreateCommodityOrderParamsVo;
+import com.genyuanlian.consumer.shop.vo.OrderNoParamsVo;
 import com.genyuanlian.consumer.shop.vo.ShopMessageVo;
 
 public interface ICommodityOrderApi {
@@ -50,4 +51,12 @@ public interface ICommodityOrderApi {
 	 * @param orderDetails
 	 */
 	public void CreateOrderCalcForce(List<ShopOrderDetail> orderDetails);
+
+	/**
+	 * 数字货币扫码支付支付完成
+	 * 
+	 * @param OrderNoParamsVo
+	 * @return
+	 */
+	public ShopMessageVo<String> completeOrderPay(OrderNoParamsVo params);
 }

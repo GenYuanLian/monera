@@ -28,17 +28,21 @@ public class CreateCommodityOrderParamsVo implements Serializable {
 
 	private String referraCode; // 推荐码
 
+	private String source;// 订单来源：mmdj,sqgw
+
+	private Integer payType;// 支付方式:1-微信,2-支付宝,3-提货卡,4-BSTK,5-ETH
+
 	// 临时属性
 	private Long referraId = new Long(0); // 推荐人Id
-	
-	private Long activityId;  //活动Id
-	
+
+	private Long activityId; // 活动Id
+
 	private String activityTitel;
-	
-	private Integer orderType;  //订单类型：1-普通订单；2-抢购订单；3-竞拍订单
-	
-	private BigDecimal totalAmount;  //总金额
-	
+
+	private Integer orderType; // 订单类型：1-普通订单；2-抢购订单；3-竞拍订单
+
+	private BigDecimal totalAmount; // 总金额
+
 	public Integer getCommodityType() {
 		return commodityType;
 	}
@@ -110,7 +114,23 @@ public class CreateCommodityOrderParamsVo implements Serializable {
 	public void setReferraCode(String referraCode) {
 		this.referraCode = referraCode;
 	}
-	
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
+	public Integer getPayType() {
+		return payType;
+	}
+
+	public void setPayType(Integer payType) {
+		this.payType = payType;
+	}
+
 	public Long getReferraId() {
 		return referraId;
 	}
@@ -150,5 +170,5 @@ public class CreateCommodityOrderParamsVo implements Serializable {
 	public void setTotalAmount(BigDecimal totalAmount) {
 		this.totalAmount = totalAmount;
 	}
-	
+
 }

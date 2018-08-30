@@ -42,14 +42,24 @@ public class ShopOrderDetail implements Serializable {
 
 	private String description;
 
-	private Integer status; // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成
+	private Integer status; // 订单状态:0-未支付,1-未支付取消,2-支付过期，3-已支付，4-发货前退单，5-商家确认发货，6-买家确认收货，7-收货后退单,8-订单已完成,9-抢购失败,已退款
 
 	private String remark;
 
 	private Integer presentCount; // 赠送数量
 
+	private String walletPrivate; // 数字货币钱包私钥
+
+	private String walletAddress; // 数字货币钱包地址
+
+	private String walletKeyJsonName; // 钱包账号文件名
+
+	private String walletAddressQrcode;// 数字货币钱包地址二维码图片地址
+
+	private String source; // 订单来源：mmdj,sqgw
+
 	private java.util.Date createTime;
-	
+
 	private java.util.Date payTime;
 
 	/**
@@ -94,7 +104,7 @@ public class ShopOrderDetail implements Serializable {
 
 	private BigDecimal totalAmount;
 
-	private Integer orderType; //订单类型：1-普通订单；2-抢购订单；3-竞拍订单
+	private Integer orderType; // 订单类型：1-普通订单；2-抢购订单；3-竞拍订单
 
 	private Long activityId;
 
@@ -232,6 +242,46 @@ public class ShopOrderDetail implements Serializable {
 
 	public void setPresentCount(Integer presentCount) {
 		this.presentCount = presentCount;
+	}
+
+	public String getWalletPrivate() {
+		return walletPrivate;
+	}
+
+	public void setWalletPrivate(String walletPrivate) {
+		this.walletPrivate = walletPrivate;
+	}
+
+	public String getWalletAddress() {
+		return walletAddress;
+	}
+
+	public void setWalletAddress(String walletAddress) {
+		this.walletAddress = walletAddress;
+	}
+
+	public String getWalletKeyJsonName() {
+		return walletKeyJsonName;
+	}
+
+	public void setWalletKeyJsonName(String walletKeyJsonName) {
+		this.walletKeyJsonName = walletKeyJsonName;
+	}
+
+	public String getWalletAddressQrcode() {
+		return walletAddressQrcode;
+	}
+
+	public void setWalletAddressQrcode(String walletAddressQrcode) {
+		this.walletAddressQrcode = walletAddressQrcode;
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
 	}
 
 	public void setCreateTime(java.util.Date value) {

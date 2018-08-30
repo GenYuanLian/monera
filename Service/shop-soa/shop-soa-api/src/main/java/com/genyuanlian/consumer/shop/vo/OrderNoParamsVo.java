@@ -11,7 +11,7 @@ public class OrderNoParamsVo implements Serializable {
 
 	private String orderNo;
 
-	private Integer memberId;
+	private Long memberId;
 
 	public String getOrderNo() {
 		return orderNo;
@@ -21,11 +21,11 @@ public class OrderNoParamsVo implements Serializable {
 		this.orderNo = orderNo;
 	}
 
-	public Integer getMemberId() {
+	public Long getMemberId() {
 		return memberId;
 	}
 
-	public void setMemberId(Integer memberId) {
+	public void setMemberId(Long memberId) {
 		this.memberId = memberId;
 	}
 
